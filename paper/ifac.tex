@@ -1,11 +1,12 @@
 \documentclass{ifacconf}
 
 \usepackage[utf8]{inputenc}
+\usepackage{acronym}
 \usepackage{natbib}
 \usepackage{amsmath}
 \usepackage{mathptmx} % amsmath makes the paper longer
 \usepackage{pgfplots}
-\usepackage{subfig}
+%\usepackage{subfig}
 
 % options for pgfplots
 \pgfplotsset{compat=1.8,compat/show suggested version=false}
@@ -16,6 +17,16 @@
 \tikzexternalize
 
 \newcommand{\str}[1]{{\color{blue} \scriptsize \sf\selectfont @#1@}}
+
+% acronym definitions
+\acrodef{lc}[LC]{Local Controller}
+\acrodefindefinite{lc}{an}{a}
+\acrodef{vm}[VM]{Virtual Machine}
+\acrodef{rm}[RM]{Resource Manager}
+\acrodefindefinite{rm}{an}{a}
+\acrodef{ip}[IP]{Infrastructure Provider}
+\acrodef{sp}[SP]{Service Provider}
+\acrodefindefinite{sp}{an}{a}
 
 \begin{document}
 % =============================================================================
