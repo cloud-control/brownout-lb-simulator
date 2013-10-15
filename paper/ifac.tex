@@ -1,0 +1,59 @@
+\documentclass{ifacconf}
+
+\usepackage[utf8]{inputenc}
+\usepackage{natbib}
+\usepackage{amsmath}
+\usepackage{mathptmx} % amsmath makes the paper longer
+\usepackage{pgfplots}
+\usepackage{subfig}
+
+% options for pgfplots
+\pgfplotsset{compat=1.8,compat/show suggested version=false}
+\usetikzlibrary{plotmarks}
+\usetikzlibrary{calc}
+% begin of externalization
+\usetikzlibrary{external}
+\tikzexternalize
+
+\newcommand{\str}[1]{{\color{blue} \scriptsize \sf\selectfont @#1@}}
+
+\begin{document}
+% =============================================================================
+\begin{frontmatter}
+\title{Title}
+
+\author[Affiliation1]{AUTHOR1} 
+\author[Affiliation1]{AUTHOR2}
+\author[Affiliation2]{AUTHOR3}
+\author[Affiliation1]{AUTHOR4}
+\address[Affiliation1]{Department of Automatic Control, Lund University}
+\address[Affiliation2]{Department of Computer Science, Ume{\aa} University}
+
+\begin{abstract} % Abstract of not more than 250 words.
+
+\end{abstract}
+
+\begin{keyword}
+  Computer systems, Feedback loops, Model-based control,
+  Multiprocessor systems, Probabilitstic models, Queuing theory.
+\end{keyword}
+
+\end{frontmatter}
+% =============================================================================
+
+\section{Introduction}
+\label{sec:introduction}
+
+Fake~\cite{Fielding02}.
+
+
+\begin{ack}
+  This work was partially supported by the Swedish Research Council
+  (VR) under contract number C0590801 for the project Cloud Control
+  and through the LCCC Linnaeus Center. Also, we received partial
+  support from the ELLIIT Excellence Center.
+\end{ack}
+
+\bibliography{ifac}
+
+\end{document}
