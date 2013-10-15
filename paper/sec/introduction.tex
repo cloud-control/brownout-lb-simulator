@@ -6,21 +6,14 @@ A defining characteristic of clouds is {\bf elasticity}. It is defined as the ab
 
 However, an existing issue with clouds is their robustness to unexpected events. For example, flash-crowds are sudden increases of end-users, that may increase the required capacity by up to 5 times~\cite{PeaksPaperThatMinaPresented}. Similarly, hardware failures may temporarily reduce the capacity of the data-center, while the failure is repaired. Due to the large magnitude and short duration of such events, it may be economically too costly to provision enough hardware to properly deal with them. As a results, unexpected events may lead to data-center overload, which translates to unresponsive cloud applications, leading to dissatisfied end-users and revenue loss.
 
-In previous work~\cite{us}, we have proposed a cloud application development paradigm called {\bf brownout}. In essence, applications have optional code, that can be deactivated as necessary. While the execution of such code is desirable, as it improves end-user experience, its deactivation is preferred to overloading the data-center. For example, online stores display personalized recommendations of similar products. No doubt, such recommendations improve the experience of the end-user and the revenue of the \ac{sp}, however, due to their sophistication, they are also very resource demanding. Hence, the \ac{sp} desires to serve as many recommendations as possible, however, she would prefer to stop serving them instead of having an unresponsive application. Our contribution not only consisted in a general architecture for brownout-compliant applications, but also a controller to decide the probability of serving optional content as a function of the application's response time.
+In previous work~\cite{us}, we have proposed a cloud application development paradigm called {\bf brownout}. In essence, some code of the application is marked as optional, such that it can be deactivated as necessary. While the execution of such code is desirable, as it improves end-user experience, its deactivation is preferred to overloading the data-center. For example, online stores display personalized recommendations of similar products. No doubt, such recommendations improve the experience of the end-user and the revenue of the \ac{sp}, however, due to their sophistication, they are also very resource demanding. Hence, the \ac{sp} desires to serve as many recommendations as possible, however, she would prefer to stop serving them instead of having an unresponsive application. Our previous contribution not only consists in a general architecture for brownout-compliant applications, but also a controller to decide the probability of serving optional content as a function of the application's response time. While the approach proved to be a success for dealing with unexpected events, it is restricted to applications having a single replica, running inside a single \ac{vm}.
 
-- previous contribution: brownout
-- restricted to a single physical machine, vertical elasticity
-- remaining issue: horizontal elasticity, redundancy through replication
-- load balancer
-- existing approaches use load or response-time, which is not okey for brownout-compliant applications
-  - intuitively, since the application already controls its response-time at the expense of the number of optional requests served, existing load-balancing architectures and approaches cannot detect which replica is performing better.
-- The contribution of this article is threefold:
-  - We propose an architecture and a problem statement
-  - We propose a control-theoretical load-balacing algorithm
-  - We evaluate the approach
+In this article, we extend our previous work to multiple \acp{vm}. This brings two improvements to brownout-compliant cloud applications. First, horizontal elasticity can be used to take advantage of more resources than provided by a single physical machine. Second, applications can be made more resilient by deploying several replica. Achieving this requires a brownout-compliant load-balancer to decide how to divide end-users between the replicas. Existing, state-of-the-art load-balancers direct load based on the response-time of each replica, which leads to inefficient decisions for brownout-compliant applications, since such applications already keep their response-time at a given setpoint (at the expense of reducing the amount of optional content served). Thus, the challenge is to find a load-balancing architecture and algorithm that maximizes the amount of served optional content.
 
-Problem statement
-- architecture
-- formalization
-- question
+Our contribution is threefold:
+\begin{enumerate}
+	\item We propose a load-balancing architecture for brownout-compliant cloud applications and formalized a problem statement (Section~\ref{sec:problem}).
+	\item Using control theory, we design a load-balacing algorithm that maximizes the performance of brownout-compliant applications (Section~\ref{sec:solution}).
+	\item We evaluate the approach and show that it improves the number of served optional content when compared with existing load-balancing algorithms (Section~\ref{sec:evaluation}).
+\end{enumerate}
 
