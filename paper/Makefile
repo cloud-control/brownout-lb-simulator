@@ -1,15 +1,88 @@
-all:	ifac.tex ifac.bib ifacconf.bst ifacconf.cls
-	rm -f ifac.pdf
-	latex ifac.tex
-	bibtex ifac.aux
-	latex ifac.tex
-	latex ifac.tex
-	dvips -Ppdf -G0 -ta4 ifac
-	ps2pdf -dCompatibilityLevel=1.4 -dMaxSubsetPct=100 -dSubsetFonts=true -dEmbedAllFonts=true -sPAPERSIZE=a4 ifac.ps ifac.pdf
-	mkdir -p out.o
-	rm -rf auto
-	mv ifac.auxlock ifac.ps ifac.dvi ifac.aux ifac.bbl ifac.blg ifac.log ./out.o
+# Config
+
+OUTDIR      := out.o
+TEXINPUTS	:= .:mystyles:
+export TEXINPUTS
+BSTINPUTS	:= .:mystyles:
+export BSTINPUTS
+
+#################################################################
+# Additional commands
+
+# A latex command that strips graphics
+PDFLATEX = pdflatex --shell-escape -interaction=nonstopmode -halt-on-error -no-parse-first-line -file-line-error
+
+#################################################################
+# Top level rules
+
+.PHONY: clean pdf preview
+
+all:
+	@echo "Choose a target:"
+	@echo "  make pdf       fully regenerate PDF"
+	@echo "  make preview   interactively regenerated PDF"
+	@echo "  make clean     clean intermediate files"
+
+pdf: ifac.pdf
+
+preview: pdf
+	# Requires inotify-tools
+	okular ifac.pdf &
+	cd out.o; \
+	while true; do \
+		sleep 1; \
+		inotifywait -e close_write -- ../* ../*/*; \
+		BIBINPUTS=..: BSTINPUTS=..: bibtex ifac; \
+		TEXINPUTS=..: $(PDFLATEX) ifac.tex; \
+		cp ifac.pdf ..; \
+	done
 
 clean:
-	rm -rf out.o
-	rm -f ifac.pdf
+	$(RM) -rf $(OUTDIR)
+
+#################################################################
+# Graphics
+
+%.pdf: %.jpg
+	convert $< $@
+
+%.precrop.pdf: %.plot %.data
+	(echo 'set term postscript color enhanced "Times" 16'; cat $<) | \
+		gnuplot - | \
+		epstopdf --filter --autorotate=All --hires > $@
+
+%.eps: %.fig
+	fig2dev -L eps $< > $@
+
+%.eps: %.dia
+	dia --export=$@ $<
+
+%.eps: %.odg
+	soffice -headless -norestore OdgToEps.odg "macro://OdgToEps/Standard.Convert.OdgToEps(\"$$PWD/$*\")"
+
+# For when XeLaTeX will be more complete
+#%.pdf: %.eps
+#	ps2pdf -dEPSCrop $< $@
+
+%.precrop.pdf: %.eps
+	ps2pdf -sPAPERSIZE=a0 $< $@
+
+img/%.pdf: img/%.precrop.pdf
+	pdfcrop $< $@
+
+img/%.eps::
+	@echo Missing image $@
+	@false
+
+#################################################################
+# Latex files
+
+ifac.pdf: $(OUTDIR)/ifac.pdf
+	cp $< $@
+
+$(OUTDIR)/ifac.pdf: *.bib *.sty *.tex img/*.tex
+	mkdir -p out.o
+	cd out.o; TEXINPUTS=..: $(PDFLATEX) ifac.tex
+	cd out.o; BIBINPUTS=..: BSTINPUTS=..: bibtex ifac
+	cd out.o; TEXINPUTS=..: $(PDFLATEX) ifac.tex
+	cd out.o; TEXINPUTS=..: $(PDFLATEX) ifac.tex
