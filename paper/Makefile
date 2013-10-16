@@ -12,3 +12,4 @@ all:	ifac.tex ifac.bib ifacconf.bst ifacconf.cls
 
 clean:
 	rm -rf out.o
+	rm -f ifac.pdf
