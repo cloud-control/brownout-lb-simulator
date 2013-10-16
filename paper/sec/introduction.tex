@@ -20,14 +20,14 @@ Horizontal elasticity calls for the introduction of a specialized
 component, called {\bf load-balancer}, that takes care of routing the
 requests to one of the \acp{vm} composing the
 service. Load-balancing techniques have been widely studied and
-adopted~\cite{Barroso09,Lu11:PerfEval,Lin12:IGCC}.
+adopted~\citep{Barroso09,Lu11:PerfEval,Lin12:IGCC}.
 
 One of the main issues with cloud computing infrastructures, however,
 is {\bf robustness} to unexpected events. For example, flash-crowds
 are sudden increases of end-users, that may increase the required
 capacity by up to five times~\citep{Bodik10:SoCC}. Similarly, hardware
 failures may temporarily reduce the capacity of the data-center, while
-the failure is repaired~\citep{Barosso09}. Due to the large magnitude and short duration
+the failure is repaired~\citep{Barroso09}. Due to the large magnitude and short duration
 of such events, it may be economically too costly to provision enough
 hardware to properly deal with them. As a results, unexpected events
 may lead to data-center overload, which translates to unresponsive

@@ -80,7 +80,7 @@ img/%.eps::
 ifac.pdf: $(OUTDIR)/ifac.pdf
 	cp $< $@
 
-$(OUTDIR)/ifac.pdf: *.bib *.sty *.tex img/*.tex
+$(OUTDIR)/ifac.pdf: *.bib *.sty *.tex sec/*.tex img/*.tex
 	mkdir -p out.o
 	cd out.o; TEXINPUTS=..: $(PDFLATEX) ifac.tex
 	cd out.o; BIBINPUTS=..: BSTINPUTS=..: bibtex ifac
