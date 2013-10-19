@@ -1,19 +1,70 @@
-In this section we present our proposed system architecture and formulate the problem statement.
+In this section we discuss the characteristics of our infrastructure
+and we clearly formulate the problem under analysis.
 
-\begin{figure}
-	\centering
-	\input{img/architecture.tex}
-	\caption{Architecture of a brownout application featuring multiple replica}
-	\label{fig:architecture}
+\begin{figure}[t]
+  \centering 
+  \input{img/architecture.tex} 
+  \caption{Architecture of a brownout-compliant cloud application
+    featuring multiple replicas.}
+  \label{fig:architecture}
 \end{figure}
 
-Figure~\ref{fig:architecture} presents the architecture of a brownout-compliant application featuring multiple replicas, which reflects established practices in cloud applications~\cite{Barroso09}. The main processes are the clients, which are the users of the cloud application, the load-balancer which directs loads towards replicas, the replicas themselves, implementing application logic, and the controllers, which decides the amount of optional content that each replica should serve. Let us describe each process and highlight its specificities related to brownout-compliance.
+Figure~\ref{fig:architecture} illustrates the infrastructure
+architecture that is deployed to execute a brownout-compliant
+application composed by multiple replicas. Our infrastructure is very
+convenient to implement a cloud application and it is widely accepted
+as the reference one for cloud applications~\citep{Barroso09}. The
+clients generate traffic to the cloud application. The traffic is
+balanced by a load-balancer and directed towards replicas. Each
+replica implements the application logic. Special to our case is the
+presence of a controller within each replica. The replica controller
+takes care of adjusting the percentage of requests served with the
+optional components enabled based on the measured response time of the
+requests served by the replica.
 
-Clients send requests at a constant rate $\lambda$ which are send to the load-balancer. The load-balancer forwards these requests to one of the $n$ replicas. As a results, each replica $i$ receives requests with a rate $\lambda_i = w_i \cdot \lambda$, such that $\sum_{i=\overline{1,n}} w_i = 1$, where $w_i$ represents weights computed by the load-balancer.
+More formally, we assume that clients generate requests for the
+brownout application at a constant rate $\lambda$. These requests are
+initially routed to the load-balancer. The load-balancer forwards them
+to one of the $n$ replicas of the application. As a results, each
+replica $i \in [1,n]$ receives requests with a rate $\lambda_i = w_i
+\cdot \lambda$, such that $\sum_{i} w_i = 1$. The load-balancer
+computes also the replicas weights $w_i$, according to its
+load-balancing policy.
 
-A replica $i$ may respond to each request in two modes: partially, where only mandatory content is included in the reply, or fully, where only mandatory and optional content is included. The service times for partial and full replies is $\mu_i$ and $M_i$, respectively. Obviously, partial replies are faster to compute than full ones, since the optional content does not need to be computed, hence, $\mu_i>M_i$. Whether the replica serves requests partially or fully depends on a parameter $\theta_i \in [0, 1]$, which represents the probability of serving optional content. Assuming the replica is not saturated, it serves requests fully at a rate $\lambda_i \cdot \theta_i$ and partially at a rate $\lambda_i \cdot (1-\theta_i)$. To aid load-balancing decisions, each replica piggy-bags the current value of $\theta_i$ through the reply, so that this value can be observed by the load-balancer.
+\textcolor{red}{Martina: in the following paragraph $\mu_i$ and $M_i$
+  were used as ``times'' before my changes. I assumed they are rates
+  since you wrote also $\mu_i > M_i$. If it is not the case you can
+  revert back to times but it should be $\mu_i < M_i$.}
 
-The parameters $\theta_i$ are computed by controllers based on a parameter $\tau$, the target average response-time. Each replica $i$ periodically reports the average observed response-time $t_i$ to its controller. In exchange, the controller computes a new value $\theta_i$ to close the feedback loop and maintain average response-time.
+A replica $i$ responds to requests either partially, where only
+mandatory content is included in the reply, or fully, where both
+mandatory and optional content is included. The service rate for a
+partial response is $\mu_i$ while a full response is generated with a
+rate of $M_i$. Obviously, partial replies are faster to compute than
+full ones, since the optional content does not need to be prepared,
+hence, $\mu_i \geq M_i$. Whether the replica serves requests partially
+or fully depends on a parameter $\theta_i \in [0, 1]$, which
+represents the probability of serving optional content. This parameter
+is chosen by the replica itself. Assuming the replica is not
+saturated, it serves requests fully at a rate $\lambda_i \cdot
+\theta_i$ and partially at a rate $\lambda_i \cdot (1-\theta_i)$. To
+aid load-balancing decisions, each replica piggy-bags the current
+value of $\theta_i$ through the reply, so that this value can be
+observed by the load-balancer.
 
-Given the above architecture, the brownout load-balancing problem can be stated as follows. Assuming the load-balancer can measure $\lambda$, $t_i$ and $\theta_i$, compute the values $w_i$ that maximize $\sum_{i=\overline{1,n}} \lambda w_i \theta_i$.
+The parameters $\theta_i$ are computed by controllers based on a
+target average response time $\bar{\tau}$. Each replica $i$
+periodically reports the average observed response-time $\tau_i$ to
+its controller. In exchange, the controller adjusts $\theta_i$ to
+maintain the average response-time close to its target value.
 
+Within this architecture, we want to solve the problem of designing a
+{\bf load-balancer}. Knowing the values of $\tau_i$ and $\theta_i$ for
+each replica $i \in [1, n]$ and the arrival rate $\lambda$, our
+load-balancer should compute the values of the weights $w_i$ such that
+\begin{equation}
+\max \sum_{i} \lambda w_i \theta_i
+\end{equation}
+is obtained. In other words, the load-balancer should maximize the
+amount of requests served with the optional part enabled, to maximize
+also the application owner's revenue.
