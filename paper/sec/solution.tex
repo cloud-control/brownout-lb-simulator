@@ -1,0 +1,8 @@
+Some stuff that might help to devise a solution. It can be proven (i.e., I have the proof on a piece of paper), that the effective service rate of a replica is:
+$$\mu_{i,eff}=\frac{1}{\frac{1-\theta_i}{\mu_i}+\frac{\theta_i}{M_i}}$$
+
+The respose time of a replica, as per M/M/1 queues, is:
+
+$$t_i=\frac{1}{\mu_{i,eff}-\lambda_i}$$
+
+Knowing that the controller tries to maintain $t_i=\tau_i$, one can compute $\theta_i$ by inverting the equation above.
