@@ -9,12 +9,14 @@ and we clearly formulate the problem under analysis.
   \label{fig:architecture}
 \end{figure}
 
-Figure~\ref{fig:architecture} illustrates the infrastructure
+% CK: In cloud vocabulary, infrastructure generally refers to the physical hardware.
+% CK: Hence, I prefer using "architecture" for "organization of software components".
+Figure~\ref{fig:architecture} illustrates the software
 architecture that is deployed to execute a brownout-compliant
-application composed by multiple replicas. Our infrastructure is very
-convenient to implement a cloud application and it is widely accepted
+application composed by multiple replicas. Our architecture
+is widely accepted
 as the reference one for cloud applications~\citep{Barroso09}. The
-clients generate traffic to the cloud application. The traffic is
+clients generate traffic to the cloud application, which is
 balanced by a load-balancer and directed towards replicas. Each
 replica implements the application logic. Special to our case is the
 presence of a controller within each replica. The replica controller
@@ -26,26 +28,22 @@ More formally, we assume that clients generate requests for the
 brownout application at a constant rate $\lambda$. These requests are
 initially routed to the load-balancer. The load-balancer forwards them
 to one of the $n$ replicas of the application. As a results, each
-replica $i \in [1,n]$ receives requests with a rate $\lambda_i = w_i
-\cdot \lambda$, such that $\sum_{i} w_i = 1$. The load-balancer
-computes also the replicas weights $w_i$, according to its
+replica $i \in [1,n]$ receives requests at a rate $\lambda_i = w_i
+\cdot \lambda$, such that $\sum_{i} w_i = 1$. $w_i$ are called the replica weights
+and are dynamically computed by the load-balancer
+according to its
 load-balancing policy.
-
-\textcolor{red}{Martina: in the following paragraph $\mu_i$ and $M_i$
-  were used as ``times'' before my changes. I assumed they are rates
-  since you wrote also $\mu_i > M_i$. If it is not the case you can
-  revert back to times but it should be $\mu_i < M_i$.}
 
 A replica $i$ responds to requests either partially, where only
 mandatory content is included in the reply, or fully, where both
 mandatory and optional content is included. The service rate for a
 partial response is $\mu_i$ while a full response is generated with a
-rate of $M_i$. Obviously, partial replies are faster to compute than
+rate $M_i$. Obviously, partial replies are faster to compute than
 full ones, since the optional content does not need to be prepared,
 hence, $\mu_i \geq M_i$. Whether the replica serves requests partially
 or fully depends on a parameter $\theta_i \in [0, 1]$, which
 represents the probability of serving optional content. This parameter
-is chosen by the replica itself. Assuming the replica is not
+is chosen by the replica itself, more precisely, by its controller. Assuming the replica is not
 saturated, it serves requests fully at a rate $\lambda_i \cdot
 \theta_i$ and partially at a rate $\lambda_i \cdot (1-\theta_i)$. To
 aid load-balancing decisions, each replica piggy-bags the current
@@ -59,12 +57,12 @@ its controller. In exchange, the controller adjusts $\theta_i$ to
 maintain the average response-time close to its target value.
 
 Within this architecture, we want to solve the problem of designing a
-{\bf load-balancer}. Knowing the values of $\tau_i$ and $\theta_i$ for
+{\bf load-balancer policy}. Knowing the values of $\tau_i$ and $\theta_i$ for
 each replica $i \in [1, n]$ and the arrival rate $\lambda$, our
 load-balancer should compute the values of the weights $w_i$ such that
 \begin{equation}
-\max \sum_{i} \lambda w_i \theta_i
+\sum_{i} \lambda w_i \theta_i
 \end{equation}
-is obtained. In other words, the load-balancer should maximize the
-amount of requests served with the optional part enabled, to maximize
-also the application owner's revenue.
+is maximized. In other words, the load-balancer should maximize the
+amount of requests served with the optional part enabled. In practice, this would also maximize
+the application owner's revenue.
