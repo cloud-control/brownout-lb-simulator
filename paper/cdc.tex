@@ -1,12 +1,17 @@
-\documentclass{ifacconf}
+\documentclass[letterpaper, 10 pt, conference]{ieeeconf}
 
 \usepackage[utf8]{inputenc}
 \usepackage{acronym}
-\usepackage{natbib}
+\usepackage[natbib=true,backend=bibtex,firstinits=true,style=numeric-comp,defernumbers,maxnames=99,maxcitenames=2]{biblatex}
 \usepackage{amsmath}
 \usepackage{mathptmx} % amsmath makes the paper longer
 \usepackage{pgfplots}
 %\usepackage{subfig}
+
+\bibliography{cdc}
+
+\IEEEoverridecommandlockouts
+\overrideIEEEmargins
 
 % options for pgfplots
 \pgfplotsset{compat=1.8,compat/show suggested version=false}
@@ -28,29 +33,21 @@
 \acrodef{sp}[SP]{Service Provider}
 \acrodefindefinite{sp}{an}{a}
 
+% =============================================================================
+\title{\LARGE \bf A Load-balancer for Brownout-compliant Cloud Applications}
+\author{Authors} 
+% =============================================================================
+
+
 \begin{document}
-% =============================================================================
-\begin{frontmatter}
-\title{A Load-balancer for Brownout-compliant Cloud Applications}
 
-\author[Affiliation1]{AUTHOR1} 
-\author[Affiliation1]{AUTHOR2}
-\author[Affiliation2]{AUTHOR3}
-\author[Affiliation1]{AUTHOR4}
-\address[Affiliation1]{Department of Automatic Control, Lund University}
-\address[Affiliation2]{Department of Computer Science, Ume{\aa} University}
+\maketitle
+\thispagestyle{empty}
+\pagestyle{empty}
 
-\begin{abstract} % Abstract of not more than 250 words.
-
+\begin{abstract}
+Abstract goes here. 
 \end{abstract}
-
-\begin{keyword}
-  Computer systems, Feedback loops, Model-based control,
-  Multiprocessor systems, Probabilistic models, Queuing theory.
-\end{keyword}
-
-\end{frontmatter}
-% =============================================================================
 
 \section{Introduction}
 \label{sec:introduction}
@@ -73,13 +70,12 @@
 \section{Conclusion}
 \label{sec:conclusion}
 
-\begin{ack}
+\section*{Acknowledgement}
   This work was partially supported by the Swedish Research Council
   (VR) under contract number C0590801 for the project Cloud Control
   and through the LCCC Linnaeus Center. Also, we received partial
   support from the ELLIIT Excellence Center.
-\end{ack}
 
-\bibliography{ifac}
+\printbibliography
 
 \end{document}

@@ -23,18 +23,18 @@ all:
 	@echo "  make preview   interactively regenerated PDF"
 	@echo "  make clean     clean intermediate files"
 
-pdf: ifac.pdf
+pdf: cdc.pdf
 
 preview: pdf
 	# Requires inotify-tools
-	okular ifac.pdf &
+	okular cdc.pdf &
 	cd out.o; \
 	while true; do \
 		sleep 1; \
 		inotifywait -e close_write -- ../* ../*/*; \
-		BIBINPUTS=..: BSTINPUTS=..: bibtex ifac; \
-		TEXINPUTS=..: $(PDFLATEX) ifac.tex; \
-		cp ifac.pdf ..; \
+		BIBINPUTS=..: BSTINPUTS=..: bibtex cdc; \
+		TEXINPUTS=..: $(PDFLATEX) cdc.tex; \
+		cp cdc.pdf ..; \
 	done
 
 clean:
@@ -77,12 +77,12 @@ img/%.eps::
 #################################################################
 # Latex files
 
-ifac.pdf: $(OUTDIR)/ifac.pdf
+cdc.pdf: $(OUTDIR)/cdc.pdf
 	cp $< $@
 
-$(OUTDIR)/ifac.pdf: *.bib *.sty *.tex sec/*.tex img/*.tex
+$(OUTDIR)/cdc.pdf: *.bib *.sty *.tex sec/*.tex img/*.tex
 	mkdir -p out.o
-	cd out.o; TEXINPUTS=..: $(PDFLATEX) ifac.tex
-	cd out.o; BIBINPUTS=..: BSTINPUTS=..: bibtex ifac
-	cd out.o; TEXINPUTS=..: $(PDFLATEX) ifac.tex
-	cd out.o; TEXINPUTS=..: $(PDFLATEX) ifac.tex
+	cd out.o; TEXINPUTS=..: $(PDFLATEX) cdc.tex
+	cd out.o; BIBINPUTS=..: BSTINPUTS=..: bibtex cdc
+	cd out.o; TEXINPUTS=..: $(PDFLATEX) cdc.tex
+	cd out.o; TEXINPUTS=..: $(PDFLATEX) cdc.tex
