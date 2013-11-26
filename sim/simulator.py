@@ -205,7 +205,7 @@ class ClosedLoopClient:
 		return self.name
 
 if __name__ == "__main__":
-	numClients = 100
+	numClients = 50
 
 	sim = Simulator()
 	server1 = Server(sim)
@@ -217,8 +217,12 @@ if __name__ == "__main__":
 	lb.addBackend(server2)
 	lb.addBackend(server3)
 
-	clients = []
-	for i in range(0, numClients):
-		clients = ClosedLoopClient(sim, lb)
+	def addClients(numClients):
+		for i in range(0, numClients):
+			clients = ClosedLoopClient(sim, lb)
+
+	sim.add(   0, lambda: addClient(numClients))
+	sim.add( 500, lambda: addClient(numClients))
+	sim.add(1000, lambda: addClient(numClients))
 	
 	sim.run()
