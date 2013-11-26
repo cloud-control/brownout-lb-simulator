@@ -135,12 +135,14 @@ class LoadBalancer:
 		self.backends = []
 		self.weights = []
 		self.lastThetas = []
+		self.lastLastThetas = []
 		
 		self.sim.add(0, self.runControlLoop)
 
 	def addBackend(self, backend):
 		self.backends.append(backend)
 		self.lastThetas.append(self.initialTheta) # to be updated at onComplete
+		self.lastLastThetas.append(self.initialTheta) # to be updated at onComplete
 
 		self.weights = [ 1.0 / len(self.backends) ] * len(self.backends)
 
@@ -161,12 +163,16 @@ class LoadBalancer:
 		request.originalRequest.onCompleted()
 
 	def runControlLoop(self):
-		sumOfThetas = sum(self.lastThetas)
-		self.weights = map(lambda x: x / sumOfThetas, self.lastThetas)
+		self.weights = map(lambda x: max(x[0] + x[1] - x[2], 0.01), \
+			zip(self.weights, self.lastThetas, self.lastLastThetas))
+		preNormalizedSumOfWeights = sum(self.weights)
+		self.weights = map(lambda x: x / preNormalizedSumOfWeights, self.weights)
+
 		self.sim.add(self.controlPeriod, self.runControlLoop)
 		self.sim.log(self, "Measured {1}, New weights {0}", \
-			' '.join([str(w) for w in self.weights ]), \
-			' '.join([str(t) for t in self.lastThetas ]))
+			' '.join(["{0:.5f}".format(w) for w in self.weights ]), \
+			' '.join(["{0:.5f}".format(t) for t in self.lastThetas ]))
+		self.lastLastThetas = self.lastThetas[:]
 
 	def __str__(self):
 		return "lb"
@@ -198,15 +204,17 @@ class ClosedLoopClient:
 		return self.name
 
 if __name__ == "__main__":
-	numClients = 50
+	numClients = 100
 
 	sim = Simulator()
 	server1 = Server(sim)
-	server2 = Server(sim, serviceTimeY = 0.07 / 3, serviceTimeN = 0.001 / 3)
+	server2 = Server(sim, serviceTimeY = 0.07 * 2, serviceTimeN = 0.001 * 2)
+	server3 = Server(sim, serviceTimeY = 0.07 * 3, serviceTimeN = 0.001 * 3)
 
-	lb = LoadBalancer(sim, controlPeriod = 5)
+	lb = LoadBalancer(sim, controlPeriod = 1)
 	lb.addBackend(server1)
 	lb.addBackend(server2)
+	lb.addBackend(server3)
 
 	clients = []
 	for i in range(0, numClients):
