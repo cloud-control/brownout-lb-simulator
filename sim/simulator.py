@@ -26,7 +26,7 @@ class Simulator:
 	def add(self, delay, what):
 		heapq.heappush(self.events, (self.now + delay, what))
 
-	def run(self, until = 100):
+	def run(self, until = 1000):
 		while self.events:
 			self.now, event = heapq.heappop(self.events)
 			if self.now > until:
@@ -49,9 +49,10 @@ class Request:
 class Server:
 	lastServerId = 1
 
-	def __init__(self, sim, **kwargs):
-		self.serviceTimeY = 0.07 # service time with recommender system
-		self.serviceTimeN = 0.001 # and without it
+	def __init__(self, sim, serviceTimeY = 0.07, serviceTimeN = 0.001, \
+			initialTheta = 0.5):
+		self.serviceTimeY = serviceTimeY # service time with recommender system
+		self.serviceTimeN = serviceTimeN # and without it
 		self.controlPeriod = 1 # second
 		self.setPoint = 1 # second
 		self.pole = 0.9
@@ -59,7 +60,7 @@ class Server:
 		Server.lastServerId += 1
 
 		self.sim = sim
-		self.theta = kwargs.get('initialTheta', 0.5)
+		self.theta = initialTheta
 		self.sim.add(0, lambda: self.runControlLoop())
 		self.latestLatencies = []
 		self.requestQueue = []
@@ -86,8 +87,8 @@ class Server:
 
 			# saturation, it's a probability
 			self.theta = min(max(serviceLevel, 0.0), 1.0)
-			self.sim.log(self, "Measured maximum latency {1:.3f}, new theta {0:.2f}", \
-				self.theta, serviceTime)
+			#self.sim.log(self, "Measured maximum latency {1:.3f}, new theta {0:.2f}", \
+			#	self.theta, serviceTime)
 
 			self.latestLatencies = []
 
@@ -126,9 +127,9 @@ class Server:
 		return str(self.name)
 
 class LoadBalancer:
-	def __init__(self, sim, **kwargs):
-		self.controlPeriod = 1 # second
-		self.initialTheta = kwargs.get('initialTheta', 0.5)
+	def __init__(self, sim, controlPeriod = 1, initialTheta = 0.5):
+		self.controlPeriod = controlPeriod # second
+		self.initialTheta = initialTheta
 
 		self.sim = sim
 		self.backends = []
@@ -163,7 +164,9 @@ class LoadBalancer:
 		sumOfThetas = sum(self.lastThetas)
 		self.weights = map(lambda x: x / sumOfThetas, self.lastThetas)
 		self.sim.add(self.controlPeriod, self.runControlLoop)
-		self.sim.log(self, "New weights {0}", ' '.join([str(w) for w in self.weights ]))
+		self.sim.log(self, "Measured {1}, New weights {0}", \
+			' '.join([str(w) for w in self.weights ]), \
+			' '.join([str(t) for t in self.lastThetas ]))
 
 	def __str__(self):
 		return "lb"
@@ -199,9 +202,9 @@ if __name__ == "__main__":
 
 	sim = Simulator()
 	server1 = Server(sim)
-	server2 = Server(sim)
+	server2 = Server(sim, serviceTimeY = 0.07 / 3, serviceTimeN = 0.001 / 3)
 
-	lb = LoadBalancer(sim)
+	lb = LoadBalancer(sim, controlPeriod = 5)
 	lb.addBackend(server1)
 	lb.addBackend(server2)
 
