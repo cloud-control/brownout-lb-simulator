@@ -72,6 +72,7 @@ class Server:
 
 			# saturation, it's a probability
 			self.theta = min(max(self.theta, 0.0), 1.0)
+			self.sim.log(self, "New theta {0}", self.theta)
 
 			self.latestLatencies = []
 
@@ -138,6 +139,7 @@ class LoadBalancer:
 		sumOfThetas = sum(self.lastThetas)
 		self.weights = map(lambda x: x / sumOfThetas, self.lastThetas)
 		self.sim.add(self.controlPeriod, self.runControlLoop)
+		self.sim.log(self, "New weights {0}", ' '.join(self.weights))
 
 	def __str__(self):
 		return "lb"
