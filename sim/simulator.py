@@ -53,7 +53,7 @@ class Server:
 			initialTheta = 0.5):
 		self.serviceTimeY = serviceTimeY # service time with recommender system
 		self.serviceTimeN = serviceTimeN # and without it
-		self.controlPeriod = 5 # second
+		self.controlPeriod = 2 # second
 		self.setPoint = 1 # second
 		self.pole = 0.9
 		self.name = 'server' + str(Server.lastServerId)
@@ -221,8 +221,8 @@ if __name__ == "__main__":
 		for i in range(0, numClients):
 			clients = ClosedLoopClient(sim, lb)
 
-	sim.add(   0, lambda: addClient(numClients))
-	sim.add( 500, lambda: addClient(numClients))
-	sim.add(1000, lambda: addClient(numClients))
+	sim.add(   0, lambda: addClients(numClients))
+	sim.add( 500, lambda: addClients(numClients))
+	sim.add(1000, lambda: addClients(numClients))
 	
 	sim.run()
