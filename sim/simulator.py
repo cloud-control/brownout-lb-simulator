@@ -50,8 +50,8 @@ class Server:
 	lastServerId = 1
 
 	def __init__(self, sim, **kwargs):
-		self.serviceTimeY = 0.02 # service time with recommender system
-		self.serviceTimeN = 0.001 # and without it
+		self.serviceTimeY = 0.8 # service time with recommender system
+		self.serviceTimeN = 0.1 # and without it
 		self.controlPeriod = 1 # second
 		self.setPoint = 1 # second
 		self.name = 'server' + str(Server.lastServerId)
@@ -101,6 +101,9 @@ class Server:
 			request = self.requestQueue.pop()
 			self.sim.add(0, lambda: self.serve(request))
 
+	def __str__(self):
+		return str(self.name)
+
 class LoadBalancer:
 	def __init__(self, sim, **kwargs):
 		self.controlPeriod = 1 # second
@@ -120,14 +123,14 @@ class LoadBalancer:
 		self.weights = [ 1.0 / len(self.backends) ] * len(self.backends)
 
 	def request(self, request):
-		self.sim.log(self, "Got request {0}", request)
+		#self.sim.log(self, "Got request {0}", request)
 		generatedWeight = random.random()
 		request.arrival = self.sim.now
 		newRequest = Request()
 		newRequest.chosenBackendIndex = weightedChoice(zip(range(0, len(self.backends)), self.weights))
 		newRequest.originalRequest = request
 		newRequest.onCompleted = lambda: self.onCompleted(newRequest)
-		self.sim.log(self, "Directed request to {0}", newRequest.chosenBackendIndex)
+		#self.sim.log(self, "Directed request to {0}", newRequest.chosenBackendIndex)
 		self.backends[newRequest.chosenBackendIndex].request(newRequest)
 
 	def onCompleted(self, request):
@@ -139,7 +142,7 @@ class LoadBalancer:
 		sumOfThetas = sum(self.lastThetas)
 		self.weights = map(lambda x: x / sumOfThetas, self.lastThetas)
 		self.sim.add(self.controlPeriod, self.runControlLoop)
-		self.sim.log(self, "New weights {0}", ' '.join(self.weights))
+		self.sim.log(self, "New weights {0}", ' '.join(str(self.weights)))
 
 	def __str__(self):
 		return "lb"
@@ -159,19 +162,19 @@ class ClosedLoopClient:
 	def issueRequest(self):
 		request = Request()
 		request.onCompleted = lambda: self.onCompleted(request)
-		self.sim.log(self, "Requested {0}", request)
+		#self.sim.log(self, "Requested {0}", request)
 		self.server.request(request)
 
 	def onCompleted(self, request):
 		thinkTime = random.expovariate(1.0 / self.averageThinkTime)
 		self.sim.add(thinkTime, self.issueRequest)
-		self.sim.log(self, "Thinking for {0}", thinkTime)
+		#self.sim.log(self, "Thinking for {0}", thinkTime)
 	
 	def __str__(self):
 		return self.name
 
 if __name__ == "__main__":
-	numClients = 1
+	numClients = 1000
 
 	sim = Simulator()
 	server1 = Server(sim)
