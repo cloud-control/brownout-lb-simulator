@@ -21,7 +21,7 @@ def weightedChoice(choices):
 class Simulator:
 	def __init__(self):
 		self.events = []
-		self.now = 0
+		self.now = 0.0
 
 	def add(self, delay, what):
 		heapq.heappush(self.events, (self.now + delay, what))
@@ -50,10 +50,11 @@ class Server:
 	lastServerId = 1
 
 	def __init__(self, sim, **kwargs):
-		self.serviceTimeY = 0.8 # service time with recommender system
-		self.serviceTimeN = 0.1 # and without it
+		self.serviceTimeY = 0.07 # service time with recommender system
+		self.serviceTimeN = 0.001 # and without it
 		self.controlPeriod = 1 # second
 		self.setPoint = 1 # second
+		self.pole = 0.9
 		self.name = 'server' + str(Server.lastServerId)
 		Server.lastServerId += 1
 
@@ -62,17 +63,31 @@ class Server:
 		self.sim.add(0, lambda: self.runControlLoop())
 		self.latestLatencies = []
 		self.requestQueue = []
+		self.activeRequest = None
 
 	def runControlLoop(self):
 		if self.latestLatencies:
-			c_est = max(self.latestLatencies) / self.theta # very rough estimate
-			pole = 0.9
-			error = self.setPoint - max(self.latestLatencies)
-			self.theta += (1/c_est) * (1 - pole) * error
+			serviceTime = max(self.latestLatencies)
+			serviceLevel = self.theta
+
+			alpha = serviceTime / serviceLevel # very rough estimate
+			# NOTE: control knob allowing to smooth service times
+			# To enable this, you *must* add a new state variable (alpha) to the controller.
+			#alpha = 0.5 * alpha + 0.5 * serviceTime / previousServiceLevel # very rough estimate
+			error = self.setPoint - serviceTime
+			# NOTE: control knob allowing slow increase
+			if error > 0:
+				error *= 0.1
+			serviceLevel = serviceLevel + (1 / alpha) * (1 - self.pole) * error
+
+			# saturation, service level is a probability
+			serviceLevel = max(serviceLevel, 0.0)
+			serviceLevel = min(serviceLevel, 1.0)
 
 			# saturation, it's a probability
-			self.theta = min(max(self.theta, 0.0), 1.0)
-			self.sim.log(self, "New theta {0}", self.theta)
+			self.theta = min(max(serviceLevel, 0.0), 1.0)
+			self.sim.log(self, "Measured maximum latency {1:.3f}, new theta {0:.2f}", \
+				self.theta, serviceTime)
 
 			self.latestLatencies = []
 
@@ -81,25 +96,31 @@ class Server:
 
 	def request(self, request):
 		request.arrival = sim.now
-		if self.requestQueue:
-			self.requestQueue.push(request)
-		else:
-			self.serve(request)
+		self.requestQueue.append(request)
+		self.triggerServer()
 
-	def serve(self, request):
+	def triggerServer(self):
+		# Another request is in progress
+		if self.activeRequest:
+			return
+
+		# Queue is empty
+		if len(self.requestQueue) == 0:
+			return
+
+		self.activeRequest = self.requestQueue.pop()
 		executeRecommender = random.random() <= self.theta
-		request.theta = self.theta
+		self.activeRequest.theta = self.theta
 		computationTime = \
 			self.serviceTimeY if executeRecommender else self.serviceTimeN
-		self.sim.add(computationTime, lambda: self.onCompleted(request))
+		self.sim.add(computationTime, lambda: self.onCompleted(self.activeRequest))
 
 	def onCompleted(self, request):
 		request.completion = self.sim.now
 		self.latestLatencies.append(request.completion - request.arrival)
 		request.onCompleted()
-		if self.requestQueue:
-			request = self.requestQueue.pop()
-			self.sim.add(0, lambda: self.serve(request))
+		self.activeRequest = None
+		self.triggerServer()
 
 	def __str__(self):
 		return str(self.name)
@@ -134,7 +155,7 @@ class LoadBalancer:
 		self.backends[newRequest.chosenBackendIndex].request(newRequest)
 
 	def onCompleted(self, request):
-		self.lastThetas[request.chosenBackendIndex]
+		self.lastThetas[request.chosenBackendIndex] = request.theta
 		request.completion = self.sim.now
 		request.originalRequest.onCompleted()
 
@@ -142,7 +163,7 @@ class LoadBalancer:
 		sumOfThetas = sum(self.lastThetas)
 		self.weights = map(lambda x: x / sumOfThetas, self.lastThetas)
 		self.sim.add(self.controlPeriod, self.runControlLoop)
-		self.sim.log(self, "New weights {0}", ' '.join(str(self.weights)))
+		self.sim.log(self, "New weights {0}", ' '.join([str(w) for w in self.weights ]))
 
 	def __str__(self):
 		return "lb"
@@ -174,7 +195,7 @@ class ClosedLoopClient:
 		return self.name
 
 if __name__ == "__main__":
-	numClients = 1000
+	numClients = 50
 
 	sim = Simulator()
 	server1 = Server(sim)
