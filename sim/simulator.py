@@ -188,7 +188,7 @@ class ClosedLoopClient:
 
 		self.sim = sim
 		self.server = server
-		self.sim.add(0, self.issueRequest)
+		self.sim.add(0, lambda: self.onCompleted(None))
 
 	def issueRequest(self):
 		request = Request()
