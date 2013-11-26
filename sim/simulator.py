@@ -53,7 +53,7 @@ class Server:
 			initialTheta = 0.5):
 		self.serviceTimeY = serviceTimeY # service time with recommender system
 		self.serviceTimeN = serviceTimeN # and without it
-		self.controlPeriod = 1 # second
+		self.controlPeriod = 5 # second
 		self.setPoint = 1 # second
 		self.pole = 0.9
 		self.name = 'server' + str(Server.lastServerId)
@@ -212,7 +212,7 @@ if __name__ == "__main__":
 	server2 = Server(sim, serviceTimeY = 0.07 * 2, serviceTimeN = 0.001 * 2)
 	server3 = Server(sim, serviceTimeY = 0.07 * 3, serviceTimeN = 0.001 * 3)
 
-	lb = LoadBalancer(sim, controlPeriod = 5)
+	lb = LoadBalancer(sim, controlPeriod = 1)
 	lb.addBackend(server1)
 	lb.addBackend(server2)
 	lb.addBackend(server3)
