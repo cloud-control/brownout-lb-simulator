@@ -166,7 +166,8 @@ class LoadBalancer:
 		self.weights = map(lambda x: max(x[0] + x[1] - x[2], 0.01), \
 			zip(self.weights, self.lastThetas, self.lastLastThetas))
 		preNormalizedSumOfWeights = sum(self.weights)
-		self.weights = map(lambda x: x / preNormalizedSumOfWeights, self.weights)
+		newWeights = map(lambda x: x / preNormalizedSumOfWeights, self.weights)
+		self.weights = [0.9 * self.weights[i] + 0.1 * newWeights[i] for i in range(0, len(self.weights))]
 
 		self.sim.add(self.controlPeriod, self.runControlLoop)
 		self.sim.log(self, "Measured {1}, New weights {0}", \
@@ -211,7 +212,7 @@ if __name__ == "__main__":
 	server2 = Server(sim, serviceTimeY = 0.07 * 2, serviceTimeN = 0.001 * 2)
 	server3 = Server(sim, serviceTimeY = 0.07 * 3, serviceTimeN = 0.001 * 3)
 
-	lb = LoadBalancer(sim, controlPeriod = 1)
+	lb = LoadBalancer(sim, controlPeriod = 5)
 	lb.addBackend(server1)
 	lb.addBackend(server2)
 	lb.addBackend(server3)
