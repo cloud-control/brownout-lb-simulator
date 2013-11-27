@@ -38,7 +38,7 @@ class Simulator:
 			del self.whatToTime[what]
 		self.add(delay, what)
 
-	def run(self, until = 1000):
+	def run(self, until = 2000):
 		while self.events:
 			self.now = min(self.events)
 			events = self.events[self.now]
@@ -197,8 +197,7 @@ class LoadBalancer:
 		self.weights = map(lambda x: max(x[0] + x[1] - x[2], 0.01), \
 			zip(self.weights, self.lastThetas, self.lastLastThetas))
 		preNormalizedSumOfWeights = sum(self.weights)
-		newWeights = map(lambda x: x / preNormalizedSumOfWeights, self.weights)
-		self.weights = [0.9 * self.weights[i] + 0.1 * newWeights[i] for i in range(0, len(self.weights))]
+		self.weights = map(lambda x: x / preNormalizedSumOfWeights, self.weights)
 
 		self.sim.add(self.controlPeriod, self.runControlLoop)
 		self.sim.log(self, "Measured {1}, New weights {0}", \
@@ -222,8 +221,11 @@ class ClosedLoopClient:
 		self.sim.add(0, lambda: self.onCompleted(None))
 
 		self.numCompletedRequests = 0
+		self.active = True
 
 	def issueRequest(self):
+		if not self.active:
+			return
 		request = Request()
 		request.onCompleted = lambda: self.onCompleted(request)
 		#self.sim.log(self, "Requested {0}", request)
@@ -257,9 +259,15 @@ if __name__ == "__main__":
 		for i in range(0, numClients):
 			clients.append(ClosedLoopClient(sim, lb))
 
+	def removeClients(numClients):
+		for i in range(0, numClients):
+			client = clients.pop()
+			client.active = False
+
 	sim.add(   0, lambda: addClients(numClients))
 	sim.add( 500, lambda: addClients(numClients))
-	sim.add(1000, lambda: addClients(numClients))
+	sim.add(1000, lambda: removeClients(int(numClients*1.5)))
+	sim.add(1500, lambda: addClients(int(numClients/2)))
 	
 	sim.run()
 
