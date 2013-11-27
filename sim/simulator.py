@@ -52,7 +52,8 @@ class Simulator:
 			event()
 
 	def log(self, issuer, message, *args):
-		print(self.now, str(issuer), message.format(*args), file = sys.stderr)
+		#print(self.now, str(issuer), message.format(*args), file = sys.stderr)
+		print(self.now, ", " + message.format(*args), file = sys.stderr)
 
 class Request:
 	lastRequestId = 1
@@ -181,6 +182,7 @@ class LoadBalancer:
 		self.lastLastThetas = []
 		
 		self.sim.add(0, self.runControlLoop)
+		#print("## TIME, DIMMERS, WEIGHTS", file = sys.stderr)
 
 	def addBackend(self, backend):
 		self.backends.append(backend)
@@ -212,9 +214,9 @@ class LoadBalancer:
 		self.weights = map(lambda x: x / preNormalizedSumOfWeights, self.weights)
 
 		self.sim.add(self.controlPeriod, self.runControlLoop)
-		self.sim.log(self, "Measured {1}, New weights {0}", \
-			' '.join(["{0:.5f}".format(w) for w in self.weights ]), \
-			' '.join(["{0:.5f}".format(t) for t in self.lastThetas ]))
+		self.sim.log(self, "{1}, {0}", \
+			', '.join(["{0:.5f}".format(w) for w in self.weights ]), \
+			', '.join(["{0:.5f}".format(t) for t in self.lastThetas ]))
 		self.lastLastThetas = self.lastThetas[:]
 
 	def __str__(self):
@@ -283,4 +285,3 @@ if __name__ == "__main__":
 	
 	sim.run()
 
-	sim.log("master", "Number of completed requests: {0}", sum([client.numCompletedRequests for client in clients]))
