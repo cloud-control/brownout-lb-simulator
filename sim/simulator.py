@@ -68,10 +68,10 @@ class Server:
 	lastServerId = 1
 
 	def __init__(self, sim, serviceTimeY = 0.07, serviceTimeN = 0.001, \
-			initialTheta = 0.5):
+			initialTheta = 0.5, controlPeriod = 5):
 		self.serviceTimeY = serviceTimeY # service time with recommender system
 		self.serviceTimeN = serviceTimeN # and without it
-		self.controlPeriod = 2 # second
+		self.controlPeriod = controlPeriod # second
 		self.setPoint = 1 # second
 		self.pole = 0.9
 		self.name = 'server' + str(Server.lastServerId)
@@ -227,11 +227,12 @@ class ClosedLoopClient:
 
 if __name__ == "__main__":
 	numClients = 50
+	serverControlPeriod = 5
 
 	sim = Simulator()
-	server1 = Server(sim)
-	server2 = Server(sim, serviceTimeY = 0.07 * 2, serviceTimeN = 0.001 * 2)
-	server3 = Server(sim, serviceTimeY = 0.07 * 3, serviceTimeN = 0.001 * 3)
+	server1 = Server(sim, controlPeriod = serverControlPeriod)
+	server2 = Server(sim, controlPeriod = serverControlPeriod, serviceTimeY = 0.07 * 2, serviceTimeN = 0.001 * 2)
+	server3 = Server(sim, controlPeriod = serverControlPeriod, serviceTimeY = 0.07 * 3, serviceTimeN = 0.001 * 3)
 
 	lb = LoadBalancer(sim, controlPeriod = 1)
 	lb.addBackend(server1)
