@@ -73,6 +73,9 @@ class Server:
 		self.serviceTimeN = serviceTimeN # and without it
 		self.controlPeriod = controlPeriod # second
 		self.setPoint = 1 # second
+		self.RLS_P = 1000 # initialization for the RLS estimator
+		self.RLS_forgetting = 0.2
+		self.alpha = 1
 		self.pole = 0.9
 		self.name = 'server' + str(Server.lastServerId)
 		Server.lastServerId += 1
@@ -88,7 +91,16 @@ class Server:
 			serviceTime = max(self.latestLatencies)
 			serviceLevel = self.theta
 
-			alpha = serviceTime / serviceLevel # very rough estimate
+			# choice of the estimator:
+			# ------- bare estimator
+			# self.alpha = serviceTime / serviceLevel # very rough estimate
+			# ------- RLS estimation algorithm
+			intermediateAlpha = serviceTime - self.alpha*self.theta
+			g = self.RLS_P * self.theta * 1/(self.RLS_forgetting + self.theta*self.RLS_P*self.theta)
+        		self.RLS_P = (1/self.RLS_forgetting) * self.RLS_P - g*self.theta*(1/self.RLS_forgetting)*self.RLS_P
+			self.alpha = self.alpha + intermediateAlpha * g
+			# end of the estimator - in the end self.alpha should be set
+	
 			# NOTE: control knob allowing to smooth service times
 			# To enable this, you *must* add a new state variable (alpha) to the controller.
 			#alpha = 0.5 * alpha + 0.5 * serviceTime / previousServiceLevel # very rough estimate
@@ -96,7 +108,7 @@ class Server:
 			# NOTE: control knob allowing slow increase
 			if error > 0:
 				error *= 0.1
-			serviceLevel = serviceLevel + (1 / alpha) * (1 - self.pole) * error
+			serviceLevel = serviceLevel + (1 / self.alpha) * (1 - self.pole) * error
 
 			# saturation, service level is a probability
 			serviceLevel = max(serviceLevel, 0.0)
