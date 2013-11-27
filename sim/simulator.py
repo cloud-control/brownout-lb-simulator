@@ -190,6 +190,8 @@ class ClosedLoopClient:
 		self.server = server
 		self.sim.add(0, lambda: self.onCompleted(None))
 
+		self.numCompletedRequests = 0
+
 	def issueRequest(self):
 		request = Request()
 		request.onCompleted = lambda: self.onCompleted(request)
@@ -200,6 +202,7 @@ class ClosedLoopClient:
 		thinkTime = random.expovariate(1.0 / self.averageThinkTime)
 		self.sim.add(thinkTime, self.issueRequest)
 		#self.sim.log(self, "Thinking for {0}", thinkTime)
+		self.numCompletedRequests += 1
 	
 	def __str__(self):
 		return self.name
@@ -217,12 +220,15 @@ if __name__ == "__main__":
 	lb.addBackend(server2)
 	lb.addBackend(server3)
 
+	clients = []
 	def addClients(numClients):
 		for i in range(0, numClients):
-			clients = ClosedLoopClient(sim, lb)
+			clients.append(ClosedLoopClient(sim, lb))
 
 	sim.add(   0, lambda: addClients(numClients))
 	sim.add( 500, lambda: addClients(numClients))
 	sim.add(1000, lambda: addClients(numClients))
 	
 	sim.run()
+
+	sim.log("master", "Number of completed requests: {0}", sum([client.numCompletedRequests for client in clients]))
