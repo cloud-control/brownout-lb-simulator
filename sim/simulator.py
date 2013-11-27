@@ -20,15 +20,33 @@ def weightedChoice(choices):
 
 class Simulator:
 	def __init__(self):
-		self.events = []
+		self.events = defaultdict(lambda: set())
+		self.whatToTime = {}
 		self.now = 0.0
 
 	def add(self, delay, what):
-		heapq.heappush(self.events, (self.now + delay, what))
+		self.events[self.now + delay].add(what)
+		self.whatToTime[what] = self.now + delay
+
+	def update(self, delay, what):
+		if what in self.whatToTime:
+			oldTime = self.whatToTime[what]
+			events = self.events[oldTime]
+			events.remove(what)
+			if len(events) == 0:
+				del self.events[oldTime]
+			del self.whatToTime[what]
+		self.add(delay, what)
 
 	def run(self, until = 1000):
 		while self.events:
-			self.now, event = heapq.heappop(self.events)
+			self.now = min(self.events)
+			events = self.events[self.now]
+			event = events.pop()
+			del self.whatToTime[event]
+			if len(events) == 0:
+				del self.events[self.now]
+
 			if self.now > until:
 				return
 			event()
