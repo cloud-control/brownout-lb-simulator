@@ -81,8 +81,7 @@ class Server:
 		self.theta = initialTheta
 		self.sim.add(0, lambda: self.runControlLoop())
 		self.latestLatencies = []
-		self.requestQueue = []
-		self.activeRequest = None
+		self.activeRequests = set()
 
 	def runControlLoop(self):
 		if self.latestLatencies:
@@ -114,32 +113,46 @@ class Server:
 		self.sim.add(self.controlPeriod, lambda: self.runControlLoop())
 
 	def request(self, request):
-		request.arrival = sim.now
-		self.requestQueue.append(request)
-		self.triggerServer()
+		self.recomputeProgressOfActiveRequests()
 
-	def triggerServer(self):
-		# Another request is in progress
-		if self.activeRequest:
-			return
-
-		# Queue is empty
-		if len(self.requestQueue) == 0:
-			return
-
-		self.activeRequest = self.requestQueue.pop()
+		request.arrival = self.sim.now
 		executeRecommender = random.random() <= self.theta
-		self.activeRequest.theta = self.theta
-		computationTime = \
+		request.theta = self.theta
+		request.remainingTime = \
 			self.serviceTimeY if executeRecommender else self.serviceTimeN
-		self.sim.add(computationTime, lambda: self.onCompleted(self.activeRequest))
+		request.lastUpdatedRemainingTime = self.sim.now
+		self.activeRequests.add(request)
+
+		self.recomputeProgressOfActiveRequests()
+
+	def recomputeProgressOfActiveRequests(self):
+		now = self.sim.now
+		numActiveRequests = len(self.activeRequests)
+		#self.sim.log(self, "checking active requests {0}", numActiveRequests)
+		if numActiveRequests == 0:
+			return # nothing to do
+
+		requestsCompleted = set()
+		earliestCompletion = float('inf')
+		for request in self.activeRequests:
+			request.remainingTime -= (now - request.lastUpdatedRemainingTime) / numActiveRequests
+			request.lastUpdatedRemainingTime = now
+			if request.remainingTime <= 0.000001:
+				requestsCompleted.add(request)
+			else:
+				earliestCompletion = min(earliestCompletion, request.remainingTime)
+		#self.sim.log(self, "earliest completion {0}", earliestCompletion)
+		sim.update(earliestCompletion, self.recomputeProgressOfActiveRequests)
+
+		self.activeRequests -= requestsCompleted
+		for request in requestsCompleted:
+			self.onCompleted(request)
 
 	def onCompleted(self, request):
 		request.completion = self.sim.now
 		self.latestLatencies.append(request.completion - request.arrival)
 		request.onCompleted()
 		self.activeRequest = None
-		self.triggerServer()
 
 	def __str__(self):
 		return str(self.name)
