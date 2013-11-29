@@ -78,10 +78,10 @@ class Simulator:
 	def run(self, until = 2000):
 		numEvents = 0
 		while self.events:
-			prevNow = sim.now
+			prevNow = self.now
 			self.now = min(self.events)
-			if int(prevNow / 100) < int(sim.now / 100):
-				sim.log(self, "progressing, handled {0} events", numEvents)
+			if int(prevNow / 100) < int(self.now / 100):
+				self.log(self, "progressing, handled {0} events", numEvents)
 			events = self.events[self.now]
 			event = events.pop()
 			del self.whatToTime[event]
