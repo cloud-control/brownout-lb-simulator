@@ -203,7 +203,7 @@ class Server:
 			# ------- RLS estimation algorithm
 			intermediateAlpha = serviceTime - self.alpha*self.theta
 			g = self.RLS_P * self.theta * 1/(self.RLS_forgetting + self.theta*self.RLS_P*self.theta)
-        		self.RLS_P = (1/self.RLS_forgetting) * self.RLS_P - g*self.theta*(1/self.RLS_forgetting)*self.RLS_P
+			self.RLS_P = (1/self.RLS_forgetting) * self.RLS_P - g*self.theta*(1/self.RLS_forgetting)*self.RLS_P
 			self.alpha = self.alpha + intermediateAlpha * g
 			# end of the estimator - in the end self.alpha should be set
 	
