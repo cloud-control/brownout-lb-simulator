@@ -222,6 +222,7 @@ class LoadBalancer:
 		self.weights = []
 		self.lastThetas = []
 		self.lastLastThetas = []
+		self.lastLatencies = []
 		
 		self.sim.add(0, self.runControlLoop)
 
@@ -229,6 +230,7 @@ class LoadBalancer:
 		self.backends.append(backend)
 		self.lastThetas.append(self.initialTheta) # to be updated at onComplete
 		self.lastLastThetas.append(self.initialTheta) # to be updated at onComplete
+		self.lastLatencies.append([]) # to be updated at onComplete
 
 		self.weights = [ 1.0 / len(self.backends) ] * len(self.backends)
 
@@ -236,17 +238,25 @@ class LoadBalancer:
 		#self.sim.log(self, "Got request {0}", request)
 		generatedWeight = random.random()
 		request.arrival = self.sim.now
+		request.chosenBackendIndex = weightedChoice(zip(range(0, len(self.backends)), self.weights))
 		newRequest = Request()
-		newRequest.chosenBackendIndex = weightedChoice(zip(range(0, len(self.backends)), self.weights))
 		newRequest.originalRequest = request
 		newRequest.onCompleted = lambda: self.onCompleted(newRequest)
 		#self.sim.log(self, "Directed request to {0}", newRequest.chosenBackendIndex)
-		self.backends[newRequest.chosenBackendIndex].request(newRequest)
+		self.backends[request.chosenBackendIndex].request(newRequest)
 
 	def onCompleted(self, request):
-		self.lastThetas[request.chosenBackendIndex] = request.theta
+		# "Decapsulate"
+		theta = request.theta
+		request = request.originalRequest
+
+		# Store stats
 		request.completion = self.sim.now
-		request.originalRequest.onCompleted()
+		self.lastThetas[request.chosenBackendIndex] = theta
+		self.lastLatencies[request.chosenBackendIndex].append(request.completion - request.arrival)
+		
+		# Call original onCompleted
+		request.onCompleted()
 
 	def runControlLoop(self):
 		self.weights = map(lambda x: max(x[0] + x[1] - x[2], 0.01), \
@@ -256,11 +266,14 @@ class LoadBalancer:
 
 		self.sim.add(self.controlPeriod, self.runControlLoop)
 
-		valuesToOutput = [ self.sim.now ] + self.weights + self.lastThetas
+		valuesToOutput = [ self.sim.now ] + self.weights + self.lastThetas + \
+			[ avg(latencies) for latencies in self.lastLatencies ] + \
+			[ max(latencies + [0]) for latencies in self.lastLatencies ]
 		self.sim.output(self, ','.join(["{0:.5f}".format(value) \
 			for value in valuesToOutput]))
 		
 		self.lastLastThetas = self.lastThetas[:]
+		self.lastLatencies = [ [] for b in self.backends ]
 
 	def __str__(self):
 		return "lb"
