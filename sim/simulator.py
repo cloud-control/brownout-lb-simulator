@@ -138,6 +138,10 @@ class Server:
 			self.theta = min(max(serviceLevel, 0.0), 1.0)
 			#self.sim.log(self, "Measured maximum latency {1:.3f}, new theta {0:.2f}", \
 			#	self.theta, serviceTime)
+		
+			valuesToOutput = [ self.sim.now, avg(self.latestLatencies), max(self.latestLatencies), self.theta ]
+			self.sim.output(self, ','.join(["{0:.5f}".format(value) \
+				for value in valuesToOutput]))
 
 			self.latestLatencies = []
 
