@@ -23,17 +23,35 @@ def avg(a):
 		return float('nan')
 	return sum(a)/len(a)
 
+## Simulation kernel.
+# Implements an event-driven simulator
 class Simulator:
+	## Constructor
 	def __init__(self):
+		## events indexed by time
 		self.events = defaultdict(lambda: set())
+		## reverse index from event handlers to time index, to allow easy update
 		self.whatToTime = {}
+		## current simulation time
 		self.now = 0.0
+		## cache of open file descriptors: for each issuer, this dictionary maps to a file descriptor
 		self.outputFiles = {}
 
+	## Adds a new event
+	# @param delay non-negative float representing in how much time should the event be triggered
+	# Can be zero, in which case the simulator will trigger the event a bit later, at the current
+	# simulation time
+	# @param what Event handler, can be a function, class method or lambda
+	# @see Callable
 	def add(self, delay, what):
 		self.events[self.now + delay].add(what)
 		self.whatToTime[what] = self.now + delay
 
+	## Update an existing event or add a new event
+	# @param delay in how much time should the event be triggered
+	# @param what Callable to call for handling this event. Can be a function, class method or lambda
+	# @note Deletes the previously existing event that is handled by what.
+	# The current implementation stores at most one such event.
 	def update(self, delay, what):
 		if what in self.whatToTime:
 			oldTime = self.whatToTime[what]
@@ -44,6 +62,8 @@ class Simulator:
 			del self.whatToTime[what]
 		self.add(delay, what)
 
+	## Run the simulation
+	# @param until time limit to stop simulation
 	def run(self, until = 2000):
 		numEvents = 0
 		while self.events:
@@ -63,9 +83,22 @@ class Simulator:
 			numEvents += 1
 		self.log(self, "Handled {0} events", numEvents)
 
-	def log(self, issuer, message, *args):
-		print("{0:.6f}".format(self.now), str(issuer), message.format(*args), file = sys.stderr)
+	## Log a simulation message.
+	# This function is designed to simplify logging inside the simulator. It prints to standard error
+	# the current simulation time, the stringified issuer of the message and the message itself.
+	# Includes formatting similar to String.format or Logging.info.
+	# @param issuer something that can be rendered as a string through str()
+	# @param message the message, first input to String.format
+	# @param *args,**kwargs additional arguments to pass to String.format
+	def log(self, issuer, message, *args, **kwargs):
+		print("{0:.6f}".format(self.now), str(issuer), message.format(*args, **kwargs), file = sys.stderr)
 
+	## Output simulation data.
+	# This function is designed to simplify outputting metrics from a simulated entity. It prints
+	# the given line to a file, whose name is derived based on the issuer (currently "sim-{issuer}.csv").
+	# @param issuer something that can be rendered as a string through str()
+	# @param outputLine the line to output
+	# @note outputLine is written verbatimly to the output file, plus a newline is added.
 	def output(self, issuer, outputLine):
 		if issuer not in self.outputFiles:
 			outputFilename = 'sim-' + str(issuer) + '.csv'
@@ -74,22 +107,42 @@ class Simulator:
 		outputFile.write(outputLine + "\n")
 		outputFile.flush() # kills performance, but reduces experimenter's impatience :D
 
+	## Pretty-print the simulator kernel's name
 	def __str__(self):
 		return "kernel"
 
+## Represents a request sent to an entity, waiting for a reply.
+# @note If a request need to travers an entity, a <b>new</b> request should be created, poiting
+# to the original request.
 class Request:
+	## Variable used for giving IDs to requests for pretty-printing
 	lastRequestId = 1
 	
+	## Constructor
 	def __init__(self):
+		## ID of this request for pretty-printing
 		self.requestId = Request.lastRequestId
 		Request.lastRequestId += 1
 
+	## Pretty-printer
 	def __str__(self):
 		return str(self.requestId)
 
+## Represents a brownout compliant server.
+# Current implementation simulates processor-sharing with an infinite number of concurrent requests
+# and a fixed time-slice.
 class Server:
+	## Variable used for giving IDs to servers for pretty-printing
 	lastServerId = 1
 
+	## Constructor.
+	# @param sim Simulator to attach the server to
+	# @param serviceTimeY time to service one request with optional content
+	# @param serviceTimeN time to service one request without optional content
+	# @param timeSlice time slice; a request longer that this will observe context-switching
+	# @param initialTheta initial dimmer value
+	# @param controlPeriod control period of brownout controller
+	# @note The constructor adds an event into the simulator
 	def __init__(self, sim, serviceTimeY = 0.07, serviceTimeN = 0.001, \
 			initialTheta = 0.5, controlPeriod = 5, timeSlice = 0.01):
 		self.timeSlice = timeSlice
@@ -110,6 +163,7 @@ class Server:
 		self.latestLatencies = []
 		self.activeRequests = deque()
 
+	## Runs the control loop.
 	def runControlLoop(self):
 		if self.latestLatencies:
 			serviceTime = max(self.latestLatencies)
@@ -152,6 +206,15 @@ class Server:
 		# Re-run later
 		self.sim.add(self.controlPeriod, lambda: self.runControlLoop())
 
+	## Tells the server to serve a request.
+	# @param request request to serve
+	# @note When request completes, request.onCompleted() is called. The following attributes are added to the request:
+	# <ul>
+	#   <li>theta, the current dimmer value</li>
+	#   <li>arrivel, time at which the request was first <b>scheduled</b>.
+	#     May be arbitrary later than when request() was called</li>
+	#   <li>completion, time at which the request finished</li>
+	# </ul>
 	def request(self, request):
 		# Activate scheduler, if its not active
 		if len(self.activeRequests) == 0:
