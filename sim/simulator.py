@@ -18,6 +18,11 @@ def weightedChoice(choices):
 		upto += w
 	assert False, "Shouldn't get here"
 
+def avg(a):
+	if len(a) == 0:
+		return float('nan')
+	return sum(a)/len(a)
+
 class Simulator:
 	def __init__(self):
 		self.events = defaultdict(lambda: set())
