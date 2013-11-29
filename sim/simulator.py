@@ -45,11 +45,12 @@ class Simulator:
 		self.add(delay, what)
 
 	def run(self, until = 2000):
+		numEvents = 0
 		while self.events:
 			prevNow = sim.now
 			self.now = min(self.events)
 			if int(prevNow / 100) < int(sim.now / 100):
-				sim.log(self, "progressing")
+				sim.log(self, "progressing, handled {0} events", numEvents)
 			events = self.events[self.now]
 			event = events.pop()
 			del self.whatToTime[event]
@@ -59,9 +60,11 @@ class Simulator:
 			if self.now > until:
 				return
 			event()
+			numEvents += 1
+		self.log(self, "Handled {0} events", numEvents)
 
 	def log(self, issuer, message, *args):
-		print(self.now, str(issuer), message.format(*args), file = sys.stderr)
+		print("{0:.6f}".format(self.now), str(issuer), message.format(*args), file = sys.stderr)
 
 	def output(self, issuer, outputLine):
 		if issuer not in self.outputFiles:
