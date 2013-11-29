@@ -1,6 +1,9 @@
 #!/usr/bin/env python
 from __future__ import division, print_function
 
+## @mainpage
+# Documentation for the brownout load-balancer simulator. If confused, start with the @ref simulator namespace.
+
 from collections import defaultdict, deque
 import heapq
 import Queue
@@ -8,6 +11,13 @@ import random
 import math
 import sys
 
+## @package simulator Main simulator namespace
+
+## Randomly picks an item from several choices, as given by the attached weights.
+# Sum of weight must equal 1.
+# Example: @code weightedChoice([('a', 0.1), ('b', 0.9)]) @endcode
+#
+# @param choices list of pairs to choose from; first item in pair is choice, second is weight
 def weightedChoice(choices):
 	total = sum(w for c, w in choices)
 	r = random.uniform(0, total)
@@ -18,6 +28,7 @@ def weightedChoice(choices):
 		upto += w
 	assert False, "Shouldn't get here"
 
+## Computes average
 def avg(a):
 	if len(a) == 0:
 		return float('nan')
@@ -112,7 +123,7 @@ class Simulator:
 		return "kernel"
 
 ## Represents a request sent to an entity, waiting for a reply.
-# @note If a request need to travers an entity, a <b>new</b> request should be created, poiting
+# @note If a request needs to traverse an entity, a <b>new</b> request should be created, pointing
 # to the original request.
 class Request:
 	## Variable used for giving IDs to requests for pretty-printing
@@ -145,25 +156,42 @@ class Server:
 	# @note The constructor adds an event into the simulator
 	def __init__(self, sim, serviceTimeY = 0.07, serviceTimeN = 0.001, \
 			initialTheta = 0.5, controlPeriod = 5, timeSlice = 0.01):
+		## time slice for scheduling requests (server model parameter)
 		self.timeSlice = timeSlice
-		self.serviceTimeY = serviceTimeY # service time with recommender system
-		self.serviceTimeN = serviceTimeN # and without it
+		## service time with optional content (server model parameter)
+		self.serviceTimeY = serviceTimeY
+		## service time without optional content (server model parameter)
+		self.serviceTimeN = serviceTimeN
+		## list of active requests (server model variable)
+		self.activeRequests = deque()
+
+		## control period (controller parameter)
 		self.controlPeriod = controlPeriod # second
-		self.setPoint = 1 # second
-		self.RLS_P = 1000 # initialization for the RLS estimator
+		## setpoint (controller parameter)
+		self.setPoint = 1
+		## initialization for the RLS estimator (controller variable)
+		self.RLS_P = 1000
+		## RLS forgetting factor (controller parameter)
 		self.RLS_forgetting = 0.2
+		## Current alpha (controller variable)
 		self.alpha = 1
+		## Pole (controller parameter)
 		self.pole = 0.9
+		## latencies measured during last control period (controller input)
+		self.latestLatencies = []
+		## dimmer value (controller output)
+		self.theta = initialTheta
+
+		## Server ID for pretty-printing
 		self.name = 'server' + str(Server.lastServerId)
 		Server.lastServerId += 1
 
+		## Reference to simulator
 		self.sim = sim
-		self.theta = initialTheta
 		self.sim.add(0, lambda: self.runControlLoop())
-		self.latestLatencies = []
-		self.activeRequests = deque()
 
 	## Runs the control loop.
+	# Basically retrieves self.lastestLatencies and computes a new self.theta. Ask Martina for details. :P
 	def runControlLoop(self):
 		if self.latestLatencies:
 			serviceTime = max(self.latestLatencies)
@@ -211,7 +239,7 @@ class Server:
 	# @note When request completes, request.onCompleted() is called. The following attributes are added to the request:
 	# <ul>
 	#   <li>theta, the current dimmer value</li>
-	#   <li>arrivel, time at which the request was first <b>scheduled</b>.
+	#   <li>arrival, time at which the request was first <b>scheduled</b>.
 	#     May be arbitrary later than when request() was called</li>
 	#   <li>completion, time at which the request finished</li>
 	# </ul>
@@ -222,6 +250,15 @@ class Server:
 		# Add request to list of active requests
 		self.activeRequests.append(request)
 
+	## Event handler for scheduling active requests.
+	# This function is the core of the processor-sharing with time-slice model. This function is called
+	# when "context-switching" occurs. There must be at most one such event registered in the simulation.
+	# This function is invoked in the following cases:
+	# <ul>
+	#   <li>By request(), when the list of active requests was previously empty.</li>
+	#   <li>By onCompleted(), to pick a new request to schedule</li>
+	#   <li>By itself, when a request is preempted, i.e., context-switched</li>
+	# </ul>
 	def onScheduleRequests(self):
 		#self.sim.log(self, "scheduling")
 		# Select next active request
@@ -257,6 +294,10 @@ class Server:
 			self.sim.add(timeToExecuteActiveRequest, lambda: self.onScheduleRequests())
 			#self.sim.log(self, "request {0} will execute for {1} not to completion", activeRequest, timeToExecuteActiveRequest)
 
+	## Event handler for request completion.
+	# Marks the request as completed, calls request.onCompleted() and calls onScheduleRequests() to
+	# pick a new request to schedule.
+	# @param request request that has received enough service time
 	def onCompleted(self, request):
 		# Remove request from active list
 		activeRequest = self.activeRequests.popleft()
@@ -272,23 +313,41 @@ class Server:
 		if len(self.activeRequests) > 0:
 			self.sim.add(0, self.onScheduleRequests)
 
+	## Pretty-print server's ID
 	def __str__(self):
 		return str(self.name)
 
+## Simulates a load-balancer.
+# The load-balancer is assumed to take zero time for its decisions.
 class LoadBalancer:
+	## Constructor.
+	# @param sim Simulator to attach to
+	# @param controlPeriod control period
+	# @param initialTheta initial dimmer value to consider before receiving any replies from a server
 	def __init__(self, sim, controlPeriod = 1, initialTheta = 0.5):
+		## control period (control parameter)
 		self.controlPeriod = controlPeriod # second
+		## initial value of measured theta (control initialization parameter)
 		self.initialTheta = initialTheta
 
+		## Simulator to which the load-balancer is attached
 		self.sim = sim
+		## list of back-end servers to which requests can be directed
 		self.backends = []
+		## weights determining how to load-balance requests (control output)
 		self.weights = []
+		## dimmer values measured during the previous control period (control input)
 		self.lastThetas = []
+		## dimmer values measured during before previous control period (control input)
 		self.lastLastThetas = []
+		## latencies measured during last control period (metric)
 		self.lastLatencies = []
 		
+		# Launch control loop
 		self.sim.add(0, self.runControlLoop)
 
+	## Adds a new back-end server and initializes decision variables.
+	# @param backend the server to add
 	def addBackend(self, backend):
 		self.backends.append(backend)
 		self.lastThetas.append(self.initialTheta) # to be updated at onComplete
@@ -297,6 +356,8 @@ class LoadBalancer:
 
 		self.weights = [ 1.0 / len(self.backends) ] * len(self.backends)
 
+	## Handles a request.
+	# @param request the request to handle
 	def request(self, request):
 		#self.sim.log(self, "Got request {0}", request)
 		generatedWeight = random.random()
@@ -308,6 +369,8 @@ class LoadBalancer:
 		#self.sim.log(self, "Directed request to {0}", newRequest.chosenBackendIndex)
 		self.backends[request.chosenBackendIndex].request(newRequest)
 
+	## Handles request completion.
+	# Stores piggybacked dimmer values and calls orginator's onCompleted() 
 	def onCompleted(self, request):
 		# "Decapsulate"
 		theta = request.theta
@@ -321,6 +384,9 @@ class LoadBalancer:
 		# Call original onCompleted
 		request.onCompleted()
 
+	## Run control loop.
+	# Takes as input the dimmers and computes new weights. Also outputs CVS-formatted statistics through the
+	# Simulator's output routine.
 	def runControlLoop(self):
 		self.weights = map(lambda x: max(x[0] + x[1] - x[2], 0.01), \
 			zip(self.weights, self.lastThetas, self.lastLastThetas))
@@ -338,24 +404,41 @@ class LoadBalancer:
 		self.lastLastThetas = self.lastThetas[:]
 		self.lastLatencies = [ [] for b in self.backends ]
 
+	## Pretty-print load-balancer's name.
 	def __str__(self):
 		return "lb"
 
+## Simulates a closed-loop client.
+# The client waits for a request to complete before issuing a new one.
 class ClosedLoopClient:
+	## Variable used for giving IDs for pretty-printing
 	lastClientId = 1
 
-	def __init__(self, sim, server, **kwargs):
-		self.averageThinkTime = kwargs.get('thinkTime', 1)
+	## Constructor.
+	# @param sim Simulator to attach client to
+	# @param server server-like entity to which requests are sent
+	# @param thinkTime average think-time between issuing consecutive requests
+	def __init__(self, sim, server, thinkTime = 1):
+		## average think-time (model parameter)
+		self.averageThinkTime = thinkTime
+		## ID of this client used for pretty-printing
 		self.name = 'client' + str(ClosedLoopClient.lastClientId)
 		ClosedLoopClient.lastClientId += 1
 
+		## simulator to which the client is attached
 		self.sim = sim
+		## server to which requests are issued
 		self.server = server
+
+		## Variable that measure the number of requests completed for this user (metric)
+		self.numCompletedRequests = 0
+		## Variable used to deactive the client
+		self.active = True
+		
+		# Launch client in the thinking phase
 		self.sim.add(0, lambda: self.onCompleted(None))
 
-		self.numCompletedRequests = 0
-		self.active = True
-
+	## Issues a new request to the server.
 	def issueRequest(self):
 		if not self.active:
 			return
@@ -364,16 +447,27 @@ class ClosedLoopClient:
 		#self.sim.log(self, "Requested {0}", request)
 		self.server.request(request)
 
+	## Called when a request completes
+	# @param request the request that has been completed
 	def onCompleted(self, request):
 		thinkTime = random.expovariate(1.0 / self.averageThinkTime)
 		self.sim.add(thinkTime, self.issueRequest)
 		#self.sim.log(self, "Thinking for {0}", thinkTime)
 		self.numCompletedRequests += 1
+
+	## Deactive this client.
+	# The client will not issue any more requests and no new simulator events are created. Hence,
+	# the object can be garbage-collected.
+	def deactivate(self):
+		self.active = False
 	
+	## Pretty-print client's name
 	def __str__(self):
 		return self.name
 
-if __name__ == "__main__":
+## Entry-point for simulator.
+# Setups up all entities, then runs simulation.
+def main():
 	numClients = 50
 	serverControlPeriod = 5
 
@@ -396,7 +490,7 @@ if __name__ == "__main__":
 	def removeClients(numClients):
 		for i in range(0, numClients):
 			client = clients.pop()
-			client.active = False
+			client.deactivate()
 
 	sim.add(   0, lambda: addClients(numClients))
 	sim.add( 500, lambda: addClients(numClients))
@@ -405,3 +499,5 @@ if __name__ == "__main__":
 	
 	sim.run()
 
+if __name__ == "__main__":
+	main()
