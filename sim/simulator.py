@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 from __future__ import division, print_function
 
-from collections import defaultdict
+from collections import defaultdict, deque
 import heapq
 import Queue
 import random
@@ -91,7 +91,8 @@ class Server:
 	lastServerId = 1
 
 	def __init__(self, sim, serviceTimeY = 0.07, serviceTimeN = 0.001, \
-			initialTheta = 0.5, controlPeriod = 5):
+			initialTheta = 0.5, controlPeriod = 5, timeSlice = 0.01):
+		self.timeSlice = timeSlice
 		self.serviceTimeY = serviceTimeY # service time with recommender system
 		self.serviceTimeN = serviceTimeN # and without it
 		self.controlPeriod = controlPeriod # second
@@ -107,7 +108,7 @@ class Server:
 		self.theta = initialTheta
 		self.sim.add(0, lambda: self.runControlLoop())
 		self.latestLatencies = []
-		self.activeRequests = set()
+		self.activeRequests = deque()
 
 	def runControlLoop(self):
 		if self.latestLatencies:
@@ -152,46 +153,61 @@ class Server:
 		self.sim.add(self.controlPeriod, lambda: self.runControlLoop())
 
 	def request(self, request):
-		self.recomputeProgressOfActiveRequests()
+		# Activate scheduler, if its not active
+		if len(self.activeRequests) == 0:
+			self.sim.add(0, self.onScheduleRequests)
+		# Add request to list of active requests
+		self.activeRequests.append(request)
 
-		request.arrival = self.sim.now
-		executeRecommender = random.random() <= self.theta
-		request.theta = self.theta
-		request.remainingTime = \
-			self.serviceTimeY if executeRecommender else self.serviceTimeN
-		request.lastUpdatedRemainingTime = self.sim.now
-		self.activeRequests.add(request)
+	def onScheduleRequests(self):
+		#self.sim.log(self, "scheduling")
+		# Select next active request
+		activeRequest = self.activeRequests.popleft()
 
-		self.recomputeProgressOfActiveRequests()
+		# Has this request been scheduled before?
+		if not hasattr(activeRequest, 'remainingTime'):
+			#self.sim.log(self, "request {0} entered the system", activeRequest)
+			# Pick whether to serve it with optional content or not
+			activeRequest.arrival = self.sim.now
+			executeRecommender = random.random() <= self.theta
+			activeRequest.theta = self.theta
+			activeRequest.remainingTime = \
+				self.serviceTimeY if executeRecommender else self.serviceTimeN
 
-	def recomputeProgressOfActiveRequests(self):
-		now = self.sim.now
-		numActiveRequests = len(self.activeRequests)
-		#self.sim.log(self, "checking active requests {0}", numActiveRequests)
-		if numActiveRequests == 0:
-			return # nothing to do
+		# Schedule it to run for a bit
+		timeToExecuteActiveRequest = min(self.timeSlice, activeRequest.remainingTime)
+		activeRequest.remainingTime -= timeToExecuteActiveRequest
 
-		requestsCompleted = set()
-		earliestCompletion = float('inf')
-		for request in self.activeRequests:
-			request.remainingTime -= (now - request.lastUpdatedRemainingTime) / numActiveRequests
-			request.lastUpdatedRemainingTime = now
-			if request.remainingTime <= 0.000001:
-				requestsCompleted.add(request)
-			else:
-				earliestCompletion = min(earliestCompletion, request.remainingTime)
-		#self.sim.log(self, "earliest completion {0}", earliestCompletion)
-		sim.update(earliestCompletion, self.recomputeProgressOfActiveRequests)
+		# Will it finish?
+		if activeRequest.remainingTime == 0:
+			# Leave this request in front (onCompleted will pop it)
+			self.activeRequests.appendleft(activeRequest)
 
-		self.activeRequests -= requestsCompleted
-		for request in requestsCompleted:
-			self.onCompleted(request)
+			# Run onComplete when done
+			self.sim.add(timeToExecuteActiveRequest, lambda: self.onCompleted(activeRequest))
+			#self.sim.log(self, "request {0} will execute for {1} to completion", activeRequest, timeToExecuteActiveRequest)
+		else:
+			# Reintroduce it in the active request list at the end for round-robin scheduling
+			self.activeRequests.append(activeRequest)
+
+			# Re-run scheduler when time-slice has expired
+			self.sim.add(timeToExecuteActiveRequest, lambda: self.onScheduleRequests())
+			#self.sim.log(self, "request {0} will execute for {1} not to completion", activeRequest, timeToExecuteActiveRequest)
 
 	def onCompleted(self, request):
+		# Remove request from active list
+		activeRequest = self.activeRequests.popleft()
+		if activeRequest != request:
+			raise Exception("Weird! Expected request {0} but got {1} instead".format(request, activeRequest))
+
+		# And completed it
 		request.completion = self.sim.now
 		self.latestLatencies.append(request.completion - request.arrival)
 		request.onCompleted()
-		self.activeRequest = None
+
+		# Continue with scheduler
+		if len(self.activeRequests) > 0:
+			self.sim.add(0, self.onScheduleRequests)
 
 	def __str__(self):
 		return str(self.name)
