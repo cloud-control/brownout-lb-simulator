@@ -52,8 +52,10 @@ class Simulator:
 			event()
 
 	def log(self, issuer, message, *args):
-		#print(self.now, str(issuer), message.format(*args), file = sys.stderr)
-		print(self.now, ", " + message.format(*args), file = sys.stderr)
+		print(self.now, str(issuer), message.format(*args), file = sys.stderr)
+
+	def output(self, outputLine):
+		print(outputLine)
 
 class Request:
 	lastRequestId = 1
@@ -182,7 +184,6 @@ class LoadBalancer:
 		self.lastLastThetas = []
 		
 		self.sim.add(0, self.runControlLoop)
-		#print("## TIME, DIMMERS, WEIGHTS", file = sys.stderr)
 
 	def addBackend(self, backend):
 		self.backends.append(backend)
@@ -214,9 +215,11 @@ class LoadBalancer:
 		self.weights = map(lambda x: x / preNormalizedSumOfWeights, self.weights)
 
 		self.sim.add(self.controlPeriod, self.runControlLoop)
-		self.sim.log(self, "{1}, {0}", \
-			', '.join(["{0:.5f}".format(w) for w in self.weights ]), \
-			', '.join(["{0:.5f}".format(t) for t in self.lastThetas ]))
+
+		valuesToOutput = [ self.sim.now ] + self.weights + self.lastThetas
+		self.sim.output(','.join(["{0:.5f}".format(value) \
+			for value in valuesToOutput]))
+		
 		self.lastLastThetas = self.lastThetas[:]
 
 	def __str__(self):
