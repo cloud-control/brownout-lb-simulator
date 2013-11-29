@@ -46,7 +46,10 @@ class Simulator:
 
 	def run(self, until = 2000):
 		while self.events:
+			prevNow = sim.now
 			self.now = min(self.events)
+			if int(prevNow / 100) < int(sim.now / 100):
+				sim.log(self, "progressing")
 			events = self.events[self.now]
 			event = events.pop()
 			del self.whatToTime[event]
@@ -67,6 +70,9 @@ class Simulator:
 		outputFile = self.outputFiles[issuer]
 		outputFile.write(outputLine + "\n")
 		outputFile.flush() # kills performance, but reduces experimenter's impatience :D
+
+	def __str__(self):
+		return "kernel"
 
 class Request:
 	lastRequestId = 1
