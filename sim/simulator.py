@@ -28,6 +28,7 @@ class Simulator:
 		self.events = defaultdict(lambda: set())
 		self.whatToTime = {}
 		self.now = 0.0
+		self.outputFiles = {}
 
 	def add(self, delay, what):
 		self.events[self.now + delay].add(what)
@@ -59,8 +60,13 @@ class Simulator:
 	def log(self, issuer, message, *args):
 		print(self.now, str(issuer), message.format(*args), file = sys.stderr)
 
-	def output(self, outputLine):
-		print(outputLine)
+	def output(self, issuer, outputLine):
+		if issuer not in self.outputFiles:
+			outputFilename = 'sim-' + str(issuer) + '.csv'
+			self.outputFiles[issuer] = open(outputFilename, 'w')
+		outputFile = self.outputFiles[issuer]
+		outputFile.write(outputLine + "\n")
+		outputFile.flush() # kills performance, but reduces experimenter's impatience :D
 
 class Request:
 	lastRequestId = 1
@@ -222,7 +228,7 @@ class LoadBalancer:
 		self.sim.add(self.controlPeriod, self.runControlLoop)
 
 		valuesToOutput = [ self.sim.now ] + self.weights + self.lastThetas
-		self.sim.output(','.join(["{0:.5f}".format(value) \
+		self.sim.output(self, ','.join(["{0:.5f}".format(value) \
 			for value in valuesToOutput]))
 		
 		self.lastLastThetas = self.lastThetas[:]
