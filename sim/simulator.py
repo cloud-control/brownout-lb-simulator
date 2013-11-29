@@ -261,6 +261,7 @@ if __name__ == "__main__":
 	numClients = 50
 	serverControlPeriod = 5
 
+	random.seed(1)
 	sim = Simulator()
 	server1 = Server(sim, controlPeriod = serverControlPeriod)
 	server2 = Server(sim, controlPeriod = serverControlPeriod, serviceTimeY = 0.07 * 2, serviceTimeN = 0.001 * 2)
