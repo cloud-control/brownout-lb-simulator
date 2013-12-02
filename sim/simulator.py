@@ -280,11 +280,11 @@ class Server:
 			#self.sim.log(self, "request {0} entered the system", activeRequest)
 			# Pick whether to serve it with optional content or not
 			activeRequest.arrival = self.sim.now
-			executeRecommender = random.random() <= self.theta
+			activeRequest.withOptional = random.random() <= self.theta
 			activeRequest.theta = self.theta
 
 			serviceTime, variance = (self.serviceTimeY, self.serviceTimeYVariance) \
-				if executeRecommender else (self.serviceTimeN, self.serviceTimeNVariance)
+				if activeRequest.withOptional else (self.serviceTimeN, self.serviceTimeNVariance)
 
 			activeRequest.remainingTime = \
 				max(random.normalvariate(serviceTime, variance), self.minimumServiceTime)
@@ -357,6 +357,10 @@ class LoadBalancer:
 		self.lastLastThetas = []
 		## latencies measured during last control period (metric)
 		self.lastLatencies = []
+		## number of requests, with or without optional content, served since the load-balancer came online (metric)
+		self.numRequests = 0
+		## number of requests, with optional content, served since the load-balancer came online (metric)
+		self.numRequestsWithOptional = 0
 		
 		# Launch control loop
 		self.sim.add(0, self.runControlLoop)
@@ -388,6 +392,8 @@ class LoadBalancer:
 	# Stores piggybacked dimmer values and calls orginator's onCompleted() 
 	def onCompleted(self, request):
 		# "Decapsulate"
+		self.numRequests += 1
+		if request.withOptional: self.numRequestsWithOptional += 1
 		theta = request.theta
 		request = request.originalRequest
 
@@ -412,7 +418,8 @@ class LoadBalancer:
 
 		valuesToOutput = [ self.sim.now ] + self.weights + self.lastThetas + \
 			[ avg(latencies) for latencies in self.lastLatencies ] + \
-			[ max(latencies + [0]) for latencies in self.lastLatencies ]
+			[ max(latencies + [0]) for latencies in self.lastLatencies ] + \
+			[ self.numRequests, self.numRequestsWithOptional ]
 		self.sim.output(self, ','.join(["{0:.5f}".format(value) \
 			for value in valuesToOutput]))
 		
