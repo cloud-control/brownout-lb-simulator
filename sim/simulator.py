@@ -150,18 +150,29 @@ class Server:
 	# @param sim Simulator to attach the server to
 	# @param serviceTimeY time to service one request with optional content
 	# @param serviceTimeN time to service one request without optional content
+	# @param serviceTimeYVariance varince in service-time with optional content
+	# @param serviceTimeNVariance varince in service-time without optional content
+	# @param minimumServiceTime minimum service-time (despite variance)
 	# @param timeSlice time slice; a request longer that this will observe context-switching
 	# @param initialTheta initial dimmer value
 	# @param controlPeriod control period of brownout controller
 	# @note The constructor adds an event into the simulator
 	def __init__(self, sim, serviceTimeY = 0.07, serviceTimeN = 0.001, \
-			initialTheta = 0.5, controlPeriod = 5, timeSlice = 0.01):
+			initialTheta = 0.5, controlPeriod = 5, timeSlice = 0.01, \
+			serviceTimeYVariance = 0.01, serviceTimeNVariance = 0.001,
+			minimumServiceTime = 0.0001):
 		## time slice for scheduling requests (server model parameter)
 		self.timeSlice = timeSlice
 		## service time with optional content (server model parameter)
 		self.serviceTimeY = serviceTimeY
 		## service time without optional content (server model parameter)
 		self.serviceTimeN = serviceTimeN
+		## service time variance with optional content (server model parameter)
+		self.serviceTimeYVariance = serviceTimeYVariance
+		## service time variance without optional content (server model parameter)
+		self.serviceTimeNVariance = serviceTimeNVariance
+		## minimum service time, despite variance (server model parameter)
+		self.minimumServiceTime = minimumServiceTime
 		## list of active requests (server model variable)
 		self.activeRequests = deque()
 
@@ -271,8 +282,12 @@ class Server:
 			activeRequest.arrival = self.sim.now
 			executeRecommender = random.random() <= self.theta
 			activeRequest.theta = self.theta
+
+			serviceTime, variance = (self.serviceTimeY, self.serviceTimeYVariance) \
+				if executeRecommender else (self.serviceTimeN, self.serviceTimeNVariance)
+
 			activeRequest.remainingTime = \
-				self.serviceTimeY if executeRecommender else self.serviceTimeN
+				max(random.normalvariate(serviceTime, variance), self.minimumServiceTime)
 
 		# Schedule it to run for a bit
 		timeToExecuteActiveRequest = min(self.timeSlice, activeRequest.remainingTime)
