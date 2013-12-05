@@ -378,6 +378,8 @@ class LoadBalancer:
 		self.controlPeriod = controlPeriod # second
 		## initial value of measured theta (control initialization parameter)
 		self.initialTheta = initialTheta
+		## what algorithm to use
+		self.algorithm = 'non-working-theta-diff'
 
 		## Simulator to which the load-balancer is attached
 		self.sim = sim
@@ -448,10 +450,16 @@ class LoadBalancer:
 	# Takes as input the dimmers and computes new weights. Also outputs
 	# CVS-formatted statistics through the Simulator's output routine.
 	def runControlLoop(self):
-		self.weights = [ max(x[0] + x[1] - x[2], 0.01) for x in \
-			zip(self.weights, self.lastThetas, self.lastLastThetas) ]
-		preNormalizedSumOfWeights = sum(self.weights)
-		self.weights = [ x / preNormalizedSumOfWeights for x in self.weights ]
+		if self.algorithm == 'static':
+			# Nothing to do here
+			pass
+		elif self.algorithm == 'non-working-theta-diff':
+			self.weights = [ max(x[0] + x[1] - x[2], 0.01) for x in \
+				zip(self.weights, self.lastThetas, self.lastLastThetas) ]
+			preNormalizedSumOfWeights = sum(self.weights)
+			self.weights = [ x / preNormalizedSumOfWeights for x in self.weights ]
+		else:
+			raise Exception("Unknown load-balancing algorithm " + self.algorithm)
 
 		self.sim.add(self.controlPeriod, self.runControlLoop)
 
@@ -546,6 +554,10 @@ def main():
 	loadBalancer.addBackend(server2)
 	loadBalancer.addBackend(server3)
 
+	# Force static load-balancing
+	loadBalancer.algorithm = 'static'
+	loadBalancer.weights = [ .6, .25, .15 ]
+
 	clients = []
 	def addClients(numClients):
 		for _ in range(0, numClients):
@@ -559,9 +571,9 @@ def main():
 	sim.add(   0, lambda: addClients(numClients))
 	sim.add( 500, lambda: addClients(numClients))
 	sim.add(1000, lambda: removeClients(int(numClients*1.5)))
-	sim.add(1500, lambda: addClients(int(numClients/2)))
+	sim.add(3000, lambda: addClients(int(numClients/2)))
 	
-	sim.run()
+	sim.run(until = 3500)
 
 if __name__ == "__main__":
 	main()
