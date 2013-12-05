@@ -1,25 +1,29 @@
-Cloud computing is expected to be one of the driving force of the future economy~\citep{WPonMckinsey13}. Already, it has dramatically changed the management of computing
-infrastructures. On one hand,
-public cloud providers, such as Amazon EC2, allow companies to deploy their
-services on large infrastructures with no up-front
-cost~\citep{Buyya09:FGCS}. On the other hand, the
-flexibility offered by cloud technologies themselves favors the
-adoption of private clouds~\citep{Gulati11:HotCloud}, therefore, companies are converting their own computing infrastructures into small, internally-managed clouds.
+Cloud computing is expected to be one of the driving force of the
+future economy~\citep{WPonMckinsey13}. Already, it has dramatically
+changed the management of computing infrastructures. On one hand,
+public cloud providers, such as Amazon EC2, allow companies to deploy
+their services on large infrastructures with no up-front
+cost~\citep{Buyya09:FGCS}. On the other hand, the flexibility offered
+by cloud technologies themselves favors the adoption of private
+clouds~\citep{Gulati11:HotCloud}, therefore, companies are converting
+their own computing infrastructures into small, internally-managed
+clouds.
 
-One of the main advantages offered by cloud infrastructures is
-{\bf elasticity}. A company that wants to deploy a new service on the
+One of the main advantages offered by cloud infrastructures is {\bf
+  elasticity}. A company that wants to deploy a new service on the
 cloud can rapidly provision the required computing resources,
-automatically acquiring and releasing \acp{vm} as required~\citep{Herbst13:ICAC}.
-Elasticity can be of two complementary types: vertical
-and horizontal. Vertical elasticity consists in adding or removing
-resources (e.g., CPU cores) from an existing \ac{vm}, while horizontal elasticity deals
-with changing the number of \acp{vm} allocated to a specific service,
-adding a new machine or removing an existing one.
+automatically acquiring and releasing \acp{vm} as
+required~\citep{Herbst13:ICAC}.  Elasticity can be of two
+complementary types: vertical and horizontal. Vertical elasticity
+consists in adding or removing resources (e.g., CPU cores) from an
+existing \ac{vm}, while horizontal elasticity deals with changing the
+number of \acp{vm} allocated to a specific service, adding a new
+machine or removing an existing one.
 %
 Horizontal elasticity calls for the introduction of a specialized
 component, called {\bf load-balancer}, that takes care of routing the
-requests to one of the \acp{vm} composing the
-service. Load-balancing techniques have been widely studied and
+requests to one of the \acp{vm} composing the service. Load-balancing
+techniques have been widely studied and
 adopted~\citep{Barroso09,Lu11:PerfEval,Lin12:IGCC}.
 
 One of the main issues with cloud computing infrastructures, however,
@@ -27,20 +31,20 @@ is {\bf robustness} to unexpected events. For example, flash-crowds
 are sudden increases of end-users, that may increase the required
 capacity by up to five times~\citep{Bodik10:SoCC}. Similarly, hardware
 failures may temporarily reduce the capacity of the data-center, while
-the failure is repaired~\citep{Barroso09}. Due to the large magnitude and short duration
-of such events, it may be economically too costly to provision enough
-hardware to properly deal with them. As a results, unexpected events
-may lead to data-center overload, which translates to unresponsive
-cloud applications, leading to dissatisfied end-users and revenue
-loss.
+the failure is repaired~\citep{Barroso09}. Due to the large magnitude
+and short duration of such events, it may be economically too costly
+to provision enough hardware to properly deal with them. As a results,
+unexpected events may lead to data-center overload, which translates
+to unresponsive cloud applications, leading to dissatisfied end-users
+and revenue loss.
 
 In our previous work~\citep{cloudish-tr}, we proposed a cloud
 application development paradigm called {\bf brownout}. The main
 characteristic of cloud brownout is to be able to cope with unexpected
-events by reducing the amount of computation executed inside the \ac{vm} to
-produce the response. In brownout applications some computations are
-marked as optional --- for example, the execution of a recommender engine
---- others are mandatory --- the display of the
+events by reducing the amount of computation executed inside the
+\ac{vm} to produce the response. In brownout applications some
+computations are marked as optional --- for example, the execution of
+a recommender engine --- others are mandatory --- the display of the
 product information in an e-commerce website. Whenever a request is
 received, the application can choose to execute or not the optional
 code based on the data-center conditions and on its own
@@ -53,30 +57,31 @@ a single \ac{vm}.
 In this paper, we extend our previous work to multiple \acp{vm},
 developing a brownout-compliant load-balancer. This enables horizontal
 elasticity and makes applications fault-tolerant by having several
-replicas. Existing, state-of-the-art load-balancers forward requests based
-on the response-time of each replica, which leads to inefficient
+replicas. Existing, state-of-the-art load-balancers forward requests
+based on the response-time of each replica, which leads to inefficient
 decisions for brownout-compliant applications, since such applications
 already keep their response-time at a given setpoint (at the expense
 of reducing the amount of optional content served). Specifically, a
-brownout-compliant load balancer is necessary, since by measuring response-time alone,
-it is not
-possible to discriminate between a replica that is avoiding overload
-by not executing the optional code and a replica that is not threatened with overload
-executing all optional code, both achieving low response times.
-Therefore, existing load-balancing techniques that monitor
-response times should be
-improved to migrate load away from replicas not executing optional code.
+brownout-compliant load balancer is necessary, since by measuring
+response-time alone, it is not possible to discriminate between a
+replica that is avoiding overload by not executing the optional code
+and a replica that is not threatened with overload executing all
+optional code, both achieving low response times.  Therefore, existing
+load-balancing techniques that monitor response times should be
+improved to migrate load away from replicas not executing optional
+code.
 
 Our challenge is to find a load-balancing methodology that maximizes
 the amount of served optional content. Our contribution is threefold.
 \begin{enumerate}
 % According to the current sec:problem, the architecture is needed to formally define the problem.
-\item We propose a load-balancing architecture for brownout-compliant cloud applications and
-formalize our problem (Section~\ref{sec:problem}).
+\item We propose a load-balancing architecture for brownout-compliant
+  cloud applications and formalize our problem
+  (Section~\ref{sec:problem}).
 \item We propose a load-balancing algorithm that maximizes the
   performance of brownout-compliant applications in terms of
   percentage of optional code executed (Section~\ref{sec:solution}).
-\item We evaluate the approach showing that it outperforms existing techniques
-  (Section~\ref{sec:evaluation}).
+\item We evaluate the approach showing that it outperforms existing
+  techniques (Section~\ref{sec:evaluation}).
 \end{enumerate}
 

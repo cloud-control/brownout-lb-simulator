@@ -10,17 +10,17 @@
            rounded corners,
            draw=black, very thick,
            minimum height=0.6cm,
-           minimum width=1.3cm,
+           minimum width=1cm,
            inner sep=3pt,
            text centered,
-           node distance=1.8cm,
+           node distance=0.9cm,
            },
     process/.style={
            rectangle,
            rounded corners,
            draw=black, very thick,
            minimum height=0.6cm,
-           minimum width=1.3cm,
+           minimum width=1cm,
            inner sep=3pt,
            text centered,
            %node distance=1cm,
@@ -31,14 +31,14 @@
            draw=black, very thick,
            fill=lightgray,
            minimum height=0.6cm,
-           minimum width=1.3cm,
+           minimum width=1cm,
            inner sep=3pt,
            text centered,
            %node distance=1cm,
            },
     processplaceholder/.style={
            minimum height=0.6cm,
-           minimum width=1.3cm,
+           minimum width=1cm,
            %inner sep=3pt,
            text centered,
            %node distance=1cm,
@@ -48,18 +48,18 @@
            rounded corners,
            draw=black, very thick,
            minimum height=0.5cm,
-           minimum width=5.35cm,
+           minimum width=5.32cm,
            inner sep=3pt,
            text centered,
-           node distance=1.1cm,
+           node distance=1cm,
            },
     abovish/.style={
            rectangle,
            rounded corners,
            draw=none,
-           minimum width=1.3cm,
+           minimum width=1cm,
            text centered,
-           node distance=1.3cm,
+           node distance=1cm,
            },
     supercloserstate/.style={
            rectangle,
@@ -92,8 +92,8 @@
 
 % controllers
 \node[processplaceholder, right=1cm of replicaI] (controllerI) {$\vdots$};
-\node[process, right=1cm of replica1] (controller1) {$\text{controller}_1$};
-\node[process, right=1cm of replicaN] (controllerN) {$\text{controller}_n$};
+\node[process, right=0.9cm of replica1] (controller1) {$\text{controller}_1$};
+\node[process, right=0.9cm of replicaN] (controllerN) {$\text{controller}_n$};
 
 % clients to lb
 \draw[thick,->] (clients.east) -- (lb.west) node[midway, above] {$\lambda$};
