@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+from __future__ import division
 
 import random
 import sys
@@ -28,6 +29,8 @@ next_departure = -1
 
 nm = 0
 sm = 0
+serviceTimeSum = 0
+serviceTimeNum = 0
 
 t = 0
 while t < tend:
@@ -39,6 +42,8 @@ while t < tend:
     q.insert(0, t)
     if next_departure == -1:
       proc = get_proc()
+      serviceTimeSum += proc
+      serviceTimeNum += 1
       next_departure = t + proc
       
   else:
@@ -54,7 +59,11 @@ while t < tend:
     if len(q) == 0:
       next_departure = -1
     else:
-      next_departure = t + get_proc()
+      proc = get_proc()
+      next_departure = t + proc
+      serviceTimeSum += proc
+      serviceTimeNum += 1
 
 mueff = 1 / ((1-theta)/muM + theta/muO)
+print "Service rate: ", serviceTimeNum / serviceTimeSum, "estimated through harmonic mean", mueff
 print("Mean %f, according to harmonic mean %f"%(sm/nm, 1 / (mueff - lam)))
