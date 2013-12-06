@@ -568,9 +568,14 @@ def main():
 			client = clients.pop()
 			client.deactivate()
 
+	def changeServiceTime(server, serviceTimeY, serviceTimeN):
+		server.serviceTimeY = serviceTimeY
+		server.serviceTimeN = serviceTimeN
+
 	sim.add(   0, lambda: addClients(numClients))
 	sim.add( 500, lambda: addClients(numClients))
 	sim.add(1000, lambda: removeClients(int(numClients*1.5)))
+	sim.add(2000, lambda: changeServiceTime(server1, 0.21, 0.003))
 	sim.add(3000, lambda: addClients(int(numClients/2)))
 	
 	sim.run(until = 3500)
