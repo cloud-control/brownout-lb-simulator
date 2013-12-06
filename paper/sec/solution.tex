@@ -15,4 +15,18 @@
     $$t_i=\frac{1}{\mu_{i,eff}-\lambda_i}$$
     \\
     Knowing that the controller tries to maintain $t_i=\tau_i$, one
-    can compute $\theta_i$ by inverting the equation above.}}
+    can compute $\theta_i$ by inverting the equation above.
+}}
+	
+\textbf{Proof for effective service rate.} Let $x_i = 1/\mu_i$ be the service time of a request served with mandatory content and $X_i = 1/M_i$ be the service time of a request served with both mandatory and optional content. Let us compute the time required to serve a burst of $n$ requests, i.e., $n$ requests that arrive at the same time, with a dimmer value of $\theta_i$:
+
+$$t=n (1-\theta_i) x_i + n \theta_i X_i$$
+
+Hence, the effective service rate is:
+
+\begin{eqnarray*}
+\mu_{eff,i} & = & n/t \\
+& = & \frac{1}{(1-\theta_i) x_i + \theta_i X_i} \\
+& = & \frac{1}{\frac{1-\theta_i}{\mu_i} + \frac{\theta_i}{M_i}}
+\end{eqnarray*}
+
