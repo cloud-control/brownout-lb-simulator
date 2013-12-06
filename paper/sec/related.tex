@@ -1,0 +1,62 @@
+\textcolor{blue}{\textit{\textbf{Martina:} All the following is just a
+    bunch of comments that I have put together. (1): it is not written
+    in decent English but I hope it is understandable anyway. It is
+    not intended to be quality writing but just represent a bunch of
+    notes that we should take into account when generating the related
+    work. (2) So far I have scratched basically only the old
+    literature, so don't consider it exhaustive by any means.}}
+
+Load balancing has been explored exensively and different strategies
+have different aims. For example, electricity based load balancing
+proposes to reduce the amount of consumed electricity by directing the
+requests to different replicas based on the electricity price
+market~\cite{LoadBalancingForElectricity:TCC}.
+
+In the software engineering context load balancing is often called
+dynamic binding, so check the literature for that too.
+
+In general it can be divided into different types. Static load
+balancing refers to a fixed policy on a fixed system. Not only the
+number of replicas is always the same but also the policy used to
+select where to direct the traffic is always the same. This found many
+applications early on, for example in load sharing on multiprocessor
+systems~\cite{StaticLoadBalancing:TSE,StaticOptimal:ACM}.
+
+We are not interested in static load balancing, because we want to
+account for variability, both in the number of replicas and in their
+behavior. Our replicas, in fact can join the system later on ---
+therefore taking into account autoscaling mechanism that are nowadays
+popular in cloud computing --- and can be self-adaptive in nature, in
+the sense that they can adjust their behavior to match specific
+quality of service requirement like maximum or average latency
+ones. 
+
+In dynamic load balancing we distinguish two categories. One where the
+number of replicas and their behavior is assumed to vary over time but
+the policy is static --- for example the Round Robin load balancing
+where the requests are distributed irregardless of the load on the
+involved replicas and of their status. See if we have examples for
+this one beside the simple Round Robin case, in case cite them
+here. Also this category is not related to our work, since we assume
+that we want to exploit the variations that are happening at the
+replica level. However, it would be nice to have implemented a couple
+of these policies (if we can find some of them) to demonstrate that we
+need to account for the variability.
+
+The second category is when the load balancing policy takes into
+account variations happening at the replica level --- for example,
+when it takes into account the replica response times to decide where
+to send the next request. Many approaches fall in this category. For
+example, in old times, Stankovic proposed a Bayesian
+approach~\cite{Stankovic:TC} to solve this problem. In his solution,
+an estimator of the queue lenght per replica (in his case per
+processor because cloud computing was not invened yet) is kept updated
+and the next job is sent to the least congested replica. This
+algorithm is very unlikely to work in our case because it has no
+knowledge of the adaptation that the single replica is preforming, but
+we borrow from the idea of having the replicas communicating some
+indicator of their behavior, and use it to communicate the dimmer
+value. It would be nice to have this as a comparison point, although
+it is from the 80s, we can simply feedback the number of elements in
+the queue and see if that helps --- maybe we would get similar
+results, although not by construction.
