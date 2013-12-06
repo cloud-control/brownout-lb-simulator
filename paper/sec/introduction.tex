@@ -43,13 +43,14 @@ application development paradigm called {\bf brownout}. The main
 characteristic of cloud brownout is to be able to cope with unexpected
 events by reducing the amount of computation executed inside the
 \ac{vm} to produce the response. In brownout applications some
-computations are marked as optional --- for example, the execution of
-a recommender engine --- others are mandatory --- the display of the
-product information in an e-commerce website. Whenever a request is
+computations are marked as mandatory --- for example, the display of the
+product information in an e-commerce website --- others are optional ---
+for example, the display of recommendations of similar products.
+Whenever a request is
 received, the application can choose to execute or not the optional
 code based on the data-center conditions and on its own
 optimization. Note that executing optional code directly translates
-into a better service and more revenues for the company. This approach
+into a better service for the user and more revenues for the company. This approach
 proved to be successful for dealing with unexpected events. However,
 we only considered services having a single replica and running inside
 a single \ac{vm}.
