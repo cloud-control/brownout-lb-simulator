@@ -454,8 +454,15 @@ class LoadBalancer:
 			# Nothing to do here
 			pass
 		elif self.algorithm == 'non-working-theta-diff':
+			modifiedLastLastThetas = self.lastLastThetas # used to do the quick fix later
+			# (by Martina:) a quick and dirty fix for this behavior that when the dimmer
+			# is kept to 1 we are not doing a good job
+			for i in range(0,len(self.lastThetas)):
+				if (self.lastThetas[i] == 1 and self.lastLastThetas[i] == 1):
+					modifiedLastLastThetas[i] = 0.99
+			# end of the quick fix
 			self.weights = [ max(x[0] + x[1] - x[2], 0.01) for x in \
-				zip(self.weights, self.lastThetas, self.lastLastThetas) ]
+				zip(self.weights, self.lastThetas, modifiedLastLastThetas) ]
 			preNormalizedSumOfWeights = sum(self.weights)
 			self.weights = [ x / preNormalizedSumOfWeights for x in self.weights ]
 		else:
@@ -555,7 +562,7 @@ def main():
 	loadBalancer.addBackend(server3)
 
 	# Force static load-balancing
-	loadBalancer.algorithm = 'static'
+	loadBalancer.algorithm = 'non-working-theta-diff'
 	loadBalancer.weights = [ .6, .25, .15 ]
 
 	clients = []
