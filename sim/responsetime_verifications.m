@@ -18,10 +18,13 @@ thetas_exp = data(:,2);
 t_exp = data(:,1);
 
 thetas = 0:0.01:0.33;
+mu = 1./((1-thetas)/muM+thetas/muO);
+rho = lambda./mu;
+V = 2*(1-thetas)/muM^2+2*thetas/muO^2-1./mu.^2;
+t_pk = (rho+mu*lambda.*V)./(2*(mu-lambda))+1./mu;
+
 mueff = 1./((1-thetas)./muM+thetas./muO);
-t_theory = 1./(mueff-lambda);
-t_pk = (lambda*(thetas/muO+(1-thetas)/muM)+lambda./((1-thetas)/muM+thetas/muO).*(thetas/muO^2+...
-(1-thetas)/muM^2))./(2*(1./((1-thetas)/muM+thetas/muO)-lambda));
+t_theory = 1./(mueff-lambda)+1./mueff;
 
 figure(1)
 plot(thetas,t_theory,'b',thetas,t_pk,'r',thetas_exp,t_exp,'r+')
@@ -48,10 +51,13 @@ thetas_exp = data(:,2);
 t_exp = data(:,1);
 
 thetas = 0:0.01:0.1;
+mu = 1./((1-thetas)/muM+thetas/muO);
+rho = lambda./mu;
+V = 2*(1-thetas)/muM^2+2*thetas/muO^2-1./mu.^2;
+t_pk = (rho+mu*lambda.*V)./(2*(mu-lambda))+1./mu;
+
 mueff = 1./((1-thetas)./muM+thetas./muO);
-t_theory = 1./(mueff-lambda);
-t_pk = (lambda*(thetas/muO+(1-thetas)/muM)+lambda./((1-thetas)/muM+thetas/muO).*(thetas/muO^2+...
-(1-thetas)/muM^2))./(2*(1./((1-thetas)/muM+thetas/muO)-lambda));
+t_theory = 1./(mueff-lambda)+1./mueff;
 
 figure(2)
 plot(thetas,t_theory,'b',thetas,t_pk,'r',thetas_exp,t_exp,'r+')
@@ -84,10 +90,14 @@ thetas_exp = data(:,2);
 t_exp = data(:,1);
 
 thetas = 0:0.01:0.65;
+mu = 1./((1-thetas)/muM+thetas/muO);
+rho = lambda./mu;
+V = 2*(1-thetas)/muM^2+2*thetas/muO^2-1./mu.^2;
+t_pk = (rho+mu*lambda.*V)./(2*(mu-lambda))+1./mu;
+
 mueff = 1./((1-thetas)./muM+thetas./muO);
-t_theory = 1./(mueff-lambda);
-t_pk = (lambda*(thetas/muO+(1-thetas)/muM)+lambda./((1-thetas)/muM+thetas/muO).*(thetas/muO^2+...
-(1-thetas)/muM^2))./(2*(1./((1-thetas)/muM+thetas/muO)-lambda));
+t_theory = 1./(mueff-lambda)+1./mueff;
+
 
 figure(3)
 plot(thetas,t_theory,'b',thetas,t_pk,'r',thetas_exp,t_exp,'r+')
@@ -118,10 +128,13 @@ thetas_exp = data(:,2);
 t_exp = data(:,1);
 
 thetas = 0:0.01:0.31;
+mu = 1./((1-thetas)/muM+thetas/muO);
+rho = lambda./mu;
+V = 2*(1-thetas)/muM^2+2*thetas/muO^2-1./mu.^2;
+t_pk = (rho+mu*lambda.*V)./(2*(mu-lambda))+1./mu;
+
 mueff = 1./((1-thetas)./muM+thetas./muO);
-t_theory = 1./(mueff-lambda);
-t_pk = (lambda*(thetas/muO+(1-thetas)/muM)+lambda./((1-thetas)/muM+thetas/muO).*(thetas/muO^2+...
-(1-thetas)/muM^2))./(2*(1./((1-thetas)/muM+thetas/muO)-lambda));
+t_theory = 1./(mueff-lambda)+1./mueff;
 
 figure(5)
 plot(thetas,t_theory,'b',thetas,t_pk,'r',thetas_exp,t_exp,'r+')
@@ -144,13 +157,49 @@ thetas_exp = data(:,2);
 t_exp = data(:,1);
 
 thetas = 0:0.01:0.6;
+mu = 1./((1-thetas)/muM+thetas/muO);
+rho = lambda./mu;
+V = 2*(1-thetas)/muM^2+2*thetas/muO^2-1./mu.^2;
+t_pk = (rho+mu*lambda.*V)./(2*(mu-lambda))+1./mu;
+
 mueff = 1./((1-thetas)./muM+thetas./muO);
-t_theory = 1./(mueff-lambda);
-t_pk = (lambda*(thetas/muO+(1-thetas)/muM)+lambda./((1-thetas)/muM+thetas/muO).*(thetas/muO^2+...
-(1-thetas)/muM^2))./(2*(1./((1-thetas)/muM+thetas/muO)-lambda));
+t_theory = 1./(mueff-lambda)+1./mueff;
 
 figure(5)
 plot(thetas,t_theory,'b',thetas,t_pk,'r',thetas_exp,t_exp,'r+')
 title('\lambda = 15, \mu_M = 200, \mu_O = 10')
+xlabel('\theta')
+ylabel('Response time')
+
+%% Case 6
+data = [0.0 0.001 0.001
+0.1 0.020 0.021
+0.2 0.043 0.043
+0.3 0.068 0.068
+0.4 0.099 0.097
+0.5 0.132 0.133
+0.6 0.179 0.179
+0.7 0.245 0.242
+0.8 0.329 0.339
+0.9 0.563 0.518
+1.0 1.040 1.000];
+
+lambda = 9; muM = 1000; muO = 10;
+
+thetas_exp = data(:,1);
+t_exp = data(:,2);
+
+thetas = 0:0.01:1;
+mu = 1./((1-thetas)/muM+thetas/muO);
+rho = lambda./mu;
+V = 2*(1-thetas)/muM^2+2*thetas/muO^2-1./mu.^2;
+t_pk = (rho+mu*lambda.*V)./(2*(mu-lambda))+1./mu;
+
+mueff = 1./((1-thetas)./muM+thetas./muO);
+t_theory = 1./(mueff-lambda)+1./mueff;
+
+figure(6)
+plot(thetas,t_theory,'b',thetas,t_pk,'r',thetas_exp,t_exp,'r+')
+title('\lambda = 9, \mu_M = 1000, \mu_O = 10')
 xlabel('\theta')
 ylabel('Response time')
