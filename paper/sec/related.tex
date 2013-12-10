@@ -1,10 +1,10 @@
-Load balancing has been explored exensively and different strategies
-have different aims. For example, electricity based load balancing
+Load-balancing has been explored exensively and different strategies
+have different aims. For example, electricity based load-balancing
 proposes to reduce the amount of consumed electricity by directing the
 requests to different replicas based on the electricity price
 market~\cite{LoadBalancingForElectricity:TCC}.
 
-In the software engineering context load balancing is often called
+In the software engineering context load-balancing is often called
 dynamic binding, so check the literature for that too.
 
 In general it can be divided into different types. Static load
@@ -13,7 +13,7 @@ number of replicas is always the same but also the policy used to
 select where to direct the traffic is always the same. This found many
 applications early on, for example in load sharing on multiprocessor
 systems~\cite{StaticLoadBalancing:TSE,StaticOptimal:ACM}. Among the
-static load balancing techniques the most common are \textbf{random}
+static load-balancing techniques the most common are \textbf{random}
 balancing, based on the random decisions. While this algorithm was
 used pretty much everywhere, his utility is questionable, since it
 does not take into account any factor in selecting the
@@ -23,7 +23,7 @@ weighted derivations. A weighted round robin algorithm selects the
 replica based on a priori knowledge of their capabilities, therefore
 it is not indicated when the replicas itself are self-adaptive.
  
-We are not interested in static load balancing, because we want to
+We are not interested in static load-balancing, because we want to
 account for variability, both in the number of replicas and in their
 behavior. Our replicas, in fact can join the system later on ---
 therefore taking into account autoscaling mechanism that are nowadays
@@ -32,9 +32,9 @@ the sense that they can adjust their behavior to match specific
 quality of service requirement like maximum or average latency
 ones. 
 
-We are interested in dynamic load balancing, where the choice of the
+We are interested in dynamic load-balancing, where the choice of the
 replica to be used is based on measurement of current quantities that
-defines the system state --- for example, when the load balancer takes
+defines the system state --- for example, when the load-balancer takes
 into account the replica response times to decide where to send the
 next request. Many approaches fall in this category. For example, in
 old times, Stankovic proposed a Bayesian approach~\cite{Stankovic:TC}
@@ -79,7 +79,7 @@ implemented by BIG-IP Local Traffic Manager.
     a paper about a honey bees technique to do load
     balancing~\cite{BeesBased:ADAPTIVE}, based on the reward model
     that the bees use to produce honey. I personally think that this
-    is not a very good way of doing load balancing but it is true that
+    is not a very good way of doing load-balancing but it is true that
     since this is a model based on reward, this might be a very good
     algorithm for comparison (since we can introduce the fact that
     recommendations are served therefore the request has a higher
