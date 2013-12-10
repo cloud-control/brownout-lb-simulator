@@ -9,9 +9,6 @@ and we clearly formulate the problem under analysis.
   \label{fig:architecture}
 \end{figure}
 
-\textcolor{red}{\textit{\textbf{Cristian:} It would be nice to discuss
-    the alternative architectures that we discussed in Umeå.}}
-
 Figure~\ref{fig:architecture} illustrates the software architecture
 that is deployed to execute a brownout-compliant application composed
 by multiple replicas. Our architecture is widely accepted as the
@@ -45,25 +42,43 @@ the probability of serving optional content. This parameter is chosen
 by the replica itself, more precisely, by its controller. Assuming the
 replica is not saturated, it serves requests fully at a rate
 $\lambda_i \cdot \theta_i$ and partially at a rate $\lambda_i \cdot
-(1-\theta_i)$. 
+(1-\theta_i)$. An existing load-balancer based on response times
+analysis would hardly work with brownout-compliant applications, due
+to their self-adaptivity and the selection of the value $\theta_i$.
 
-\textcolor{blue}{\textit{\textbf{Martina:} I feel that here we should
-    say something on why existing load balancer do not work with
-    brownout-compliant applications, partially repeating what we say
-    in the introduction but also showing a numerical example of the
-    fact that existing strategies do not work in this case. I think we
-    should have in the simulator some existing strategies. We can show
-    only one here but we can have a comparison among many of them (as
-    many as we can) in the experimental part of the paper.}}
+Many alternatives can be envisioned on how to extend existing load
+balancers to deal with brownout-compliant applications:
+\begin{itemize}
+\item The load-balancer does not know anything about the current state
+  of the system but can inspect the requests and the responses and see
+  how many of them have been executed with the optional components
+  turned on. This would give it an estimation of the probability of
+  executing optional code $\theta_i$ per replica but not the certainty
+  of its current value.
+\item The load-balancer does not know anything about the state of the
+  system and cannot inspect the requests because this would be too
+  heavy on the architecture, therefore it can try to estimate the
+  probability of executing optional code based on the time needed to
+  compute the response --- clearly, a request with optional code
+  enabled would take longer than one without it. The estimate of
+  $\theta_i$ in this case would be less accurate than in the previous
+  scenario.
+\item The load-balancer receives information about $\theta_i$ from the
+  replicas. This solution is lighter than the others on the load
+  balancer side but requires additional communication. The overhead,
+  however, is very limited, since only one value should be reported
+  per replica.
+\end{itemize}
 
-Therefore, to aid load-balancing decisions, each replica piggy-bags
-the current value of $\theta_i$ through the reply, so that this value
-can be observed by the load-balancer. The parameters $\theta_i$ are
-computed by controllers based on a target average response time
-$\bar{\tau}$. Each replica $i$ periodically reports the average
-observed response-time $\tau_i$ to its controller. In exchange, the
-controller adjusts $\theta_i$ to maintain the average response-time
-close to its target value.
+In our case, we assume that to aid load-balancing decisions, each
+replica piggy-bags the current value of $\theta_i$ through the reply,
+so that this value can be observed by the load-balancer, limiting the
+overhead. The parameters $\theta_i$ are computed by controllers based
+on a target average or maximum response time $\bar{\tau}$. Each
+replica $i$ periodically reports the average observed response-time
+$\tau_i$ to its controller. In exchange, the controller adjusts
+$\theta_i$ to maintain the desired response-time close to its target
+value.
 
 Within this architecture, we want to solve the problem of designing a
 {\bf load-balancer policy}. Knowing the values of $\tau_i$ and
@@ -76,4 +91,3 @@ $w_i$ such that
 is maximized. In other words, the load-balancer should maximize the
 amount of requests served with the optional part enabled. In practice,
 this would also maximize the application owner's revenue.
-
