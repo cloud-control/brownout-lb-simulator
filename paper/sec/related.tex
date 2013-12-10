@@ -1,79 +1,88 @@
-Load-balancing has been explored exensively and different strategies
-have different aims. For example, electricity based load-balancing
-proposes to reduce the amount of consumed electricity by directing the
-requests to different replicas based on the electricity price
-market~\cite{LoadBalancingForElectricity:TCC}.
+Load-balancing has received a lot of attention and industry and
+researchers have developed a wide variety of balancing policies and
+cloud applications have given a further boost to the
+research~\citep{Barroso09,Lu11:PerfEval,Lin12:IGCC}. Load-balancing
+strategies can be guided by many different aims, for example regional
+load-balancing driven by the electricity price was proposed to reduce
+the datacenter operation cost~\cite{LoadBalancingForElectricity:TCC}.
 
-In the software engineering context load-balancing is often called
-dynamic binding, so check the literature for that too.
-
-In general it can be divided into different types. Static load
-balancing refers to a fixed policy on a fixed system. Not only the
-number of replicas is always the same but also the policy used to
-select where to direct the traffic is always the same. This found many
-applications early on, for example in load sharing on multiprocessor
+\str{{\bf Martina}: Reinforce the citation list for the static part}\\
+Load-balancing solutions can be divided into two different types:
+static and dynamic policies. Static load-balancing refers to a fixed
+strategy to select the next replica to be loaded. Static
+load-balancing found many applications in load sharing on
+multiprocessor
 systems~\cite{StaticLoadBalancing:TSE,StaticOptimal:ACM}. Among the
-static load-balancing techniques the most common are \textbf{random}
-balancing, based on the random decisions. While this algorithm was
-used pretty much everywhere, his utility is questionable, since it
-does not take into account any factor in selecting the
-replica. Another family of algorithms widely used in this case is the
-\textbf{round robin} one, both in its plain version and in the
-weighted derivations. A weighted round robin algorithm selects the
-replica based on a priori knowledge of their capabilities, therefore
-it is not indicated when the replicas itself are self-adaptive.
- 
-We are not interested in static load-balancing, because we want to
-account for variability, both in the number of replicas and in their
-behavior. Our replicas, in fact can join the system later on ---
-therefore taking into account autoscaling mechanism that are nowadays
-popular in cloud computing --- and can be self-adaptive in nature, in
-the sense that they can adjust their behavior to match specific
-quality of service requirement like maximum or average latency
-ones. 
+static load-balancing techniques the most commonly implemented are
+random balancing, and \textbf{round robin} based ones. Random
+balancing is based on random decisions, and despite being extremely
+simple to implement, his utility is questionable, since it does not
+take into account any factor in selecting the replica. Round robin
+solutions try to balance the load onto the replicas. A round robin
+algorithm selects the replica, eventually weighting the possible
+alternatives based on a priori knowledge of their capabilities.
 
-We are interested in dynamic load-balancing, where the choice of the
-replica to be used is based on measurement of current quantities that
-defines the system state --- for example, when the load-balancer takes
-into account the replica response times to decide where to send the
-next request. Many approaches fall in this category. For example, in
-old times, Stankovic proposed a Bayesian approach~\cite{Stankovic:TC}
-to solve this problem. In his solution, an estimator of the queue
-lenght per replica (in his case per processor because cloud computing
-was not invened yet) is kept updated and the next job is sent to the
-least congested replica. This algorithm is very unlikely to work in
-our case because it has no knowledge of the adaptation that the single
-replica is preforming, but we borrow from the idea of having the
-replicas communicating some indicator of their behavior, and use it to
-communicate the dimmer value. It would be nice to have this as a
-comparison point, although it is from the 80s, we can simply feedback
-the number of elements in the queue and see if that helps --- maybe we
-would get similar results, although not by construction.
+Although in our comparison we use also a weighted round robin
+solution, in principle we are not interested in static
+load-balancing. In fact, the purpose of brownout-compliant
+applications and load-balancing is to account for the inherent
+fluctuations of a cloud environment. The same replica can receive
+different resources during its lifetime, therefore a static weight
+vector would not reflect the current situation.
 
-The \textbf{dynamic round robin} algorithm is similar to a weighted
-round robin but the weights depend on the current status of the
-server, for example on measurements of the current response times. A
-currently widely implemented algorithm --- due to its simplicity ---
-it to choose the fastest replica. However, also with replicas that are
-not self-adaptive, this can cause severe congestion, since the current
-response time does not always reflect the load of the machine and the
-queue can saturate pretty fast. A less used strategy is based on
-connection counts and select the replicas with the least
-connections. This strategy works very well in environments where the
-replicas have similar capabilities and the requests are
-homogeneous. It might have problems if the requests are very different
-from one another --- for example one serves a plain HTML page while
-another requires a lot of database connections. A merge of the two has
-been implemented, ranking the replicas based on a linear combination
-of currently served requests and response times. This partially
-overcomes the limitations induced by the two approaches but do not
-take into account when the server is about to be
-overloaded. Therefore, some \textbf{prediction} was introduced in this
-method. Instead of ranking the replicas based on the linear
-combination of the current metric, the difference between the past
-metrics and the current ones was used, to distinguish which replicas
-were improving and which were struggling. This is the solution
-implemented by BIG-IP Local Traffic Manager.
+\str{{\bf Martina}: Add to the simulator a few load-balancing
+  strategies. (1) a weighed round robin where the weights are chosen
+  based on an initial ``correct'' estimate of the replica
+  capabilities. (2) the fastest replica. (3) the connection count. (4)
+  the predictive approach.}
+
+On the contrary, in dynamic load-balancing the choice of the replica
+is based on measurements about the current system state. One widely
+used option is the choice of the \textbf{fastest replica}. This is
+unlikely to work with brownout-compliant applications, because each
+replica selects the amount of optional code executed to maintain the
+response times to a certain desired value, and there is no way to
+distinguish between a congested replica that is not serving optional
+content and a non-congested replica that could serve the optional
+content. Also with non-adaptive applications this algorithm can cause
+severe performance loss, since the current response time does not
+necessarily reflect the future response time and the internal replica
+queue can saturate at an unexpected rate, especially if the time taken
+to produce the answer is much greater than the arrival rate.
+
+Another adopted strategy is based on the \textbf{connection count},
+where the load-balancer tracks the connections and select the replicas
+with the least amount of connections. This strategy pays off in
+architectures where the replicas have similar capacities and the
+requests are homogeneous. The strategy may not be optimal if the
+requests can be very different from one another --- for example a
+request serves a plain HTML page while another requires looking up a
+lot of data in a database. This suggests that the strategy is unlikely
+to work with brownout-compliant applications, where requests served
+with optional computations can be very different from the ones
+containing only the mandatory content. Stankovic proposed a Bayesian
+approach to the load-balancing problem for a multiprocessor load
+distribution~\cite{Stankovic:TC}. An estimator of the queue length per
+processor is kept updated and the next request is sent to the least
+congested computing unit. This approach is hardly applicable to
+brownout-compliant cloud applications because it does not take into
+account the replica control loop adjusting the percentage of optional
+code executed. Since in our case the load-balancer is the only entity
+routing requests to the replica, this approach is equivalent to the
+connection count policy.
+
+In an attempt to overcome the mentioned limitations a merge of the
+fastest replica and the connection count approach was implemented
+where the replicas are ranked based on a linear combination of
+response times and number of routed requests. Also, the approach was
+extended with a \textbf{predictive} estimator. To produce the ranking
+the difference between the past metrics and the current one was
+used. This is the solution implemented in the BIG-IP Local Traffic
+Manager. One of the solutions proposed in this paper borrows the idea
+of looking at the difference between the past behavior and the current
+one, although our load-balancer observes the changes in the amount of
+optional code served and tries to maximize the requests served
+enabling the full computation.
 
 \textcolor{blue}{\textit{\textbf{Martina:} In the ref folder there is
     a paper about a honey bees technique to do load

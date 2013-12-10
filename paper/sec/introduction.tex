@@ -38,56 +38,58 @@ unexpected events may lead to data-center overload, which translates
 to unresponsive cloud applications, leading to dissatisfied end-users
 and revenue loss.
 
-In our previous work~\citep{cloudish-tr}, we proposed a cloud
-application development paradigm called {\bf brownout}. The main
-characteristic of cloud brownout is to be able to cope with unexpected
-events by reducing the amount of computation executed inside the
-\ac{vm} to produce the response. In brownout applications some
-computations are marked as mandatory --- for example, the display of the
-product information in an e-commerce website --- others are optional ---
+Cloud applications therefore greatly benefit from
+self-adaptation~\cite{SalehieSelfadaptive:TAAS}. One possible
+adaptation is based on a paradigm called {\bf
+  brownout}~\citep{cloudish-tr}. The main characteristic of cloud
+brownout is adaptivity to obtain predictable performance despite
+unexpected events like flash crowds. A brownout cloud application
+adapts itself by reducing the amount of computation executed inside
+the \ac{vm} to produce the response. In fact, some computations are
+marked as mandatory --- for example, the display of the product
+information in an e-commerce website --- while others are optional ---
 for example, the display of recommendations of similar products.
-Whenever a request is
-received, the application can choose to execute or not the optional
-code based on the data-center conditions and on its own
-optimization. Note that executing optional code directly translates
-into a better service for the user and more revenues for the company. This approach
-proved to be successful for dealing with unexpected events. However,
-we only considered services having a single replica and running inside
-a single \ac{vm}.
+Whenever a request is received, the application can choose to execute
+or not the optional code based on the data-center conditions and on
+its own optimization. Note that executing optional code directly
+translates into a better service for the user and more revenues for
+the company. This approach proved to be successful for dealing with
+unexpected events. However, brownout applications were simply composed
+by a single replica and running inside a single \ac{vm}.
 
-In this paper, we extend our previous work to multiple \acp{vm},
-developing a brownout-compliant load-balancer. This enables horizontal
-elasticity and makes applications fault-tolerant by having several
-replicas. Existing, state-of-the-art load-balancers forward requests
-based on the response-time of each replica, which leads to inefficient
-decisions for brownout-compliant applications, since such applications
-already keep their response-time at a given setpoint (at the expense
-of reducing the amount of optional content served). Specifically, a
-brownout-compliant load-balancer is necessary, since by measuring
-response-time alone, it is not possible to discriminate between a
-replica that is avoiding overload by not executing the optional code
-and a replica that is not threatened with overload executing all
-optional code, both achieving low response times.  Therefore, existing
-load-balancing techniques that monitor response times should be
-improved to migrate load away from replicas not executing optional
-code.
+In this paper, we extend the brownout paradigm to multiple \acp{vm},
+developing a load-balancer that takes into account the replica
+adaptation. This enables horizontal elasticity and makes applications
+fault-tolerant by having several replicas. Existing, state-of-the-art
+load-balancers forward requests based on the response-time of each
+replica, which leads to inefficient decisions for brownout-compliant
+applications, since such applications already keep their response-time
+at a given setpoint (at the expense of reducing the amount of optional
+content served). Specifically, a brownout-compliant load-balancer is
+necessary, since by measuring response-time alone, it is not possible
+to discriminate between a replica that is avoiding overload by not
+executing the optional code and a replica that is not threatened with
+overload executing all optional code, both achieving low response
+times.  Therefore, existing load-balancing techniques that monitor
+response times should be improved to migrate load away from replicas
+not executing optional code.
 
 Our challenge is to find a load-balancing methodology that maximizes
-the amount of served optional content. Our contribution is summarized
-as follows.
-\begin{enumerate}
-\item We propose a load-balancing architecture for brownout-compliant
-  cloud applications and formalize our problem
-  (Section~\ref{sec:problem}).
-\item We discuss why the existing load-balancing strategies would fail
-  with brownout-compliant caloud applications and compare to different
-  approaches from the theoretical standpoint
-  (Section~\ref{sec:related}).
-\item We propose two load-balancing algorithms that aim at maximizing
-  the performance of brownout-compliant applications in terms of
-  percentage of optional code executed (Section~\ref{sec:solution}).
-\item We evaluate the approach showing that it outperforms existing
-  techniques (Section~\ref{sec:evaluation}).
-\end{enumerate}
-We draw our conclusion and discuss future research in
-Section~\ref{sec:conclusion}.
+the amount of served optional content, provided that every replica
+independentaly serves only an amount of optional code that allows it
+to constrain the latency to be below a target value.
+
+Our contribution is summarized as follows.
+\begin{itemize}
+\item We discuss load-balancing architectures and the requireed
+  modifications to the classical structures that allow to deal with
+  brownout-compliant applications and obtain predictability.
+\item We propose two load-balancing policies that aim at maximizing
+  the performance of brownout-compliant cloud applications, in terms
+  of frequency of execution of the optional components, therefore
+  maximizing the total revenue for the application provider.
+\item We evaluate existing load-balancing strategies and compare them
+  with the two proposed approaches, demonstrating the need for a
+  brownout-aware load-balancer and proving that the proposed policies
+  outperform existing techniques.
+\end{itemize}
