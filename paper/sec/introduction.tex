@@ -73,16 +73,21 @@ improved to migrate load away from replicas not executing optional
 code.
 
 Our challenge is to find a load-balancing methodology that maximizes
-the amount of served optional content. Our contribution is threefold.
+the amount of served optional content. Our contribution is summarized
+as follows.
 \begin{enumerate}
-% According to the current sec:problem, the architecture is needed to formally define the problem.
 \item We propose a load-balancing architecture for brownout-compliant
   cloud applications and formalize our problem
   (Section~\ref{sec:problem}).
-\item We propose a load-balancing algorithm that maximizes the
-  performance of brownout-compliant applications in terms of
+\item We discuss why the existing load-balancing strategies would fail
+  with brownout-compliant caloud applications and compare to different
+  approaches from the theoretical standpoint
+  (Section~\ref{sec:related}).
+\item We propose two load-balancing algorithms that aim at maximizing
+  the performance of brownout-compliant applications in terms of
   percentage of optional code executed (Section~\ref{sec:solution}).
 \item We evaluate the approach showing that it outperforms existing
   techniques (Section~\ref{sec:evaluation}).
 \end{enumerate}
-
+We draw our conclusion and discuss future research in
+Section~\ref{sec:conclusion}.
