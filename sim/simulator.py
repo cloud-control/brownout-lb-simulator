@@ -543,6 +543,43 @@ class ClosedLoopClient:
 	def __str__(self):
 		return self.name
 
+## Simulates open-loop clients.
+# The clients have an exponential arrival time.
+class MarkovianArrivalProcess:
+	## Constructor.
+	# @param sim Simulator to attach client to
+	# @param server server-like entity to which requests are sent
+	# @param rate average arrival rate
+	def __init__(self, sim, server, rate = 1):
+		## average arrival rate (model parameter)
+		self.rate = rate
+
+		## simulator to which the client is attached
+		self.sim = sim
+		## server to which requests are issued
+		self.server = server
+
+		self.numCompletedRequests = 0
+		## Vector of response-times, useful to compute average or distribution (metric)
+		self.responseTimes = []
+
+		# Launch arrival process
+		self.sim.add(0, lambda: self.issueRequest())
+
+	## Issues a new request to the server.
+	def issueRequest(self):
+		request = Request()
+		request.onCompleted = lambda: self.onCompleted(request)
+		self.server.request(request)
+
+		interval = random.expovariate(self.rate)
+		self.sim.add(interval, lambda: self.issueRequest())
+
+	## Called when a request completes
+	# @param _request the request that has been completed (ignored for now)
+	def onCompleted(self, request):
+		self.responseTimes.append(self.sim.now - request.arrival)
+
 ## Entry-point for simulator.
 # Setups up all entities, then runs simulation.
 def main():
