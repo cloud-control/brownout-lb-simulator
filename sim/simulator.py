@@ -625,5 +625,28 @@ def main():
 	
 	sim.run(until = 3500)
 
+def responseTimeTest():
+	results = []
+	for i in range(0, 11):
+		arrivalRate = 12
+		theta = i / 10
+
+		random.seed(1)
+		sim = Simulator()
+		server = Server(sim, controlPeriod = 0, initialTheta = theta)
+		clients = MarkovianArrivalProcess(sim, server, rate = arrivalRate)
+
+		sim.run()
+
+		results.append((theta, avg(clients.responseTimes)))
+
+	print("theta measured modelled")
+	for theta, avgResponseTime in results:
+		expectedServiceRate = 1 / ((theta * server.serviceTimeY) + (1-theta) * server.serviceTimeN)
+		modelledAvgResponseTime = 1 / (expectedServiceRate - arrivalRate)
+
+		print(theta, avgResponseTime, modelledAvgResponseTime)
+
 if __name__ == "__main__":
-	main()
+	#main()
+	responseTimeTest()
