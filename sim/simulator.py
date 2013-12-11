@@ -176,7 +176,7 @@ class Server:
 	# @param timeSlice time slice; a request longer that this will observe
 	# context-switching
 	# @param initialTheta initial dimmer value
-	# @param controlPeriod control period of brownout controller
+	# @param controlPeriod control period of brownout controller (0 = disabled)
 	# @note The constructor adds an event into the simulator
 	def __init__(self, sim, serviceTimeY = 0.07, serviceTimeN = 0.001, \
 			initialTheta = 0.5, controlPeriod = 5, timeSlice = 0.01, \
@@ -220,7 +220,8 @@ class Server:
 
 		## Reference to simulator
 		self.sim = sim
-		self.sim.add(0, self.runControlLoop)
+		if self.controlPeriod > 0:
+			self.sim.add(0, self.runControlLoop)
 
 	## Runs the control loop.
 	# Basically retrieves self.lastestLatencies and computes a new self.theta.
