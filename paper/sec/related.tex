@@ -1,6 +1,9 @@
 Load-balancing has received a lot of attention and industry and
-researchers have developed a wide variety of balancing policies and
-cloud applications have given a further boost to the
+researchers have developed a wide variety of balancing policies, for
+different domains, spanning from processor load~~\cite{Stankovic:TC}
+to memory management~\cite{PattersonMemoryLB,MemoryLBACC} and
+web-server systems~\cite{Cardellini2003}. Cloud applications have
+given a further boost to the
 research~\citep{Barroso09,Lu11:PerfEval,Lin12:IGCC}. Load-balancing
 strategies can be guided by many different aims, for example regional
 load-balancing driven by the electricity price was proposed to reduce
@@ -79,8 +82,8 @@ response times and number of routed requests. Also, the approach was
 extended with a \textbf{predictive} estimator. To produce the ranking
 the difference between the past metrics and the current one was
 used. This is the solution implemented in the BIG-IP Local Traffic
-Manager. One of the solutions proposed in this paper borrows the idea
-of looking at the difference between the past behavior and the current
-one, although our load-balancer observes the changes in the amount of
-optional code served and tries to maximize the requests served
-enabling the full computation.
+Manager~\cite{BIGIP}. One of the solutions proposed in this paper
+borrows the idea of looking at the difference between the past
+behavior and the current one, although our load-balancer observes the
+changes in the amount of optional code served and tries to maximize
+the requests served enabling the full computation.
