@@ -423,7 +423,7 @@ class LoadBalancer:
 	def request(self, request):
 		#self.sim.log(self, "Got request {0}", request)
 		request.arrival = self.sim.now
-		if self.algorithm in [ 'static', 'non-working-theta-diff' ]:
+		if self.algorithm in [ 'static', 'non-working-theta-diff', 'equal-thetas' ]:
 			request.chosenBackendIndex = \
 				weightedChoice(zip(range(0, len(self.backends)), self.weights))
 		elif self.algorithm == 'SQF':
@@ -483,6 +483,32 @@ class LoadBalancer:
 		elif self.algorithm == 'SQF':
 			# shortest queue first is not dynamic
 			pass
+		elif self.algorithm == 'equal-thetas':
+			
+			for i in xrange(3):
+				# This code was meant to adjust the gain so that the weights of weak servers
+				# react faster, since their response times react faster to changing loads.
+				# Doesn't work... Yet.
+				#theta = self.lastThetas[i]
+				#muY = self.backends[i].serviceTimeY
+				#muN = self.backends[i].serviceTimeN
+				#mueff = 1/(theta/muY + (1-theta)/muN)
+				#gamma = 6/mueff
+				
+				# Gain
+				gamma = 0.0125
+				
+				# Calculate error to the average
+				e = self.lastThetas[i] - avg(self.lastThetas)
+				# "Integrate"
+				self.weights[i] += gamma * e
+				# Bound
+				if self.weights[i] < 0.001:
+					self.weights[i] = 0.001
+			
+			# Normalize
+			for i in xrange(3):
+				self.weights[i] = self.weights[i] / sum(self.weights)
 		else:
 			raise Exception("Unknown load-balancing algorithm " + self.algorithm)
 
@@ -622,6 +648,11 @@ def main():
 	
 	# SQF
 	loadBalancer.algorithm = 'SQF'
+	
+	# Equal thetas comparison
+	# A naive approach which integrates each server's theta-meanTheta to
+	# drive all thetas towards each other
+	#loadBalancer.algorithm = 'equal-thetas'
 
 	clients = []
 	def addClients(numClients):
