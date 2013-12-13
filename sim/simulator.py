@@ -395,6 +395,8 @@ class LoadBalancer:
 		self.lastLastThetas = []
 		## latencies measured during last control period (metric)
 		self.lastLatencies = []
+		## queue length of each replica (control input for SQF algorithm)
+		self.queueLengths = []
 		## number of requests, with or without optional content, served since
 		# the load-balancer came online (metric)
 		self.numRequests = 0
@@ -412,6 +414,7 @@ class LoadBalancer:
 		self.lastThetas.append(self.initialTheta) # to be updated at onComplete
 		self.lastLastThetas.append(self.initialTheta) # to be updated at onComplete
 		self.lastLatencies.append([]) # to be updated at onComplete
+		self.queueLengths.append(0) # to be updated in request and onComplete
 
 		self.weights = [ 1.0 / len(self.backends) ] * len(self.backends)
 
@@ -420,12 +423,22 @@ class LoadBalancer:
 	def request(self, request):
 		#self.sim.log(self, "Got request {0}", request)
 		request.arrival = self.sim.now
-		request.chosenBackendIndex = \
-			weightedChoice(zip(range(0, len(self.backends)), self.weights))
+		if self.algorithm in [ 'static', 'non-working-theta-diff' ]:
+			request.chosenBackendIndex = \
+				weightedChoice(zip(range(0, len(self.backends)), self.weights))
+		elif self.algorithm == 'SQF':
+			# choose replica with shortest queue
+			request.chosenBackendIndex = \
+				min(range(0, len(self.queueLengths)), \
+				key = lambda i: self.queueLengths[i])
+		else:
+			raise Exception("Unknown load-balancing algorithm " + self.algorithm)
+			
 		newRequest = Request()
 		newRequest.originalRequest = request
 		newRequest.onCompleted = lambda: self.onCompleted(newRequest)
 		#self.sim.log(self, "Directed request to {0}", newRequest.chosenBackendIndex)
+		self.queueLengths[request.chosenBackendIndex] += 1
 		self.backends[request.chosenBackendIndex].request(newRequest)
 
 	## Handles request completion.
@@ -443,6 +456,7 @@ class LoadBalancer:
 		self.lastThetas[request.chosenBackendIndex] = theta
 		self.lastLatencies[request.chosenBackendIndex].\
 			append(request.completion - request.arrival)
+		self.queueLengths[request.chosenBackendIndex] -= 1
 		
 		# Call original onCompleted
 		request.onCompleted()
@@ -466,6 +480,9 @@ class LoadBalancer:
 				zip(self.weights, self.lastThetas, modifiedLastLastThetas) ]
 			preNormalizedSumOfWeights = sum(self.weights)
 			self.weights = [ x / preNormalizedSumOfWeights for x in self.weights ]
+		elif self.algorithm == 'SQF':
+			# shortest queue first is not dynamic
+			pass
 		else:
 			raise Exception("Unknown load-balancing algorithm " + self.algorithm)
 
@@ -600,8 +617,11 @@ def main():
 	loadBalancer.addBackend(server3)
 
 	# Force static load-balancing
-	loadBalancer.algorithm = 'non-working-theta-diff'
-	loadBalancer.weights = [ .6, .25, .15 ]
+	#loadBalancer.algorithm = 'non-working-theta-diff'
+	#loadBalancer.weights = [ .6, .25, .15 ]
+	
+	# SQF
+	loadBalancer.algorithm = 'SQF'
 
 	clients = []
 	def addClients(numClients):
@@ -648,5 +668,5 @@ def responseTimeTest():
 		print(theta, avgResponseTime, modelledAvgResponseTime)
 
 if __name__ == "__main__":
-	#main()
-	responseTimeTest()
+	main()
+	#responseTimeTest()
