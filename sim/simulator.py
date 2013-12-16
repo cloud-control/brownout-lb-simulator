@@ -43,7 +43,7 @@ def normalize(numbers):
 	
 	s = sum(numbers)
 	if s == 0:
-		# How to normalize a zero vector is a matter of much debate
+	# How to normalize a zero vector is a matter of much debate
 		return [ float('nan') ] * len(numbers)
 	return [ n / s for n in numbers ]
 
@@ -61,6 +61,8 @@ class Simulator:
 		## cache of open file descriptors: for each issuer, this dictionary maps
 		# to a file descriptor
 		self.outputFiles = {}
+		self.optionalOn = 0
+		self.optionalOff = 0
 
 	## Adds a new event
 	# @param delay non-negative float representing in how much time should the
@@ -464,7 +466,10 @@ class LoadBalancer:
 		# "Decapsulate"
 		self.numRequests += 1
 		if request.withOptional:
+			self.sim.optionalOn += 1
 			self.numRequestsWithOptional += 1
+		else:
+			self.sim.optionalOff += 1
 		theta = request.theta
 		request = request.originalRequest
 
@@ -677,10 +682,10 @@ def main():
 	#loadBalancer.weights = [ .6, .25, .15 ]
 
 	# Heuristic (Martina)	
-	#loadBalancer.algorithm = 'non-working-theta-diff'
+	loadBalancer.algorithm = 'non-working-theta-diff'
 
 	# SQF
-	loadBalancer.algorithm = 'SQF'
+	#loadBalancer.algorithm = 'SQF'
 	
 	# Equal thetas comparison
 	# A naive approach which integrates each server's theta-meanTheta to
@@ -708,6 +713,8 @@ def main():
 	sim.add(3000, lambda: addClients(int(numClients/2)))
 	
 	sim.run(until = 3500)
+	recommendationPercentage = float(sim.optionalOn) / float(sim.optionalOff + sim.optionalOn)
+	sim.log(sim, "total recommendation percentage {0}", recommendationPercentage)
 
 def responseTimeTest():
 	results = []
