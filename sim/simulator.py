@@ -484,8 +484,7 @@ class LoadBalancer:
 			# shortest queue first is not dynamic
 			pass
 		elif self.algorithm == 'equal-thetas':
-			
-			for i in xrange(3):
+			for i in range(0,len(self.backends)):
 				# This code was meant to adjust the gain so that the weights of weak servers
 				# react faster, since their response times react faster to changing loads.
 				# Doesn't work... Yet.
@@ -507,7 +506,7 @@ class LoadBalancer:
 					self.weights[i] = 0.001
 			
 			# Normalize
-			for i in xrange(3):
+			for i in range(0,len(self.backends)):
 				self.weights[i] = self.weights[i] / sum(self.weights)
 		else:
 			raise Exception("Unknown load-balancing algorithm " + self.algorithm)
