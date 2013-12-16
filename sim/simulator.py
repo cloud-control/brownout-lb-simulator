@@ -33,6 +33,20 @@ def avg(numbers):
 		return float('nan')
 	return sum(numbers)/len(numbers)
 
+## Normalize a list, so that the sum of all elements becomes 1
+# @param numbers list to normalize
+# @return normalized list
+def normalize(numbers):
+	if len(numbers) == 0:
+		# Nothing to do
+		return [ ]
+	
+	s = sum(numbers)
+	if s == 0:
+		# How to normalize a zero vector is a matter of much debate
+		return [ float('nan') ] * len(numbers)
+	return [ n / s for n in numbers ]
+
 ## Simulation kernel.
 # Implements an event-driven simulator
 class Simulator:
@@ -403,6 +417,10 @@ class LoadBalancer:
 		## number of requests, with optional content, served since the
 		# load-balancer came online (metric)
 		self.numRequestsWithOptional = 0
+		## number of requests served by each replica (metric).
+		self.numRequestsPerReplica = []
+		## number of requests served by each replica before the last control period (metric).
+		self.numLastRequestsPerReplica = []
 		
 		# Launch control loop
 		self.sim.add(0, self.runControlLoop)
@@ -415,6 +433,8 @@ class LoadBalancer:
 		self.lastLastThetas.append(self.initialTheta) # to be updated at onComplete
 		self.lastLatencies.append([]) # to be updated at onComplete
 		self.queueLengths.append(0) # to be updated in request and onComplete
+		self.numRequestsPerReplica.append(0) # to be updated in request
+		self.numLastRequestsPerReplica.append(0) # to be updated in runControlLoop
 
 		self.weights = [ 1.0 / len(self.backends) ] * len(self.backends)
 
@@ -439,6 +459,7 @@ class LoadBalancer:
 		newRequest.onCompleted = lambda: self.onCompleted(newRequest)
 		#self.sim.log(self, "Directed request to {0}", newRequest.chosenBackendIndex)
 		self.queueLengths[request.chosenBackendIndex] += 1
+		self.numRequestsPerReplica[request.chosenBackendIndex] += 1
 		self.backends[request.chosenBackendIndex].request(newRequest)
 
 	## Handles request completion.
@@ -513,15 +534,22 @@ class LoadBalancer:
 
 		self.sim.add(self.controlPeriod, self.runControlLoop)
 
+		# Compute effective weights
+		effectiveWeights = [ self.numRequestsPerReplica[i] - self.numLastRequestsPerReplica[i] \
+			for i in range(0,len(self.backends)) ]
+		effectiveWeights = normalize(effectiveWeights)
+
 		valuesToOutput = [ self.sim.now ] + self.weights + self.lastThetas + \
 			[ avg(latencies) for latencies in self.lastLatencies ] + \
 			[ max(latencies + [0]) for latencies in self.lastLatencies ] + \
-			[ self.numRequests, self.numRequestsWithOptional ]
+			[ self.numRequests, self.numRequestsWithOptional ] + \
+			effectiveWeights
 		self.sim.output(self, ','.join(["{0:.5f}".format(value) \
 			for value in valuesToOutput]))
 		
 		self.lastLastThetas = self.lastThetas[:]
 		self.lastLatencies = [ [] for _ in self.backends ]
+		self.numLastRequestsPerReplica = self.numRequestsPerReplica[:]
 
 	## Pretty-print load-balancer's name.
 	def __str__(self):
