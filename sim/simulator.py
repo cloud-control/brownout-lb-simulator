@@ -649,21 +649,28 @@ class MarkovianArrivalProcess:
 ## Entry-point for simulator.
 # Setups up all entities, then runs simulation.
 def main():
-	numClients = 50
+	numClients = 100
 	serverControlPeriod = 5
 
 	random.seed(1)
 	sim = Simulator()
-	server1 = Server(sim, controlPeriod = serverControlPeriod)
+	server1 = Server(sim, controlPeriod = serverControlPeriod,
+                serviceTimeY = 0.07, serviceTimeN = 0.001)
 	server2 = Server(sim, controlPeriod = serverControlPeriod, \
-		serviceTimeY = 0.07 * 2, serviceTimeN = 0.001 * 2)
+		serviceTimeY = 0.07 * 10, serviceTimeN = 0.001 * 10)
 	server3 = Server(sim, controlPeriod = serverControlPeriod, \
-		serviceTimeY = 0.07 * 3, serviceTimeN = 0.001 * 3)
+		serviceTimeY = 0.07 * 10, serviceTimeN = 0.001 * 10)
+	server4 = Server(sim, controlPeriod = serverControlPeriod, \
+		serviceTimeY = 0.07 * 10, serviceTimeN = 0.001 * 10)
+	server5 = Server(sim, controlPeriod = serverControlPeriod, \
+		serviceTimeY = 0.07 * 10, serviceTimeN = 0.001 * 10)
 
 	loadBalancer = LoadBalancer(sim, controlPeriod = 1)
 	loadBalancer.addBackend(server1)
 	loadBalancer.addBackend(server2)
 	loadBalancer.addBackend(server3)
+	loadBalancer.addBackend(server4)
+	loadBalancer.addBackend(server5)
 
 	# Force static load-balancing
 	#loadBalancer.algorithm = 'static'
