@@ -262,7 +262,7 @@ class Server:
 			error = self.setPoint - serviceTime
 			# NOTE: control knob allowing slow increase
 			if error > 0:
-				error *= 0.1
+				error *= 0.5
 			serviceLevel += (1 / self.alpha) * (1 - self.pole) * error
 
 			# saturation, it's a probability
@@ -392,7 +392,7 @@ class LoadBalancer:
 		## initial value of measured theta (control initialization parameter)
 		self.initialTheta = initialTheta
 		## what algorithm to use
-		self.algorithm = 'non-working-theta-diff'
+		self.algorithm = 'theta-diff'
 
 		## Simulator to which the load-balancer is attached
 		self.sim = sim
@@ -441,7 +441,7 @@ class LoadBalancer:
 	def request(self, request):
 		#self.sim.log(self, "Got request {0}", request)
 		request.arrival = self.sim.now
-		if self.algorithm in [ 'static', 'non-working-theta-diff', 'equal-thetas' ]:
+		if self.algorithm in [ 'static', 'theta-diff', 'equal-thetas' ]:
 			request.chosenBackendIndex = \
 				weightedChoice(zip(range(0, len(self.backends)), self.weights))
 		elif self.algorithm == 'SQF':
@@ -490,7 +490,7 @@ class LoadBalancer:
 		if self.algorithm == 'static':
 			# Nothing to do here
 			pass
-		elif self.algorithm == 'non-working-theta-diff':
+		elif self.algorithm == 'theta-diff':
 			modifiedLastLastThetas = self.lastLastThetas # used to do the quick fix later
 			# (by Martina:) a quick and dirty fix for this behavior that when the dimmer
 			# is kept to 1 we are not doing a good job
@@ -682,7 +682,7 @@ def main():
 	#loadBalancer.weights = [ .6, .25, .15 ]
 
 	# Heuristic (Martina)	
-	loadBalancer.algorithm = 'non-working-theta-diff'
+	loadBalancer.algorithm = 'theta-diff'
 
 	# SQF
 	#loadBalancer.algorithm = 'SQF'
@@ -714,7 +714,7 @@ def main():
 	
 	sim.run(until = 3500)
 	recommendationPercentage = float(sim.optionalOn) / float(sim.optionalOff + sim.optionalOn)
-	sim.log(sim, "total recommendation percentage {0}", recommendationPercentage)
+	sim.log(sim, loadBalancer.algorithm + ", total recommendation percentage {0}", recommendationPercentage)
 
 def responseTimeTest():
 	results = []
