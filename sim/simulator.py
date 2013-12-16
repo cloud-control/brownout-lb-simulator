@@ -249,10 +249,6 @@ class Server:
 				error *= 0.1
 			serviceLevel += (1 / self.alpha) * (1 - self.pole) * error
 
-			# saturation, service level is a probability
-			serviceLevel = max(serviceLevel, 0.0)
-			serviceLevel = min(serviceLevel, 1.0)
-
 			# saturation, it's a probability
 			self.theta = min(max(serviceLevel, 0.0), 1.0)
 		
@@ -617,9 +613,12 @@ def main():
 	loadBalancer.addBackend(server3)
 
 	# Force static load-balancing
-	#loadBalancer.algorithm = 'non-working-theta-diff'
+	#loadBalancer.algorithm = 'static'
 	#loadBalancer.weights = [ .6, .25, .15 ]
-	
+
+	# Heuristic (Martina)	
+	#loadBalancer.algorithm = 'non-working-theta-diff'
+
 	# SQF
 	loadBalancer.algorithm = 'SQF'
 
