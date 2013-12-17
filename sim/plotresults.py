@@ -21,19 +21,22 @@ def main():
 	total_requests = data[:,4*replicas+1]
 	optional_requests = data[:,4*replicas+2]
 	effective_weights = data[:,4*replicas+3:5*replicas+3]
-
-	figure(1)
+	
+	subplot(3, 2, 1)
 	plot(times, weights)
 	title("Weights")
-	figure(2)
+	subplot(3, 2, 2)
 	plot(times, dimmers)
 	title("Dimmers")
-	figure(3)
+	subplot(3, 2, 3)
 	plot(times, max_latencies)
 	title("Max latencies")
-	figure(4)
+	subplot(3, 2, 4)
 	plot(times, optional_requests/total_requests)
 	title("Percentage recommendations")
+	subplot(3, 2, 5)
+	plot(times, effective_weights)
+	title("Effective weights")
 	show()
 
 
