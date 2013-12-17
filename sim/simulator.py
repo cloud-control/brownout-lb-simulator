@@ -692,10 +692,10 @@ def main():
 
 	# Force static load-balancing with chosen weights
 	#loadBalancer.algorithm = 'static'
-	#loadBalancer.weights = [ .6, .25, .15 ]
+	#loadBalancer.weights = [ .60, .20, .10, .05, .05 ]
 
 	# Heuristic based on dimmer differences (Martina)	
-	#loadBalancer.algorithm = 'theta-diff'
+	loadBalancer.algorithm = 'theta-diff'
 
 	# Optimization-based algorithm (Jonas and Manfred)	
 	#loadBalancer.algorithm = 'optimization'
@@ -704,7 +704,7 @@ def main():
 	#loadBalancer.algorithm = 'SQF'
 
 	# FRF - fastest replica first
-	loadBalancer.algorithm = 'FRF'
+	#loadBalancer.algorithm = 'FRF'
 	
 	# Equal thetas comparison
 	# A naive approach which integrates each server's theta-meanTheta to
