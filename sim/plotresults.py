@@ -19,10 +19,10 @@ def aggregate(a, interval = 10, func = avg):
 def main():
 	replicas = 0
 	for f in os.listdir('.'):
-    		if fnmatch.fnmatch(f, 'sim-lb.csv'):
+		if fnmatch.fnmatch(f, 'sim-lb.csv'):
 			data = np.genfromtxt(f, dtype=float, delimiter=',') 
 		if fnmatch.fnmatch(f, 'sim-server*.csv'):
-        		replicas += 1
+			replicas += 1
 
 	# parse data
 	times = data[:,0]
