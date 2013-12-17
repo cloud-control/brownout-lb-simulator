@@ -654,21 +654,21 @@ class MarkovianArrivalProcess:
 ## Entry-point for simulator.
 # Setups up all entities, then runs simulation.
 def main():
-	numClients = 100
-	serverControlPeriod = 5
+	numClients = 50
+	serverControlPeriod = 10
 
 	random.seed(1)
 	sim = Simulator()
 	server1 = Server(sim, controlPeriod = serverControlPeriod,
                 serviceTimeY = 0.07, serviceTimeN = 0.001)
 	server2 = Server(sim, controlPeriod = serverControlPeriod, \
-		serviceTimeY = 0.07 * 5, serviceTimeN = 0.001 * 2)
+		serviceTimeY = 0.07 * 2, serviceTimeN = 0.001 * 2)
 	server3 = Server(sim, controlPeriod = serverControlPeriod, \
-		serviceTimeY = 0.07 * 5, serviceTimeN = 0.001 * 2)
+		serviceTimeY = 0.07 * 3, serviceTimeN = 0.001 * 3)
 	server4 = Server(sim, controlPeriod = serverControlPeriod, \
-		serviceTimeY = 0.07 * 5, serviceTimeN = 0.001 * 2)
+		serviceTimeY = 0.07 * 10, serviceTimeN = 0.001)
 	server5 = Server(sim, controlPeriod = serverControlPeriod, \
-		serviceTimeY = 0.07 * 5, serviceTimeN = 0.001 * 2)
+		serviceTimeY = 0.07 * 10, serviceTimeN = 0.001)
 
 	loadBalancer = LoadBalancer(sim, controlPeriod = 1)
 	loadBalancer.addBackend(server1)
@@ -682,10 +682,10 @@ def main():
 	#loadBalancer.weights = [ .6, .25, .15 ]
 
 	# Heuristic (Martina)	
-	#loadBalancer.algorithm = 'theta-diff'
+	loadBalancer.algorithm = 'theta-diff'
 
 	# SQF
-	loadBalancer.algorithm = 'SQF'
+	#loadBalancer.algorithm = 'SQF'
 	
 	# Equal thetas comparison
 	# A naive approach which integrates each server's theta-meanTheta to
