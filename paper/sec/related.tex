@@ -37,11 +37,11 @@ fluctuations of a cloud environment. The same replica can receive
 different resources during its lifetime, therefore a static weight
 vector would not reflect the current situation.
 
-\str{{\bf Martina}: Add to the simulator a few load-balancing
-  strategies. (1) a weighed round robin where the weights are chosen
-  based on an initial ``correct'' estimate of the replica
-  capabilities. (2) the fastest replica. (3) the connection count. (4)
-  the predictive approach.}
+\str{{\bf Martina}: In the simulator we have some load balancing
+  strategies: (1) a weighed round robin called \emph{static}. 
+  (2) the fastest replica (SRF, shortest replica first). 
+  (3) the connection count (SQF, shortest queue first). 
+  We should also implement: (4) the predictive approach.}
 
 On the contrary, in dynamic load-balancing the choice of the replica
 is based on measurements about the current system state. One widely
