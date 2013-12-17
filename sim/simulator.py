@@ -441,7 +441,7 @@ class LoadBalancer:
 	def request(self, request):
 		#self.sim.log(self, "Got request {0}", request)
 		request.arrival = self.sim.now
-		if self.algorithm in [ 'static', 'theta-diff', 'equal-thetas' ]:
+		if self.algorithm in [ 'static', 'theta-diff', 'equal-thetas', 'optimization' ]:
 			request.chosenBackendIndex = \
 				weightedChoice(zip(range(0, len(self.backends)), self.weights))
 		elif self.algorithm == 'SQF':
@@ -449,6 +449,11 @@ class LoadBalancer:
 			request.chosenBackendIndex = \
 				min(range(0, len(self.queueLengths)), \
 				key = lambda i: self.queueLengths[i])
+		elif self.algorithm == 'SRF':
+			# choose replica with minimum latency
+			maxlat = [max(x) if x else 0 for x in self.lastLatencies]
+			request.chosenBackendIndex = \
+				maxlat.index(min(maxlat))
 		else:
 			raise Exception("Unknown load-balancing algorithm " + self.algorithm)
 			
@@ -490,6 +495,11 @@ class LoadBalancer:
 		if self.algorithm == 'static':
 			# Nothing to do here
 			pass
+		elif self.algorithm == 'optimization':
+			# TODO: work in progress here
+			# self.lastThetas contains the vector of thetas
+			# self.weights should be set to the desired values
+			pass
 		elif self.algorithm == 'theta-diff':
 			modifiedLastLastThetas = self.lastLastThetas # used to do the quick fix later
 			# (by Martina:) a quick and dirty fix for this behavior that when the dimmer
@@ -504,6 +514,9 @@ class LoadBalancer:
 			self.weights = [ x / preNormalizedSumOfWeights for x in self.weights ]
 		elif self.algorithm == 'SQF':
 			# shortest queue first is not dynamic
+			pass
+		elif self.algorithm == 'SRF':
+			# shortest server first is not dynamic
 			pass
 		elif self.algorithm == 'equal-thetas':
 			for i in range(0,len(self.backends)):
@@ -666,11 +679,9 @@ def main():
 	server3 = Server(sim, controlPeriod = serverControlPeriod, \
 		serviceTimeY = 0.07 * 3, serviceTimeN = 0.001 * 3)
 	server4 = Server(sim, controlPeriod = serverControlPeriod, \
-		serviceTimeY = 0.07 * 10, serviceTimeN = 0.001)
+		serviceTimeY = 0.07 * 10, serviceTimeN = 0.001 * 50)
 	server5 = Server(sim, controlPeriod = serverControlPeriod, \
-		serviceTimeY = 0.07 * 10, serviceTimeN = 0.001)
-	server6 = Server(sim, controlPeriod = serverControlPeriod, \
-		serviceTimeY = 0.07, serviceTimeN = 0.001)
+		serviceTimeY = 0.07 * 10, serviceTimeN = 0.001 * 50)
 
 	loadBalancer = LoadBalancer(sim, controlPeriod = 1)
 	loadBalancer.addBackend(server1)
@@ -686,8 +697,14 @@ def main():
 	# Heuristic (Martina)	
 	#loadBalancer.algorithm = 'theta-diff'
 
+	# Optimization-based (Jonas and Manfred)	
+	#loadBalancer.algorithm = 'optimization'
+
 	# SQF
-	loadBalancer.algorithm = 'SQF'
+	#loadBalancer.algorithm = 'SQF'
+
+	# SRF - shortest replica first
+	loadBalancer.algorithm = 'SRF'
 	
 	# Equal thetas comparison
 	# A naive approach which integrates each server's theta-meanTheta to
@@ -711,11 +728,10 @@ def main():
 	sim.add(   0, lambda: addClients(numClients))
 	sim.add(1000, lambda: addClients(numClients))
 	sim.add(2000, lambda: removeClients(int(numClients*1.5)))
-	#sim.add(3000, lambda: loadBalancer.addBackend(server6))
-	sim.add(4000, lambda: changeServiceTime(server1, 0.21, 0.003))
-	sim.add(5000, lambda: addClients(int(numClients/2)))
+	sim.add(3000, lambda: changeServiceTime(server1, 0.21, 0.003))
+	sim.add(4000, lambda: addClients(int(numClients/2)))
 	
-	sim.run(until = 6000)
+	sim.run(until = 5000)
 	recommendationPercentage = float(sim.optionalOn) / float(sim.optionalOff + sim.optionalOn)
 	sim.log(sim, loadBalancer.algorithm + ", total recommendation percentage {0}", recommendationPercentage)
 
