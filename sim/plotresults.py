@@ -27,7 +27,7 @@ def main():
 	replicas = 0
 	for f in os.listdir('.'):
 		if fnmatch.fnmatch(f, 'sim-lb.csv'):
-			data = np.genfromtxt(f, dtype=float, delimiter=',') 
+			data = np.genfromtxt(f, dtype=float, delimiter=',', invalid_raise=False) 
 		if fnmatch.fnmatch(f, 'sim-server*.csv'):
 			replicas += 1
 

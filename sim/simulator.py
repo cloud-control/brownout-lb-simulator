@@ -711,7 +711,7 @@ def main():
 	sim.add(   0, lambda: addClients(numClients))
 	sim.add(1000, lambda: addClients(numClients))
 	sim.add(2000, lambda: removeClients(int(numClients*1.5)))
-	sim.add(3000, lambda: loadBalancer.addBackend(server6))
+	#sim.add(3000, lambda: loadBalancer.addBackend(server6))
 	sim.add(4000, lambda: changeServiceTime(server1, 0.21, 0.003))
 	sim.add(5000, lambda: addClients(int(numClients/2)))
 	
