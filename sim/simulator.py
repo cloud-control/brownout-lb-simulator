@@ -449,7 +449,7 @@ class LoadBalancer:
 			request.chosenBackendIndex = \
 				min(range(0, len(self.queueLengths)), \
 				key = lambda i: self.queueLengths[i])
-		elif self.algorithm == 'SRF':
+		elif self.algorithm == 'FRF':
 			# choose replica with minimum latency
 			maxlat = [max(x) if x else 0 for x in self.lastLatencies]
 			request.chosenBackendIndex = \
@@ -515,8 +515,8 @@ class LoadBalancer:
 		elif self.algorithm == 'SQF':
 			# shortest queue first is not dynamic
 			pass
-		elif self.algorithm == 'SRF':
-			# shortest server first is not dynamic
+		elif self.algorithm == 'FRF':
+			# fastest replica first is not dynamic
 			pass
 		elif self.algorithm == 'equal-thetas':
 			for i in range(0,len(self.backends)):
@@ -690,21 +690,21 @@ def main():
 	loadBalancer.addBackend(server4)
 	loadBalancer.addBackend(server5)
 
-	# Force static load-balancing
+	# Force static load-balancing with chosen weights
 	#loadBalancer.algorithm = 'static'
 	#loadBalancer.weights = [ .6, .25, .15 ]
 
-	# Heuristic (Martina)	
+	# Heuristic based on dimmer differences (Martina)	
 	#loadBalancer.algorithm = 'theta-diff'
 
-	# Optimization-based (Jonas and Manfred)	
+	# Optimization-based algorithm (Jonas and Manfred)	
 	#loadBalancer.algorithm = 'optimization'
 
-	# SQF
+	# SQF - shortest queue first
 	#loadBalancer.algorithm = 'SQF'
 
-	# SRF - shortest replica first
-	loadBalancer.algorithm = 'SRF'
+	# FRF - fastest replica first
+	loadBalancer.algorithm = 'FRF'
 	
 	# Equal thetas comparison
 	# A naive approach which integrates each server's theta-meanTheta to
