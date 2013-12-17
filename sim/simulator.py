@@ -669,6 +669,8 @@ def main():
 		serviceTimeY = 0.07 * 10, serviceTimeN = 0.001)
 	server5 = Server(sim, controlPeriod = serverControlPeriod, \
 		serviceTimeY = 0.07 * 10, serviceTimeN = 0.001)
+	server6 = Server(sim, controlPeriod = serverControlPeriod, \
+		serviceTimeY = 0.07, serviceTimeN = 0.001)
 
 	loadBalancer = LoadBalancer(sim, controlPeriod = 1)
 	loadBalancer.addBackend(server1)
@@ -682,10 +684,10 @@ def main():
 	#loadBalancer.weights = [ .6, .25, .15 ]
 
 	# Heuristic (Martina)	
-	loadBalancer.algorithm = 'theta-diff'
+	#loadBalancer.algorithm = 'theta-diff'
 
 	# SQF
-	#loadBalancer.algorithm = 'SQF'
+	loadBalancer.algorithm = 'SQF'
 	
 	# Equal thetas comparison
 	# A naive approach which integrates each server's theta-meanTheta to
@@ -707,12 +709,13 @@ def main():
 		server.serviceTimeN = serviceTimeN
 
 	sim.add(   0, lambda: addClients(numClients))
-	sim.add( 500, lambda: addClients(numClients))
-	sim.add(1000, lambda: removeClients(int(numClients*1.5)))
-	sim.add(2000, lambda: changeServiceTime(server1, 0.21, 0.003))
-	sim.add(3000, lambda: addClients(int(numClients/2)))
+	sim.add(1000, lambda: addClients(numClients))
+	sim.add(2000, lambda: removeClients(int(numClients*1.5)))
+	sim.add(3000, lambda: loadBalancer.addBackend(server6))
+	sim.add(4000, lambda: changeServiceTime(server1, 0.21, 0.003))
+	sim.add(5000, lambda: addClients(int(numClients/2)))
 	
-	sim.run(until = 3500)
+	sim.run(until = 6000)
 	recommendationPercentage = float(sim.optionalOn) / float(sim.optionalOff + sim.optionalOn)
 	sim.log(sim, loadBalancer.algorithm + ", total recommendation percentage {0}", recommendationPercentage)
 
