@@ -4,6 +4,18 @@ import os
 import numpy as np
 from pylab import *
 
+def avg(a):
+	if len(a) == 0:
+		return float('nan')
+	return sum(a) / len(a)
+
+def aggregate(a, interval = 10, func = avg):
+	ret = np.zeros(a.shape)
+	for i in range(0, a.shape[0]):
+		for j in range(0, a.shape[1]):
+			ret[i,j] = func(a[i:i+interval,j])
+	return ret
+
 def main():
 	replicas = 0
 	for f in os.listdir('.'):
@@ -21,6 +33,10 @@ def main():
 	total_requests = data[:,4*replicas+1]
 	optional_requests = data[:,4*replicas+2]
 	effective_weights = data[:,4*replicas+3:5*replicas+3]
+
+	# make plots more readable
+	max_latencies = aggregate(max_latencies, func = max)
+	effective_weights = aggregate(effective_weights)
 	
 	subplot(3, 2, 1)
 	plot(times, weights)
