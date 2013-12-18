@@ -501,11 +501,12 @@ class LoadBalancer:
 			# Nothing to do here
 			pass
 		elif self.algorithm == 'optimization':
-			# TODO: work in progress here
-			mu = matrix([0.07 * 1, 0.07 * 2, 0.07 * 3, 0.07 * 10, 0.07 * 10])
-			M = matrix([0.001 * 1, 0.001 * 2, 0.001 * 3, 0.001 * 50, 0.001 * 50])
 			setpoint = 1
 			arrivalRate = float(self.numRequests - self.lastNumRequests) / float(self.controlPeriod)
+			# TODO: we have to substitute these vectors (mu and M) 
+			# with estimations of their values
+			mu = matrix([0.07 * 1, 0.07 * 2, 0.07 * 3, 0.07 * 10, 0.07 * 10])
+			M = matrix([0.001 * 1, 0.001 * 2, 0.001 * 3, 0.001 * 50, 0.001 * 50])
 			A = matrix(np.ones((1, len(self.weights))))
 			b = matrix(1, (1,1), 'd')
 			m, n = A.size
@@ -514,6 +515,7 @@ class LoadBalancer:
 			intB = M*arrivalRate*setpoint
 			intC = mu - M
 			intD = (mu - M)*arrivalRate*setpoint 
+			# inequality constraints
 			G = matrix(-1*np.eye(len(self.weights)))
 			h = matrix(np.zeros((len(self.weights),1)))
 			def F(x=None, z=None):
@@ -524,12 +526,10 @@ class LoadBalancer:
 				Df = -(cvxopt.div((cvxopt.mul(intA,intC) - 2*cvxopt.mul(intB,cvxopt.mul(intC,x))-cvxopt.mul(intB,cvxopt.mul(intD,(x**2)))),\
 					             ((intC+cvxopt.mul(intD,x))**2))).T
 				if z is None: return f, Df
-				H = spdiag(#z[0] #* x**-2)
-					(
+				H = spdiag((
 					cvxopt.div(2*cvxopt.mul(intA,cvxopt.mul(intC,intD)), (intC+cvxopt.mul(intD,x))**3) + \
 					cvxopt.div(2*cvxopt.mul(intB,(intC**2)), (intC+cvxopt.mul(intD,x))**3)
-					)
-				)
+					))
 				return f, Df, H
 			solution = solvers.cp(F, G, h, A=A, b=b)['x']
 			self.weights = list(solution)
