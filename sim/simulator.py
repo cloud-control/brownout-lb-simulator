@@ -424,6 +424,10 @@ class LoadBalancer:
 		## number of requests served by each replica before the last control period (metric).
 		self.numLastRequestsPerReplica = []
 		self.iteration = 1
+		## average response time of each replica (control input for FRF2 algorithm)
+		self.ewmaResponseTime = []
+		## number of sample to use for computing average response time (parameter for FRF2 algorithm)
+		self.ewmaNumSamples = 10
 		
 		# Launch control loop
 		self.sim.add(0, self.runControlLoop)
@@ -438,6 +442,7 @@ class LoadBalancer:
 		self.queueLengths.append(0) # to be updated in request and onComplete
 		self.numRequestsPerReplica.append(0) # to be updated in request
 		self.numLastRequestsPerReplica.append(0) # to be updated in runControlLoop
+		self.ewmaResponseTime.append(0) # to be updated in onComplete
 
 		self.weights = [ 1.0 / len(self.backends) ] * len(self.backends)
 
@@ -459,6 +464,11 @@ class LoadBalancer:
 			maxlat = [max(x) if x else 0 for x in self.lastLatencies]
 			request.chosenBackendIndex = \
 				maxlat.index(min(maxlat))
+		elif self.algorithm == 'FRF2':
+			# choose replica with minimum EWMA latency
+			request.chosenBackendIndex = \
+				min(range(0, len(self.backends)), \
+				key = lambda i: self.ewmaResponseTime[i])
 		else:
 			raise Exception("Unknown load-balancing algorithm " + self.algorithm)
 			
@@ -489,6 +499,10 @@ class LoadBalancer:
 		self.lastLatencies[request.chosenBackendIndex].\
 			append(request.completion - request.arrival)
 		self.queueLengths[request.chosenBackendIndex] -= 1
+		alpha = 2 / (self.ewmaNumSamples + 1)
+		self.ewmaResponseTime[request.chosenBackendIndex] = \
+			alpha * (request.completion - request.arrival) + \
+			(1 - alpha) * self.ewmaResponseTime[request.chosenBackendIndex]
 		
 		# Call original onCompleted
 		request.onCompleted()
@@ -549,6 +563,9 @@ class LoadBalancer:
 			# shortest queue first is not dynamic
 			pass
 		elif self.algorithm == 'FRF':
+			# fastest replica first is not dynamic
+			pass
+		elif self.algorithm == 'FRF2':
 			# fastest replica first is not dynamic
 			pass
 		elif self.algorithm == 'equal-thetas':
