@@ -6,6 +6,9 @@ from __future__ import division, print_function
 # with the @ref simulator namespace.
 
 from collections import defaultdict, deque
+import numpy as np
+from cvxopt import solvers, matrix, spdiag, log
+import cvxopt
 import random
 import sys
 
@@ -412,6 +415,7 @@ class LoadBalancer:
 		## number of requests, with or without optional content, served since
 		# the load-balancer came online (metric)
 		self.numRequests = 0
+		self.lastNumRequests = 0
 		## number of requests, with optional content, served since the
 		# load-balancer came online (metric)
 		self.numRequestsWithOptional = 0
@@ -419,6 +423,7 @@ class LoadBalancer:
 		self.numRequestsPerReplica = []
 		## number of requests served by each replica before the last control period (metric).
 		self.numLastRequestsPerReplica = []
+		self.iteration = 1
 		
 		# Launch control loop
 		self.sim.add(0, self.runControlLoop)
@@ -497,9 +502,37 @@ class LoadBalancer:
 			pass
 		elif self.algorithm == 'optimization':
 			# TODO: work in progress here
-			# self.lastThetas contains the vector of thetas
-			# self.weights should be set to the desired values
-			pass
+			mu = matrix([0.07 * 1, 0.07 * 2, 0.07 * 3, 0.07 * 10, 0.07 * 10])
+			M = matrix([0.001 * 1, 0.001 * 2, 0.001 * 3, 0.001 * 50, 0.001 * 50])
+			setpoint = 1
+			arrivalRate = float(self.numRequests - self.lastNumRequests) / float(self.controlPeriod)
+			A = matrix(np.ones((1, len(self.weights))))
+			b = matrix(1, (1,1), 'd')
+			m, n = A.size
+			# intermediate quantities for optimization
+			intA = cvxopt.mul(M,mu)*setpoint - M
+			intB = M*arrivalRate*setpoint
+			intC = mu - M
+			intD = (mu - M)*arrivalRate*setpoint 
+			G = matrix(-1*np.eye(len(self.weights)))
+			h = matrix(np.zeros((len(self.weights),1)))
+			def F(x=None, z=None):
+				if x is None: return 0, matrix(1.0, (n, 1))
+				if min(x) <= 0.0: return None
+				# function that we want to minimize
+				f = -sum(cvxopt.mul(x, cvxopt.div(intA-cvxopt.mul(intB,x), intC+cvxopt.mul(intD,x))))
+				Df = -(cvxopt.div((cvxopt.mul(intA,intC) - 2*cvxopt.mul(intB,cvxopt.mul(intC,x))-cvxopt.mul(intB,cvxopt.mul(intD,(x**2)))),\
+					             ((intC+cvxopt.mul(intD,x))**2))).T
+				if z is None: return f, Df
+				H = spdiag(#z[0] #* x**-2)
+					(
+					cvxopt.div(2*cvxopt.mul(intA,cvxopt.mul(intC,intD)), (intC+cvxopt.mul(intD,x))**3) + \
+					cvxopt.div(2*cvxopt.mul(intB,(intC**2)), (intC+cvxopt.mul(intD,x))**3)
+					)
+				)
+				return f, Df, H
+			solution = solvers.cp(F, G, h, A=A, b=b)['x']
+			self.weights = list(solution)
 		elif self.algorithm == 'theta-diff':
 			modifiedLastLastThetas = self.lastLastThetas # used to do the quick fix later
 			# (by Martina:) a quick and dirty fix for this behavior that when the dimmer
@@ -546,6 +579,8 @@ class LoadBalancer:
 		else:
 			raise Exception("Unknown load-balancing algorithm " + self.algorithm)
 
+		self.lastNumRequests = self.numRequests
+		self.iteration += 1
 		self.sim.add(self.controlPeriod, self.runControlLoop)
 
 		# Compute effective weights
@@ -669,6 +704,7 @@ class MarkovianArrivalProcess:
 def main():
 	numClients = 50
 	serverControlPeriod = 10
+	solvers.options['show_progress'] = False # suppress output of cvxopt solver
 
 	random.seed(1)
 	sim = Simulator()
@@ -695,10 +731,10 @@ def main():
 	#loadBalancer.weights = [ .60, .20, .10, .05, .05 ]
 
 	# Heuristic based on dimmer differences (Martina)	
-	loadBalancer.algorithm = 'theta-diff'
+	#loadBalancer.algorithm = 'theta-diff'
 
 	# Optimization-based algorithm (Jonas and Manfred)	
-	#loadBalancer.algorithm = 'optimization'
+	loadBalancer.algorithm = 'optimization'
 
 	# SQF - shortest queue first
 	#loadBalancer.algorithm = 'SQF'
