@@ -31,10 +31,22 @@ def weightedChoice(choiceWeightPairs):
 	assert False, "Shouldn't get here"
 
 ## Computes average
+# @param numbers list of number to compute average for
+# @return average or NaN if list is empty
 def avg(numbers):
 	if len(numbers) == 0:
 		return float('nan')
 	return sum(numbers)/len(numbers)
+
+## Computes maximum
+# @param numbers list of number to compute maximum for
+# @return maximum or NaN if list is empty
+# @note Similar to built-in function max(), but returns NaN instead of throwing
+# exception when list is empty
+def maxOrNan(numbers):
+	if len(numbers) == 0:
+		return float('nan')
+	return max(numbers)
 
 ## Normalize a list, so that the sum of all elements becomes 1
 # @param numbers list to normalize
@@ -233,6 +245,14 @@ class Server:
 		## dimmer value (controller output)
 		self.theta = initialTheta
 
+		## The amount of time this server is active. Useful to compute utilization
+		# Since we are in a simulator, this value is hard to use correctly. Use getActiveTime() instead.
+		self.__activeTime = 0
+		## The time when the server became last active (None, not currently active)
+		self.__activeTimeStarted = None
+		## Value used to compute utilization
+		self.lastActiveTime = 0
+
 		## Server ID for pretty-printing
 		self.name = 'server' + str(Server.lastServerId)
 		Server.lastServerId += 1
@@ -241,6 +261,17 @@ class Server:
 		self.sim = sim
 		if self.controlPeriod > 0:
 			self.sim.add(0, self.runControlLoop)
+
+	## Compute the (simulated) amount of time this server has been active.
+	# @note In a real OS, the active time would be updated at each context switch.
+	# However, this is a simulation, therefore, in order not to waste time on
+	# simulating context-switches, we compute this value when requested, as if it
+	# were continuously update.
+	def getActiveTime(self):
+		ret = self.__activeTime
+		if self.__activeTimeStarted is not None:
+			ret += self.sim.now - self.__activeTimeStarted
+		return ret
 
 	## Runs the control loop.
 	# Basically retrieves self.lastestLatencies and computes a new self.theta.
@@ -271,18 +302,23 @@ class Server:
 			# saturation, it's a probability
 			self.theta = min(max(serviceLevel, 0.0), 1.0)
 		
-			valuesToOutput = [ \
-				self.sim.now, \
-				avg(self.latestLatencies), \
-				max(self.latestLatencies), \
-				self.theta \
-			]
-			self.sim.output(self, ','.join(["{0:.5f}".format(value) \
-				for value in valuesToOutput]))
+		# Compute utilization
+		utilization = (self.getActiveTime() - self.lastActiveTime) / self.controlPeriod
+		self.lastActiveTime = self.getActiveTime()
 
-			self.latestLatencies = []
+		# Report
+		valuesToOutput = [ \
+			self.sim.now, \
+			avg(self.latestLatencies), \
+			maxOrNan(self.latestLatencies), \
+			self.theta, \
+			utilization, \
+		]
+		self.sim.output(self, ','.join(["{0:.5f}".format(value) \
+			for value in valuesToOutput]))
 
 		# Re-run later
+		self.latestLatencies = []
 		self.sim.add(self.controlPeriod, self.runControlLoop)
 
 	## Tells the server to serve a request.
@@ -317,6 +353,10 @@ class Server:
 		#self.sim.log(self, "scheduling")
 		# Select next active request
 		activeRequest = self.activeRequests.popleft()
+		
+		# Track utilization
+		if self.__activeTimeStarted is None:
+			self.__activeTimeStarted = self.sim.now
 
 		# Has this request been scheduled before?
 		if not hasattr(activeRequest, 'remainingTime'):
@@ -362,6 +402,10 @@ class Server:
 	# onScheduleRequests() to pick a new request to schedule.
 	# @param request request that has received enough service time
 	def onCompleted(self, request):
+		# Track utilization
+		self.__activeTime += self.sim.now - self.__activeTimeStarted
+		self.__activeTimeStarted = None
+
 		# Remove request from active list
 		activeRequest = self.activeRequests.popleft()
 		if activeRequest != request:
