@@ -424,9 +424,9 @@ class LoadBalancer:
 		## number of requests served by each replica before the last control period (metric).
 		self.numLastRequestsPerReplica = []
 		self.iteration = 1
-		## average response time of each replica (control input for FRF2 algorithm)
+		## average response time of each replica (control input for FRF-EWMA algorithm)
 		self.ewmaResponseTime = []
-		## number of sample to use for computing average response time (parameter for FRF2 algorithm)
+		## number of sample to use for computing average response time (parameter for FRF-EWMA algorithm)
 		self.ewmaNumSamples = 10
 		
 		# Launch control loop
@@ -464,8 +464,9 @@ class LoadBalancer:
 			maxlat = [max(x) if x else 0 for x in self.lastLatencies]
 			request.chosenBackendIndex = \
 				maxlat.index(min(maxlat))
-		elif self.algorithm == 'FRF2':
+		elif self.algorithm == 'FRF-EWMA':
 			# choose replica with minimum EWMA latency
+			#self.sim.log(self, "EWMA RT {0}", self.ewmaResponseTime)
 			request.chosenBackendIndex = \
 				min(range(0, len(self.backends)), \
 				key = lambda i: self.ewmaResponseTime[i])
@@ -475,7 +476,7 @@ class LoadBalancer:
 		newRequest = Request()
 		newRequest.originalRequest = request
 		newRequest.onCompleted = lambda: self.onCompleted(newRequest)
-		#self.sim.log(self, "Directed request to {0}", newRequest.chosenBackendIndex)
+		#self.sim.log(self, "Directed request to {0}", request.chosenBackendIndex)
 		self.queueLengths[request.chosenBackendIndex] += 1
 		self.numRequestsPerReplica[request.chosenBackendIndex] += 1
 		self.backends[request.chosenBackendIndex].request(newRequest)
@@ -499,10 +500,10 @@ class LoadBalancer:
 		self.lastLatencies[request.chosenBackendIndex].\
 			append(request.completion - request.arrival)
 		self.queueLengths[request.chosenBackendIndex] -= 1
-		alpha = 2 / (self.ewmaNumSamples + 1)
+		ewmaAlpha = 2 / (self.ewmaNumSamples + 1)
 		self.ewmaResponseTime[request.chosenBackendIndex] = \
-			alpha * (request.completion - request.arrival) + \
-			(1 - alpha) * self.ewmaResponseTime[request.chosenBackendIndex]
+			ewmaAlpha * (request.completion - request.arrival) + \
+			(1 - ewmaAlpha) * self.ewmaResponseTime[request.chosenBackendIndex]
 		
 		# Call original onCompleted
 		request.onCompleted()
@@ -565,9 +566,11 @@ class LoadBalancer:
 		elif self.algorithm == 'FRF':
 			# fastest replica first is not dynamic
 			pass
-		elif self.algorithm == 'FRF2':
-			# fastest replica first is not dynamic
-			pass
+		elif self.algorithm == 'FRF-EWMA':
+			# slowly forget response times
+			ewmaAlpha = 2 / (self.ewmaNumSamples + 1)
+			for i in range(0, len(self.backends)):
+				self.ewmaResponseTime[i] *= (1 - ewmaAlpha)
 		elif self.algorithm == 'equal-thetas':
 			for i in range(0,len(self.backends)):
 				# This code was meant to adjust the gain so that the weights of weak servers
@@ -763,6 +766,10 @@ def main():
 	# A naive approach which integrates each server's theta-meanTheta to
 	# drive all thetas towards each other
 	#loadBalancer.algorithm = 'equal-thetas'
+	
+	# FRF-EWMA
+	# Fastest replica first based on exponentially weighted moving average response time 
+	loadBalancer.algorithm = 'FRF-EWMA'
 
 	clients = []
 	def addClients(numClients):
