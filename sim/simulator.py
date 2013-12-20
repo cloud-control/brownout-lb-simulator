@@ -454,8 +454,10 @@ class LoadBalancer:
 		self.lastLastThetas = []
 		## latencies measured during last control period (metric)
 		self.lastLatencies = []
+		self.lastLastLatencies = []
 		## queue length of each replica (control input for SQF algorithm)
 		self.queueLengths = []
+		self.lastQueueLengths = []
 		## number of requests, with or without optional content, served since
 		# the load-balancer came online (metric)
 		self.numRequests = 0
@@ -514,6 +516,16 @@ class LoadBalancer:
 			request.chosenBackendIndex = \
 				min(range(0, len(self.backends)), \
 				key = lambda i: self.ewmaResponseTime[i])
+		elif self.algorithm == 'predictive':
+			maxlat = np.array([max(x) if x else 0 for x in self.lastLatencies])
+			maxlatLast = np.array([max(x) if x else 0 for x in self.lastLastLatencies])
+			wlat = 0.2
+			wqueue = 0.8
+			points = wlat*(maxlat - maxlatLast) + wqueue*(np.array(self.queueLengths) - np.array(self.lastQueueLengths))
+			# choose replica with shortest queue
+			request.chosenBackendIndex = \
+				min(range(0, len(points)), \
+				key = lambda i: points[i])
 		else:
 			raise Exception("Unknown load-balancing algorithm " + self.algorithm)
 			
@@ -582,8 +594,9 @@ class LoadBalancer:
 				if min(x) <= 0.0: return None
 				# function that we want to minimize
 				f = -sum(cvxopt.mul(x, cvxopt.div(intA-cvxopt.mul(intB,x), intC+cvxopt.mul(intD,x))))
-				Df = -(cvxopt.div((cvxopt.mul(intA,intC) - 2*cvxopt.mul(intB,cvxopt.mul(intC,x))-cvxopt.mul(intB,cvxopt.mul(intD,(x**2)))),\
-					             ((intC+cvxopt.mul(intD,x))**2))).T
+				Df = -(cvxopt.div((cvxopt.mul(intA,intC) -  \
+                                     2*cvxopt.mul(intB,cvxopt.mul(intC,x))-cvxopt.mul(intB,cvxopt.mul(intD,(x**2)))),\
+				     ((intC+cvxopt.mul(intD,x))**2))).T
 				if z is None: return f, Df
 				H = spdiag((
 					cvxopt.div(2*cvxopt.mul(intA,cvxopt.mul(intC,intD)), (intC+cvxopt.mul(intD,x))**3) + \
@@ -615,6 +628,9 @@ class LoadBalancer:
 			ewmaAlpha = 2 / (self.ewmaNumSamples + 1)
 			for i in range(0, len(self.backends)):
 				self.ewmaResponseTime[i] *= (1 - ewmaAlpha)
+		elif self.algorithm == 'predictive':
+			# preditctive is not dynamic
+			pass
 		elif self.algorithm == 'equal-thetas':
 			for i in range(0,len(self.backends)):
 				# This code was meant to adjust the gain so that the weights of weak servers
@@ -660,7 +676,9 @@ class LoadBalancer:
 		self.sim.output(self, ','.join(["{0:.5f}".format(value) \
 			for value in valuesToOutput]))
 		
+		self.lastQueueLengths = self.queueLengths
 		self.lastLastThetas = self.lastThetas[:]
+		self.lastLastLatencies = self.lastLatencies
 		self.lastLatencies = [ [] for _ in self.backends ]
 		self.numLastRequestsPerReplica = self.numRequestsPerReplica[:]
 
@@ -798,7 +816,7 @@ def main():
 	#loadBalancer.algorithm = 'theta-diff'
 
 	# Optimization-based algorithm (Jonas and Manfred)	
-	loadBalancer.algorithm = 'optimization'
+	#loadBalancer.algorithm = 'optimization'
 
 	# SQF - shortest queue first
 	#loadBalancer.algorithm = 'SQF'
@@ -813,7 +831,11 @@ def main():
 	
 	# FRF-EWMA
 	# Fastest replica first based on exponentially weighted moving average response time 
-	loadBalancer.algorithm = 'FRF-EWMA'
+	#loadBalancer.algorithm = 'FRF-EWMA'
+
+	# Predictive load balancer, based on weighted difference between queue lenghts
+	# and response times
+	loadBalancer.algorithm = 'predictive'
 
 	clients = []
 	def addClients(numClients):
