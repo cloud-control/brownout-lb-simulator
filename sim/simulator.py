@@ -785,18 +785,19 @@ class MarkovianArrivalProcess:
 ## Entry-point for simulator.
 # Setups up all entities, then runs simulation.
 def main():
+	algorithms = ("static theta-diff optimization SQF FRF equal-thetas " + \
+		"FRF-EWMA predictive").split()
 
 	# Parsing command line options to find out the algorithm
-	parser = argparse.ArgumentParser(description='Load balancer.')
-	parser.add_argument('algorithm', metavar='algorithm', nargs='+', 
-               help='static, theta-diff, optimization, SQF, FRF, ' + \
-               'equal-thetas, FRF-EWMA, predictive')
+	parser = argparse.ArgumentParser(description='Run brownout load balancer simulation.')
+	parser.add_argument('--algorithm', 
+		help = 'Load-balancer algorithm: ' + ' '.join(algorithms),
+		default = algorithms[0])
 	args = parser.parse_args()
-	algorithm = args.algorithm[1]
-	if algorithm not in [ 'static', 'theta-diff', 'optimization', \
-                              'SQF', 'FRF', 'equal-thetas', 'FRF-EWMA', \
-                              'predictive' ]:
-		print("Unsupported algorithm")
+	algorithm = args.algorithm
+	if algorithm not in algorithms:
+		print("Unsupported algorithm '{0}'".format(algorithm))
+		parser.print_help()
 		quit()
 
 	numClients = 50
