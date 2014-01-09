@@ -70,7 +70,7 @@ class Simulator:
 	## Constructor
 	def __init__(self, outputDirectory = '.'):
 		## events indexed by time
-		self.events = defaultdict(set)
+		self.events = defaultdict(list)
 		## reverse index from event handlers to time index, to allow easy update
 		self.whatToTime = {}
 		## current simulation time
@@ -90,7 +90,7 @@ class Simulator:
 	# @param what Event handler, can be a function, class method or lambda
 	# @see Callable
 	def add(self, delay, what):
-		self.events[self.now + delay].add(what)
+		self.events[self.now + delay].append(what)
 		self.whatToTime[what] = self.now + delay
 
 	## Update an existing event or add a new event
