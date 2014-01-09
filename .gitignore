@@ -1,1 +1,12 @@
+# Intermediate files from LaTeX
 out.o
+
+# Python-compiled byte-code
+*.py[co]
+
+# Doxygen-generated code documentation
+sim/html
+sim/latex
+
+# Results (maybe later we'll have them in the repo)
+sim/results
