@@ -9,6 +9,7 @@ from collections import defaultdict, deque
 import numpy as np
 from cvxopt import solvers, matrix, spdiag, log
 import cvxopt
+import os
 import random
 import sys
 import argparse
@@ -67,7 +68,7 @@ def normalize(numbers):
 # Implements an event-driven simulator
 class Simulator:
 	## Constructor
-	def __init__(self):
+	def __init__(self, outputDirectory = '.'):
 		## events indexed by time
 		self.events = defaultdict(set)
 		## reverse index from event handlers to time index, to allow easy update
@@ -77,6 +78,8 @@ class Simulator:
 		## cache of open file descriptors: for each issuer, this dictionary maps
 		# to a file descriptor
 		self.outputFiles = {}
+		## output directory
+		self.outputDirectory = outputDirectory
 		self.optionalOn = 0
 		self.optionalOff = 0
 
@@ -151,6 +154,7 @@ class Simulator:
 	def output(self, issuer, outputLine):
 		if issuer not in self.outputFiles:
 			outputFilename = 'sim-' + str(issuer) + '.csv'
+			outputFilename = os.path.join(self.outputDirectory, outputFilename)
 			self.outputFiles[issuer] = open(outputFilename, 'w')
 		outputFile = self.outputFiles[issuer]
 		outputFile.write(outputLine + "\n")
@@ -793,6 +797,9 @@ def main():
 	parser.add_argument('--algorithm', 
 		help = 'Load-balancer algorithm: ' + ' '.join(algorithms),
 		default = algorithms[0])
+	parser.add_argument('--outdir', 
+		help = 'Destination folder for results and logs (default: current folder)',
+		default = '.')
 	args = parser.parse_args()
 	algorithm = args.algorithm
 	if algorithm not in algorithms:
@@ -805,7 +812,7 @@ def main():
 	solvers.options['show_progress'] = False # suppress output of cvxopt solver
 
 	random.seed(1)
-	sim = Simulator()
+	sim = Simulator(outputDirectory = args.outdir)
 	server1 = Server(sim, controlPeriod = serverControlPeriod,
                 serviceTimeY = 0.07, serviceTimeN = 0.001)
 	server2 = Server(sim, controlPeriod = serverControlPeriod, \
