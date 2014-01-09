@@ -11,6 +11,7 @@ from cvxopt import solvers, matrix, spdiag, log
 import cvxopt
 import random
 import sys
+import argparse
 
 ## @package simulator Main simulator namespace
 
@@ -112,8 +113,8 @@ class Simulator:
 		while self.events:
 			prevNow = self.now
 			self.now = min(self.events)
-			if int(prevNow / 100) < int(self.now / 100):
-				self.log(self, "progressing, handled {0} events", numEvents)
+			#if int(prevNow / 100) < int(self.now / 100):
+			#	self.log(self, "progressing, handled {0} events", numEvents)
 			events = self.events[self.now]
 			event = events.pop()
 			del self.whatToTime[event]
@@ -784,6 +785,20 @@ class MarkovianArrivalProcess:
 ## Entry-point for simulator.
 # Setups up all entities, then runs simulation.
 def main():
+
+	# Parsing command line options to find out the algorithm
+	parser = argparse.ArgumentParser(description='Load balancer.')
+	parser.add_argument('algorithm', metavar='algorithm', nargs='+', 
+               help='static, theta-diff, optimization, SQF, FRF, ' + \
+               'equal-thetas, FRF-EWMA, predictive')
+	args = parser.parse_args()
+	algorithm = args.algorithm[1]
+	if algorithm not in [ 'static', 'theta-diff', 'optimization', \
+                              'SQF', 'FRF', 'equal-thetas', 'FRF-EWMA', \
+                              'predictive' ]:
+		print("Unsupported algorithm")
+		quit()
+
 	numClients = 50
 	serverControlPeriod = 10
 	solvers.options['show_progress'] = False # suppress output of cvxopt solver
@@ -808,34 +823,9 @@ def main():
 	loadBalancer.addBackend(server4)
 	loadBalancer.addBackend(server5)
 
-	# Force static load-balancing with chosen weights
-	#loadBalancer.algorithm = 'static'
-	#loadBalancer.weights = [ .60, .20, .10, .05, .05 ]
-
-	# Heuristic based on dimmer differences (Martina)	
-	#loadBalancer.algorithm = 'theta-diff'
-
-	# Optimization-based algorithm (Jonas and Manfred)	
-	#loadBalancer.algorithm = 'optimization'
-
-	# SQF - shortest queue first
-	#loadBalancer.algorithm = 'SQF'
-
-	# FRF - fastest replica first
-	#loadBalancer.algorithm = 'FRF'
-	
-	# Equal thetas comparison
-	# A naive approach which integrates each server's theta-meanTheta to
-	# drive all thetas towards each other
-	#loadBalancer.algorithm = 'equal-thetas'
-	
-	# FRF-EWMA
-	# Fastest replica first based on exponentially weighted moving average response time 
-	#loadBalancer.algorithm = 'FRF-EWMA'
-
-	# Predictive load balancer, based on weighted difference between queue lenghts
-	# and response times
-	loadBalancer.algorithm = 'predictive'
+	# For static algorithm set the weights
+	loadBalancer.weights = [ .60, .20, .10, .05, .05 ]
+	loadBalancer.algorithm = algorithm
 
 	clients = []
 	def addClients(numClients):
