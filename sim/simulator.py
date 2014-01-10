@@ -833,7 +833,7 @@ def main():
 		default = '.')
 	parser.add_argument('--timeSlice',
 		type = float,
-		help = 'Destination folder for results and logs (default: %default)',
+		help = 'Time-slice of server scheduler (default: %default)',
 		default = 0.01)
 	parser.add_argument('--delay',
 		type = float,
