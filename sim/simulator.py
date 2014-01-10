@@ -832,7 +832,8 @@ def main():
 	loadBalancer.addBackend(server5)
 
 	# For static algorithm set the weights
-	loadBalancer.weights = [ .60, .20, .10, .05, .05 ]
+	if algorithm == 'static':
+		loadBalancer.weights = [ .60, .20, .10, .05, .05 ]
 	loadBalancer.algorithm = algorithm
 
 	clients = []
