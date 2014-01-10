@@ -800,6 +800,10 @@ def main():
 	parser.add_argument('--outdir', 
 		help = 'Destination folder for results and logs (default: current folder)',
 		default = '.')
+	parser.add_argument('--timeSlice',
+		type = float,
+		help = 'Destination folder for results and logs (default: %default)',
+		default = 0.01)
 	args = parser.parse_args()
 	algorithm = args.algorithm
 	if algorithm not in algorithms:
@@ -814,15 +818,20 @@ def main():
 	random.seed(1)
 	sim = Simulator(outputDirectory = args.outdir)
 	server1 = Server(sim, controlPeriod = serverControlPeriod,
-                serviceTimeY = 0.07, serviceTimeN = 0.001)
+        serviceTimeY = 0.07, serviceTimeN = 0.001, \
+		timeSlice = args.timeSlice)
 	server2 = Server(sim, controlPeriod = serverControlPeriod, \
-		serviceTimeY = 0.07 * 2, serviceTimeN = 0.001 * 2)
+		serviceTimeY = 0.07 * 2, serviceTimeN = 0.001 * 2, \
+		timeSlice = args.timeSlice)
 	server3 = Server(sim, controlPeriod = serverControlPeriod, \
-		serviceTimeY = 0.07 * 3, serviceTimeN = 0.001 * 3)
+		serviceTimeY = 0.07 * 3, serviceTimeN = 0.001 * 3, \
+		timeSlice = args.timeSlice)
 	server4 = Server(sim, controlPeriod = serverControlPeriod, \
-		serviceTimeY = 0.07 * 10, serviceTimeN = 0.001 * 50)
+		serviceTimeY = 0.07 * 10, serviceTimeN = 0.001 * 50, \
+		timeSlice = args.timeSlice)
 	server5 = Server(sim, controlPeriod = serverControlPeriod, \
-		serviceTimeY = 0.07 * 10, serviceTimeN = 0.001 * 50)
+		serviceTimeY = 0.07 * 10, serviceTimeN = 0.001 * 50, \
+		timeSlice = args.timeSlice)
 
 	loadBalancer = LoadBalancer(sim, controlPeriod = 1)
 	loadBalancer.addBackend(server1)
