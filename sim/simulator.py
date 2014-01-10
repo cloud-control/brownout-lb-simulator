@@ -430,6 +430,37 @@ class Server:
 	def __str__(self):
 		return str(self.name)
 
+## Simulates a link with latency
+class Link:
+	## Constructor.
+	# @param sim instance of a simulator.
+	# @param server server to direct incoming requests to
+	# @param delay delay (in seconds) introduced by this link
+	def __init__(self, sim, server, delay = 0.01):
+		## destination server
+		self.server = server
+		## simulator instance
+		self.sim = sim
+		## delay (in seconds) that the link introduces
+		self.delay = delay
+
+	## Handles a request.
+	# @param request the request to handle
+	def request(self, request):
+		newRequest = Request()
+		newRequest.originalRequest = request
+		newRequest.onCompleted = lambda: self.onCompleted(newRequest)
+		self.sim.add(self.delay, lambda: self.server.request(newRequest))
+
+	## Handles a completed request.
+	# @param request the request to handle
+	def onCompleted(self, request):
+		originalRequest = request.originalRequest
+		# XXX: decapsulation could/should be improved
+		originalRequest.withOptional = request.withOptional
+		originalRequest.theta = request.theta
+		self.sim.add(self.delay, lambda: originalRequest.onCompleted())
+
 ## Simulates a load-balancer.
 # The load-balancer is assumed to take zero time for its decisions.
 class LoadBalancer:
@@ -804,6 +835,10 @@ def main():
 		type = float,
 		help = 'Destination folder for results and logs (default: %default)',
 		default = 0.01)
+	parser.add_argument('--delay',
+		type = float,
+		help = 'Delay from load-balancer to servers (default: %default)',
+		default = 0)
 	args = parser.parse_args()
 	algorithm = args.algorithm
 	if algorithm not in algorithms:
@@ -833,12 +868,18 @@ def main():
 		serviceTimeY = 0.07 * 10, serviceTimeN = 0.001 * 50, \
 		timeSlice = args.timeSlice)
 
+	link1 = Link(sim = sim, server = server1, delay = args.delay)
+	link2 = Link(sim = sim, server = server2, delay = args.delay)
+	link3 = Link(sim = sim, server = server3, delay = args.delay)
+	link4 = Link(sim = sim, server = server4, delay = args.delay)
+	link5 = Link(sim = sim, server = server5, delay = args.delay)
+
 	loadBalancer = LoadBalancer(sim, controlPeriod = 1)
-	loadBalancer.addBackend(server1)
-	loadBalancer.addBackend(server2)
-	loadBalancer.addBackend(server3)
-	loadBalancer.addBackend(server4)
-	loadBalancer.addBackend(server5)
+	loadBalancer.addBackend(link1)
+	loadBalancer.addBackend(link2)
+	loadBalancer.addBackend(link3)
+	loadBalancer.addBackend(link4)
+	loadBalancer.addBackend(link5)
 
 	# For static algorithm set the weights
 	if algorithm == 'static':
