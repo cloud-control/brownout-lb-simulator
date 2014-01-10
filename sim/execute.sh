@@ -11,3 +11,10 @@ do
 done
 wait
 
+echo
+echo "Results sorted by algorithm:"
+cat results/*/sim-final-results.csv | sort
+
+echo
+echo "Results sorted by performance:"
+cat results/*/sim-final-results.csv | sort -t, -k2 -r

@@ -858,6 +858,7 @@ def main():
 	sim.run(until = 5000)
 	recommendationPercentage = float(sim.optionalOn) / float(sim.optionalOff + sim.optionalOn)
 	sim.log(sim, loadBalancer.algorithm + ", total recommendation percentage {0}", recommendationPercentage)
+	sim.output('final-results', "{algo:15}, {res:.5f}".format(algo = loadBalancer.algorithm, res = recommendationPercentage))
 
 def responseTimeTest():
 	results = []
