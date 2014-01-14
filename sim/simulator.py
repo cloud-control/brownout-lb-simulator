@@ -643,6 +643,8 @@ class LoadBalancer:
 				return f, Df, H
 			solution = solvers.cp(F, G, h, A=A, b=b)['x']
 			self.weights = list(solution)
+			x = matrix(self.weights)
+			self.sim.output('optimizer', ','.join(map(str, list(cvxopt.div(intA-cvxopt.mul(intB,x), intC+cvxopt.mul(intD,x))))))
 		elif self.algorithm == 'theta-diff':
 			modifiedLastLastThetas = self.lastLastThetas # used to do the quick fix later
 			# (by Martina:) a quick and dirty fix for this behavior that when the dimmer
