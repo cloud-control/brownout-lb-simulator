@@ -283,7 +283,9 @@ class Server:
 	# Ask Martina for details. :P
 	def runControlLoop(self):
 		if self.latestLatencies:
-			serviceTime = max(self.latestLatencies)
+			# XXX: original algorithm is with max, change this back to max once we
+			# completed debugging the optimizer
+			serviceTime = avg(self.latestLatencies)
 			serviceLevel = self.theta
 
 			# choice of the estimator:
