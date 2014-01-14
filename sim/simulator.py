@@ -612,8 +612,8 @@ class LoadBalancer:
 			arrivalRate = float(self.numRequests - self.lastNumRequests) / float(self.controlPeriod)
 			# TODO: we have to substitute these vectors (mu and M) 
 			# with estimations of their values
-			mu = cvxopt.div(1,matrix([0.001 * 1, 0.001 * 2, 0.001 * 3, 0.001 * 10, 0.001 * 10]))
-			M = cvxopt.div(1,matrix([0.07 * 1, 0.07 * 2, 0.07 * 3, 0.07 * 50, 0.07 * 50]))
+			mu = cvxopt.div(1,matrix([0.001 * 1, 0.001 * 2, 0.001 * 3, 0.001 * 50, 0.001 * 50]))
+			M = cvxopt.div(1,matrix([0.07 * 1, 0.07 * 2, 0.07 * 3, 0.07 * 10, 0.07 * 10]))
 			A = matrix(np.ones((1, len(self.weights))))
 			b = matrix(1, (1,1), 'd')
 			m, n = A.size
@@ -903,7 +903,7 @@ def main():
 	sim.add(   0, lambda: addClients(numClients))
 	sim.add(1000, lambda: addClients(numClients))
 	sim.add(2000, lambda: removeClients(int(numClients*1.5)))
-	sim.add(3000, lambda: changeServiceTime(server1, 0.21, 0.003))
+	#sim.add(3000, lambda: changeServiceTime(server1, 0.21, 0.003))
 	sim.add(4000, lambda: addClients(int(numClients/2)))
 	
 	sim.run(until = 5000)
