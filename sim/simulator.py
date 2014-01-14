@@ -616,8 +616,8 @@ class LoadBalancer:
 			# with estimations of their values
 			mu = cvxopt.div(1,matrix([0.001 * 1, 0.001 * 2, 0.001 * 3, 0.001 * 50, 0.001 * 50]))
 			M = cvxopt.div(1,matrix([0.07 * 1, 0.07 * 2, 0.07 * 3, 0.07 * 10, 0.07 * 10]))
-			A = matrix(np.ones((1, len(self.weights))))
-			b = matrix(1, (1,1), 'd')
+			A = matrix(np.ones((1, len(self.weights)))) # A and b are constraints for the sum of weights to be 1.0
+			b = matrix(1.0, (1,1), 'd')
 			m, n = A.size
 			# intermediate quantities for optimization
 			intA = cvxopt.mul(M,mu)*setpoint - M
@@ -625,8 +625,19 @@ class LoadBalancer:
 			intC = mu - M
 			intD = (mu - M)*arrivalRate*setpoint 
 			# inequality constraints
-			G = matrix(-1*np.eye(len(self.weights)))
-			h = matrix(np.zeros((len(self.weights),1)))
+			G = matrix(0.0, (3*len(self.weights), len(self.weights)), 'd')
+			for i in range(0, len(self.weights)):
+				G[i,i] = -1.0 # constraints for nonnegativity of weights
+				G[len(self.weights) + i, i] = 1.0 # constrain that lower bound on optimal dimmers is 0
+				G[2*len(self.weights) + i, i] = -1.0 # constrain that upper bound on optimal dimmers is 1
+			h = matrix(0.0, (3*len(self.weights), 1), 'd')
+			for i in range(0, len(self.weights)):
+				if intB[i] == 0: # avoid initial corner case
+					h[len(self.weights) + i, 0] = 1
+					h[2*len(self.weights) + i, 0] = 1
+				else:
+					h[len(self.weights) + i, 0] = intA[i] / intB[i] # for dimmers greater than 0
+					h[2*len(self.weights) + i, 0] = (intC[i] - intA[i]) / (intD[i] + intB[i]) # for dimmers lower than 1
 			def F(x=None, z=None):
 				if x is None: return 0, matrix(1.0, (n, 1))
 				if min(x) <= 0.0: return None
