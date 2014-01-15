@@ -70,7 +70,9 @@ brownout-compliant cloud applications because it does not take into
 account the replica control loop adjusting the percentage of optional
 code executed. Since in our case the load-balancer is the only entity
 routing requests to the replica, this approach is equivalent to the
-connection count policy.
+connection count policy. A variation of this is the Two Random Choices
+algorithm, 2RC~\cite{2RC}, that randomly chooses two servers and
+assigns the request to the least loaded one between them.
 
 In an attempt to overcome the mentioned limitations a merge of the
 fastest replica and the connection count approach was implemented
@@ -84,3 +86,12 @@ borrows the idea of looking at the difference between the past
 behavior and the current one, although our load-balancer observes the
 changes in the amount of optional code served and tries to maximize
 the requests served enabling the full computation.
+
+Dynamic solutions can be based on control
+theory~\cite{multipathctlb,comparisonstaticdynamic} and also account
+for the cost of applying the control action~\cite{costofcontrol}. This
+is especially necessary where the load balancer acts also as a
+resource allocator and the induced sudden lack of the resource can
+result in poor performances. This is not an issue with the stateless
+requests that are typical in the cloud domain.
+

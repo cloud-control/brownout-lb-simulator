@@ -543,6 +543,17 @@ class LoadBalancer:
 			request.chosenBackendIndex = \
 				min(range(0, len(self.queueLengths)), \
 				key = lambda i: self.queueLengths[i])
+		elif self.algorithm == '2RC':
+			if len(self.backends) == 1:
+				request.chosenBackendIndex = 0
+			# randomly select two backends and send it to the least loaded
+			else:
+				backends = set(range(0, len(self.backends)))
+				randomlychosen = random.sample(backends, 2)
+				if self.queueLengths[randomlychosen[0]] > self.queueLengths[randomlychosen[1]]:
+					request.chosenBackendIndex = randomlychosen[1]
+				else:
+					request.chosenBackendIndex = randomlychosen[0]
 		elif self.algorithm == 'FRF':
 			# choose replica with minimum latency
 			maxlat = [max(x) if x else 0 for x in self.lastLatencies]
@@ -671,6 +682,9 @@ class LoadBalancer:
 			self.weights = [ x / preNormalizedSumOfWeights for x in self.weights ]
 		elif self.algorithm == 'SQF':
 			# shortest queue first is not dynamic
+			pass
+		elif self.algorithm == '2RC':
+			# two random choices is not dynamic
 			pass
 		elif self.algorithm == 'FRF':
 			# fastest replica first is not dynamic
@@ -837,7 +851,7 @@ class MarkovianArrivalProcess:
 # Setups up all entities, then runs simulation.
 def main():
 	algorithms = ("static theta-diff optimization SQF FRF equal-thetas " + \
-		"FRF-EWMA predictive").split()
+		"FRF-EWMA predictive 2RC").split()
 
 	# Parsing command line options to find out the algorithm
 	parser = argparse.ArgumentParser(description='Run brownout load balancer simulation.')

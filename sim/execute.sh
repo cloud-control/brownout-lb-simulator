@@ -2,7 +2,7 @@
 
 mkdir -p results
 
-algs=( static theta-diff optimization SQF FRF equal-thetas FRF-EWMA predictive )
+algs=( static theta-diff optimization SQF FRF equal-thetas FRF-EWMA predictive 2RC )
 
 for algorithm in "${algs[@]}"
 do
