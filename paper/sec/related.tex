@@ -1,9 +1,9 @@
 Load-balancing is a standard component of Internet-scale services,
 allowing them to achieve scalability and
-resilience~\citep{Barroso09,Hamilton07:LISA}.  Many load-balancing
-policies have been proposed, aiming at different optimizations,
-spanning from processor load~~\cite{Stankovic:TC} to memory
-management~\cite{PattersonMemoryLB,MemoryLBACC} and web-server
+resilience~\citep{Barroso09,Hamilton07:LISA,clusteredbalancing}.  Many
+load-balancing policies have been proposed, aiming at different
+optimizations, spanning from processor load~\cite{Stankovic:TC} to
+memory management~\cite{PattersonMemoryLB,MemoryLBACC} and web-server
 systems~\cite{Cardellini2003}. Load-balancing strategies can be guided
 by many different aims, for example geografical~\cite{GeograficalSASO}
 or driven by the electricity price was proposed to reduce the
@@ -11,8 +11,6 @@ datacenter operation
 cost~\cite{LoadBalancingForElectricity:TCC}. Cloud applications have
 given a further boost to the
 research~\citep{Barroso09,Lu11:PerfEval,Lin12:IGCC}.
-
-\str{{\bf Martina}: Reinforce the citation list for the static part}
 
 Load-balancing solutions can be divided into two different types:
 static and dynamic policies. Static load-balancing refers to a fixed
@@ -71,8 +69,8 @@ account the replica control loop adjusting the percentage of optional
 code executed. Since in our case the load-balancer is the only entity
 routing requests to the replica, this approach is equivalent to the
 connection count policy. A variation of this is the Two Random Choices
-algorithm, 2RC~\cite{2RC}, that randomly chooses two servers and
-assigns the request to the least loaded one between them.
+algorithm, \textbf{2RC}~\cite{2RC}, that randomly chooses two replicas
+and assigns the request to the least loaded one between them.
 
 In an attempt to overcome the mentioned limitations a merge of the
 fastest replica and the connection count approach was implemented
