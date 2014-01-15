@@ -709,7 +709,7 @@ class LoadBalancer:
 				#gamma = 6/mueff
 				
 				# Gain
-				gamma = 0.0125
+				gamma = self.equal_theta_gain
 				
 				# Calculate error to the average
 				e = self.lastThetas[i] - avg(self.lastThetas)
@@ -869,6 +869,10 @@ def main():
 		type = float,
 		help = 'Delay from load-balancer to servers (default: %default)',
 		default = 0)
+	parser.add_argument('--equal-theta-gain',
+		type = float,
+		help = 'Gain in the equal-theta algorithm (default: %default)',
+		default = 0.0416)
 	args = parser.parse_args()
 	algorithm = args.algorithm
 	if algorithm not in algorithms:
@@ -915,6 +919,8 @@ def main():
 	if algorithm == 'static':
 		loadBalancer.weights = [ .60, .20, .10, .05, .05 ]
 	loadBalancer.algorithm = algorithm
+
+	loadBalancer.equal_theta_gain = args.equal_theta_gain
 
 	clients = []
 	def addClients(numClients):
