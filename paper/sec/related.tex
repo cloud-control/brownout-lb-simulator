@@ -39,17 +39,20 @@ vector would not reflect the current situation.
 On the contrary, in dynamic load-balancing the choice of the replica
 is based on measurements about the current system state. One widely
 used option is the choice of the fastest replica, therefore realizing
-a \textbf{Fastest Replica First (FRF)} load balancer. This is unlikely
-to work with brownout-compliant applications, because each replica
-selects the amount of optional code executed to maintain the response
-times to a certain desired value, and there is no way to distinguish
-between a congested replica that is not serving optional content and a
-non-congested replica that could serve the optional content. Also with
-non-adaptive applications this algorithm can cause severe performance
-loss, since the current response time does not necessarily reflect the
-future response time and the internal replica queue can saturate at an
-unexpected rate, especially if the time taken to produce the answer is
-much greater than the arrival rate.
+a \textbf{Fastest Replica First (FRF)} load balancer.
+\str{Describe FRF-EWMA here.}
+
+FRF and its variations are unlikely to work with brownout-compliant
+applications, because each replica selects the amount of optional code
+executed to maintain the response times to a certain desired value,
+and there is no way to distinguish between a congested replica that is
+not serving optional content and a non-congested replica that could
+serve the optional content. Also with non-adaptive applications this
+algorithm can cause severe performance loss, since the current
+response time does not necessarily reflect the future response time
+and the internal replica queue can saturate at an unexpected rate,
+especially if the time taken to produce the answer is much greater
+than the arrival rate.
 
 Another adopted strategy is based on the connection count and
 generally called \textbf{Shortest Queue First (SQF)}, where the
