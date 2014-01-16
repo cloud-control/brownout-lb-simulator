@@ -5,11 +5,11 @@ load-balancing policies have been proposed, aiming at different
 optimizations, spanning from processor load~\cite{Stankovic:TC} to
 memory management~\cite{PattersonMemoryLB,MemoryLBACC} and web-server
 systems~\cite{Cardellini2003}. Load-balancing strategies can be guided
-by many different aims, for example geografical~\cite{GeograficalSASO}
-or driven by the electricity price was proposed to reduce the
-datacenter operation
-cost~\cite{LoadBalancingForElectricity:TCC}. Cloud applications have
-given a further boost to the
+by many different aims, for example
+geografical~\cite{GeograficalSASO,geographicalwanbalancing} or driven
+by the electricity price was proposed to reduce the datacenter
+operation cost~\cite{LoadBalancingForElectricity:TCC}. Cloud
+applications have given a further boost to the
 research~\citep{Barroso09,Lu11:PerfEval,Lin12:IGCC}.
 
 Load-balancing solutions can be divided into two different types:
@@ -53,24 +53,32 @@ Another adopted strategy is based on the \textbf{connection count},
 where the load-balancer tracks the connections and select the replicas
 with the least amount of connections. This strategy pays off in
 architectures where the replicas have similar capacities and the
-requests are homogeneous. The strategy may not be optimal if the
-requests can be very different from one another --- for example a
-request serves a plain HTML page while another requires looking up a
-lot of data in a database. This suggests that the strategy is unlikely
-to work with brownout-compliant applications, where requests served
-with optional computations can be very different from the ones
-containing only the mandatory content. Stankovic proposed a Bayesian
-approach to the load-balancing problem for a multiprocessor load
-distribution~\cite{Stankovic:TC}. An estimator of the queue length per
-processor is kept updated and the next request is sent to the least
-congested computing unit. This approach is hardly applicable to
-brownout-compliant cloud applications because it does not take into
-account the replica control loop adjusting the percentage of optional
-code executed. Since in our case the load-balancer is the only entity
-routing requests to the replica, this approach is equivalent to the
-connection count policy. A variation of this is the Two Random Choices
-algorithm, \textbf{2RC}~\cite{2RC}, that randomly chooses two replicas
-and assigns the request to the least loaded one between them.
+requests are homogeneous. To account for non-homongeneity, Pao and
+Chen proposed a load balancing solution using the remaining capacity
+of the replicas to determine how the next request should be
+managed~\cite{feedbackintensive}. The capacity is determined through a
+combination of factors like the remaining available CPU and memory,
+the network transmission and the current connection count.  These
+strategies may not be optimal if the requests can be very different
+from one another --- for example a request serves a plain HTML page
+while another requires looking up a lot of data in a database. This
+remark also suggests that the strategy is unlikely to work with
+brownout-compliant applications, where requests served with optional
+computations can be very different from the ones containing only the
+mandatory content.
+
+Stankovic proposed a Bayesian approach to the load-balancing problem
+for a multiprocessor load distribution~\cite{Stankovic:TC}. An
+estimator of the queue length per processor is kept updated and the
+next request is sent to the least congested computing unit. This
+approach is hardly applicable to brownout-compliant cloud applications
+because it does not take into account the replica control loop
+adjusting the percentage of optional code executed. Since in our case
+the load-balancer is the only entity routing requests to the replica,
+this approach is equivalent to the connection count policy. A
+variation of this is the Two Random Choices algorithm,
+\textbf{2RC}~\cite{2RC}, that randomly chooses two replicas and
+assigns the request to the least loaded one between them.
 
 In an attempt to overcome the mentioned limitations a merge of the
 fastest replica and the connection count approach was implemented
