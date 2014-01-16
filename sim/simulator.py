@@ -881,7 +881,7 @@ def main():
 		default = 0.0416)
 	parser.add_argument('--scenario',
 		help = 'Specify a scenario in which to test the system',
-		default = os.path.join(sys.argv[0], 'scenarios', 'A.py'))
+		default = os.path.join(os.path.dirname(sys.argv[0]), 'scenarios', 'A.py'))
 	args = parser.parse_args()
 	algorithm = args.algorithm
 	if algorithm not in algorithms:
@@ -889,69 +889,57 @@ def main():
 		parser.print_help()
 		quit()
 
-	numClients = 50
 	serverControlPeriod = 10
 	solvers.options['show_progress'] = False # suppress output of cvxopt solver
 
 	random.seed(1)
 	sim = Simulator(outputDirectory = args.outdir)
-	server1 = Server(sim, controlPeriod = serverControlPeriod,
-        serviceTimeY = 0.07, serviceTimeN = 0.001, \
-		timeSlice = args.timeSlice)
-	server2 = Server(sim, controlPeriod = serverControlPeriod, \
-		serviceTimeY = 0.07 * 2, serviceTimeN = 0.001 * 2, \
-		timeSlice = args.timeSlice)
-	server3 = Server(sim, controlPeriod = serverControlPeriod, \
-		serviceTimeY = 0.07 * 3, serviceTimeN = 0.001 * 3, \
-		timeSlice = args.timeSlice)
-	server4 = Server(sim, controlPeriod = serverControlPeriod, \
-		serviceTimeY = 0.07 * 10, serviceTimeN = 0.001 * 50, \
-		timeSlice = args.timeSlice)
-	server5 = Server(sim, controlPeriod = serverControlPeriod, \
-		serviceTimeY = 0.07 * 10, serviceTimeN = 0.001 * 50, \
-		timeSlice = args.timeSlice)
-
-	link1 = Link(sim = sim, server = server1, delay = args.delay)
-	link2 = Link(sim = sim, server = server2, delay = args.delay)
-	link3 = Link(sim = sim, server = server3, delay = args.delay)
-	link4 = Link(sim = sim, server = server4, delay = args.delay)
-	link5 = Link(sim = sim, server = server5, delay = args.delay)
-
+	servers = []
+	clients = []
 	loadBalancer = LoadBalancer(sim, controlPeriod = 1)
-	loadBalancer.addBackend(link1)
-	loadBalancer.addBackend(link2)
-	loadBalancer.addBackend(link3)
-	loadBalancer.addBackend(link4)
-	loadBalancer.addBackend(link5)
 
 	# For static algorithm set the weights
-	if algorithm == 'weighted-RR':
+	if algorithm == 'static':
 		loadBalancer.weights = [ .60, .20, .10, .05, .05 ]
 	loadBalancer.algorithm = algorithm
-
 	loadBalancer.equal_theta_gain = args.equal_theta_gain
 
-	clients = []
-	def addClients(numClients):
-		for _ in range(0, numClients):
-			clients.append(ClosedLoopClient(sim, loadBalancer))
+	# Define verbs for scenarios
+	def addClients(at, n):
+		def addClientsHandler():
+			for _ in range(0, n):
+				clients.append(ClosedLoopClient(sim, loadBalancer))
+		sim.add(at, addClientsHandler)
 
-	def removeClients(numClients):
-		for _ in range(0, numClients):
-			client = clients.pop()
-			client.deactivate()
+	def delClients(at, n):
+		def delClientsHandler():
+			for _ in range(0, n):
+				client = clients.pop()
+				client.deactivate()
+		sim.add(at, delClientsHandler)
 
-	def changeServiceTime(server, serviceTimeY, serviceTimeN):
+	def changeServiceTime(serverId, y, n):
+		server = servers[serverId]
 		server.serviceTimeY = serviceTimeY
 		server.serviceTimeN = serviceTimeN
 
-	sim.add(   0, lambda: addClients(numClients))
-	sim.add(1000, lambda: addClients(numClients))
-	sim.add(2000, lambda: removeClients(int(numClients*1.5)))
-	#sim.add(3000, lambda: changeServiceTime(server1, 0.21, 0.003))
-	sim.add(4000, lambda: addClients(int(numClients/2)))
+	def addServer(y, n):
+		server = Server(sim, controlPeriod = serverControlPeriod,
+			serviceTimeY = y, serviceTimeN = n, \
+			timeSlice = args.timeSlice)
+		servers.append(server)
+		loadBalancer.addBackend(server)
+
+	def endOfSimulation(at):
+		otherParams['simulateUntil'] = at
+
+	# Load scenario
+	otherParams = {}
+	execfile(args.scenario)
 	
-	sim.run(until = 5000)
+	if 'simulateUntil' not in otherParams:
+		raise Exception("Scenario does not define end-of-simulation")
+	sim.run(until = otherParams['simulateUntil'])
 	recommendationPercentage = float(sim.optionalOn) / float(sim.optionalOff + sim.optionalOn)
 	sim.log(sim, loadBalancer.algorithm + ", total recommendation percentage {0}", recommendationPercentage)
 	sim.output('final-results', "{algo:15}, {res:.5f}".format(algo = loadBalancer.algorithm, res = recommendationPercentage))
