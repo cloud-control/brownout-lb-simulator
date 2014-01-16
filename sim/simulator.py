@@ -535,22 +535,27 @@ class LoadBalancer:
 	def request(self, request):
 		#self.sim.log(self, "Got request {0}", request)
 		request.arrival = self.sim.now
-		if self.algorithm in [ 'static', 'theta-diff', 'equal-thetas', 'optimization' ]:
+		if self.algorithm in [ 'weighted-RR', 'theta-diff', 'equal-thetas', 'optimization' ]:
 			request.chosenBackendIndex = \
 				weightedChoice(zip(range(0, len(self.backends)), self.weights))
+		elif self.algorithm == 'RR':
+			# round robin
+			request.chosenBackendIndex = \
+				(self.numRequests % len(self.backends)) - 1
 		elif self.algorithm == 'SQF':
 			# choose replica with shortest queue
 			request.chosenBackendIndex = \
 				min(range(0, len(self.queueLengths)), \
 				key = lambda i: self.queueLengths[i])
 		elif self.algorithm == '2RC':
+			maxlat = [max(x) if x else 0 for x in self.lastLatencies]
 			if len(self.backends) == 1:
 				request.chosenBackendIndex = 0
-			# randomly select two backends and send it to the least loaded
+			# randomly select two backends and send it to the one with lowest latency
 			else:
 				backends = set(range(0, len(self.backends)))
 				randomlychosen = random.sample(backends, 2)
-				if self.queueLengths[randomlychosen[0]] > self.queueLengths[randomlychosen[1]]:
+				if maxlat[randomlychosen[0]] > maxlat[randomlychosen[1]]:
 					request.chosenBackendIndex = randomlychosen[1]
 				else:
 					request.chosenBackendIndex = randomlychosen[0]
@@ -617,7 +622,7 @@ class LoadBalancer:
 	# Takes as input the dimmers and computes new weights. Also outputs
 	# CVS-formatted statistics through the Simulator's output routine.
 	def runControlLoop(self):
-		if self.algorithm == 'static':
+		if self.algorithm == 'weighted-RR':
 			# Nothing to do here
 			pass
 		elif self.algorithm == 'optimization':
@@ -682,6 +687,9 @@ class LoadBalancer:
 			self.weights = [ x / preNormalizedSumOfWeights for x in self.weights ]
 		elif self.algorithm == 'SQF':
 			# shortest queue first is not dynamic
+			pass
+		elif self.algorithm == 'RR':
+			# round robin is not dynamic
 			pass
 		elif self.algorithm == '2RC':
 			# two random choices is not dynamic
@@ -850,8 +858,8 @@ class MarkovianArrivalProcess:
 ## Entry-point for simulator.
 # Setups up all entities, then runs simulation.
 def main():
-	algorithms = ("static theta-diff optimization SQF FRF equal-thetas " + \
-		"FRF-EWMA predictive 2RC").split()
+	algorithms = ("weighted-RR theta-diff optimization SQF FRF equal-thetas " + \
+		"FRF-EWMA predictive 2RC RR").split()
 
 	# Parsing command line options to find out the algorithm
 	parser = argparse.ArgumentParser( \
@@ -917,7 +925,7 @@ def main():
 	loadBalancer.addBackend(link5)
 
 	# For static algorithm set the weights
-	if algorithm == 'static':
+	if algorithm == 'weighted-RR':
 		loadBalancer.weights = [ .60, .20, .10, .05, .05 ]
 	loadBalancer.algorithm = algorithm
 
