@@ -10,3 +10,6 @@ sim/latex
 
 # Results (maybe later we'll have them in the repo)
 sim/results
+
+# PDF of the paper
+paper/cdc.pdf
