@@ -80,7 +80,8 @@ the load-balancer is the only entity routing requests to the replica,
 this approach is equivalent to the connection count policy. A
 variation of this algorithm is the \textbf{Two Random Choices
   (2RC)}~\cite{2RC} one, that randomly chooses two replicas and
-assigns the request to the least loaded one between them.
+assigns the request to the fastest one, i.e., the one with the
+lowest maximum latency.
 
 In an attempt to overcome the mentioned limitations a merge of the
 fastest replica and the connection count approach was implemented
