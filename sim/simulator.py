@@ -535,7 +535,7 @@ class LoadBalancer:
 	def request(self, request):
 		#self.sim.log(self, "Got request {0}", request)
 		request.arrival = self.sim.now
-		if self.algorithm in [ 'static', 'theta-diff', 'equal-thetas', 'optimization' ]:
+		if self.algorithm in [ 'weighted-RR', 'theta-diff', 'equal-thetas', 'optimization' ]:
 			request.chosenBackendIndex = \
 				weightedChoice(zip(range(0, len(self.backends)), self.weights))
 		elif self.algorithm == 'RR':
@@ -622,7 +622,7 @@ class LoadBalancer:
 	# Takes as input the dimmers and computes new weights. Also outputs
 	# CVS-formatted statistics through the Simulator's output routine.
 	def runControlLoop(self):
-		if self.algorithm == 'static':
+		if self.algorithm == 'weighted-RR':
 			# Nothing to do here
 			pass
 		elif self.algorithm == 'optimization':
@@ -858,7 +858,7 @@ class MarkovianArrivalProcess:
 ## Entry-point for simulator.
 # Setups up all entities, then runs simulation.
 def main():
-	algorithms = ("static theta-diff optimization SQF FRF equal-thetas " + \
+	algorithms = ("weighted-RR theta-diff optimization SQF FRF equal-thetas " + \
 		"FRF-EWMA predictive 2RC RR").split()
 
 	# Parsing command line options to find out the algorithm
@@ -924,7 +924,7 @@ def main():
 	loadBalancer.addBackend(link5)
 
 	# For static algorithm set the weights
-	if algorithm == 'static':
+	if algorithm == 'weighted-RR':
 		loadBalancer.weights = [ .60, .20, .10, .05, .05 ]
 	loadBalancer.algorithm = algorithm
 
