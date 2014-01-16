@@ -3,9 +3,10 @@ allowing them to achieve scalability and
 resilience~\citep{Barroso09,Hamilton07:LISA,clusteredbalancing}.  Many
 load-balancing policies have been proposed, aiming at different
 optimizations, spanning from processor load~\cite{Stankovic:TC} to
-memory management~\cite{PattersonMemoryLB,MemoryLBACC} and web-server
-systems~\cite{Cardellini2003}. Load-balancing strategies can be guided
-by many different aims, for example
+memory management~\cite{PattersonMemoryLB,MemoryLBACC}, web-server
+systems~\cite{Cardellini2003} and iterative 
+algorithms~\cite{BahiIterative}. Load-balancing strategies can be 
+guided by many different aims, for example
 geografical~\cite{GeograficalSASO,geographicalwanbalancing} or driven
 by the electricity price was proposed to reduce the datacenter
 operation cost~\cite{LoadBalancingForElectricity:TCC}. Cloud
@@ -104,9 +105,10 @@ the requests served enabling the full computation.
 
 Dynamic solutions can be based on control
 theory~\cite{multipathctlb,comparisonstaticdynamic} and also account
-for the cost of applying the control action~\cite{costofcontrol}. This
-is especially necessary where the load balancer acts also as a
-resource allocator and the induced sudden lack of the resource can
-result in poor performances. This is not an issue with the stateless
-requests that are typical in the cloud domain.
+for the cost of applying the control action~\cite{costofcontrol} or for
+the load trend~\cite{CasolariSA}. This is especially necessary where 
+the load balancer acts also as a resource allocator and the induced 
+sudden lack of the resource can result in poor performances. This is 
+not an issue with the stateless requests that are typical in the cloud 
+domain.
 
