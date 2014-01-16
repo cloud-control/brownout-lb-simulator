@@ -854,25 +854,26 @@ def main():
 		"FRF-EWMA predictive 2RC").split()
 
 	# Parsing command line options to find out the algorithm
-	parser = argparse.ArgumentParser(description='Run brownout load balancer simulation.')
-	parser.add_argument('--algorithm', 
+	parser = argparse.ArgumentParser( \
+		description='Run brownout load balancer simulation.', \
+		formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+	parser.add_argument('--algorithm',
 		help = 'Load-balancer algorithm: ' + ' '.join(algorithms),
 		default = algorithms[0])
-	parser.add_argument('--outdir', 
-		help = 'Destination folder for results and logs (default: current folder)',
+	parser.add_argument('--outdir',
+		help = 'Destination folder for results and logs',
 		default = '.')
 	parser.add_argument('--timeSlice',
 		type = float,
-		help = 'Time-slice of server scheduler (default: %default)',
+		help = 'Time-slice of server scheduler',
 		default = 0.01)
-	parser.add_argument('--delay',
-		type = float,
-		help = 'Delay from load-balancer to servers (default: %default)',
-		default = 0)
 	parser.add_argument('--equal-theta-gain',
 		type = float,
-		help = 'Gain in the equal-theta algorithm (default: %default)',
+		help = 'Gain in the equal-theta algorithm',
 		default = 0.0416)
+	parser.add_argument('--scenario',
+		help = 'Specify a scenario in which to test the system',
+		default = os.path.join(sys.argv[0], 'scenarios', 'A.py'))
 	args = parser.parse_args()
 	algorithm = args.algorithm
 	if algorithm not in algorithms:
