@@ -918,10 +918,12 @@ def main():
 				client.deactivate()
 		sim.add(at, delClientsHandler)
 
-	def changeServiceTime(serverId, y, n):
-		server = servers[serverId]
-		server.serviceTimeY = serviceTimeY
-		server.serviceTimeN = serviceTimeN
+	def changeServiceTime(at, serverId, y, n):
+		def changeServiceTimeHandler():
+			server = servers[serverId]
+			server.serviceTimeY = y
+			server.serviceTimeN = n
+		sim.add(at, changeServiceTimeHandler)
 
 	def addServer(y, n):
 		server = Server(sim, controlPeriod = serverControlPeriod,
