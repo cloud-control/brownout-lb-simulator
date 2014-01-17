@@ -61,7 +61,7 @@ a load-balancer that takes into account the replica
 adaptation to decide how to forward requests to replicas.
 Besides enabling horizontal elasticity, having a load-balancer and multiple replicas
 makes services fault-tolerant. Existing, state-of-the-art
-load-balancers forward requests based on the response-time of each
+load-balancers may forward requests based on the response-time of each
 replica, which leads to inefficient decisions for brownout services.
 Indeed, such services already keep their response-time
 at a given setpoint, at the expense of reducing the amount of optional
