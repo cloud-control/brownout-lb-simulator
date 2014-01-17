@@ -22,8 +22,8 @@ overlapping) replicas. For example, Control-Law Balancing
 load-balancer receives information about the load of its replicas and
 constructs a probability space where least loaded nodes have higher
 probability of receiving the request to be served.  In this paper we
-are interested in centralized solutions that could be brownout
-compliant. \str{True?}
+are interested in centralized solutions that could be 
+brownout-compliant. \str{True?}
 
 \str{Reinforce citations for the static load-balancing.}
 
@@ -114,13 +114,14 @@ behavior and the current one, although our load-balancer observes the
 changes in the amount of optional code served and tries to maximize
 the requests served enabling the full computation.
 
-Dynamic solutions can also be based on control
-theory~\cite{multipathctlb,comparisonstaticdynamic} and also account
-for the cost of applying the control action~\cite{costofcontrol} or
-for the load trend~\cite{CasolariSA}. This is especially necessary
-where the load balancer acts also as a resource
-allocator~\cite{Ardagnaalltogether} and the induced sudden lack of the
-resource can result in poor performances. This is not an issue with
-the stateless requests that are typical in the cloud domain if
+Dynamic solutions can be
+control-theoretical~\cite{multipathctlb,comparisonstaticdynamic} and
+also account for the cost of applying the control
+action~\cite{costofcontrol} or for the load trend~\cite{CasolariSA}.
+This is especially necessary where the load balancer acts also as a
+resource allocator, like in~\cite{Ardagnaalltogether}. In these cases,
+the induced sudden lack of the resource can result in poor
+performances. This is not an issue with centralized load-balancers for
+stateless requests that are typical in the cloud domain when
 geographical load-balancing is not considered.
 
