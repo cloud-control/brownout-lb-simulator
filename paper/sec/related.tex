@@ -1,31 +1,32 @@
-Load-balancing is a standard component of Internet-scale
-services~\cite{WangOSDI}, allowing them to achieve scalability and
-resilience~\citep{Barroso09,Hamilton07:LISA,clusteredbalancing}. Many
-load-balancing policies have been proposed, aiming at different
-optimizations, spanning from processor load~\cite{Stankovic:TC} to
-memory management~\cite{PattersonMemoryLB,MemoryLBACC}, web-server
-systems~\cite{Cardellini2003}, bounded latencies~\cite{TC-Abdelzaher}
-and iterative algorithms~\cite{BahiIterative}. Load-balancing
-strategies can be guided by many different aims, for example
+Load-balancers are standard components of Internet-scale
+services~\cite{WangOSDI}, allowing applications to achieve scalability
+and resilience~\citep{Barroso09, Hamilton07:LISA,
+  clusteredbalancing}. Many load-balancing policies have been
+proposed, aiming at different optimizations, spanning from equalizing
+processor load~\cite{Stankovic:TC} to managing memory
+pools~\cite{PattersonMemoryLB,MemoryLBACC}, to specific optimizations
+for iterative algorithms~\cite{BahiIterative}. Often load-balancing
+policies considered web server systems~\cite{CLB,Cardellini2003} as a
+target, where one of the most important result is to bound the maximum
+latencies that the clients are exposed
+to~\cite{TC-Abdelzaher}. Load-balancing strategies can be guided by
+many different purposes, for example
 geografical~\cite{GeograficalSASO,geographicalwanbalancing} or driven
 by the electricity price was proposed to reduce the datacenter
 operation cost~\cite{LoadBalancingForElectricity:TCC}. Cloud
-applications have given a further boost to the
+applications gave further boost to the
 research~\citep{Barroso09,Lu11:PerfEval,Lin12:IGCC}.
 
-Load-balancing strategies can be centralized or distributed. In a
-centralized solution there is one load-balancer that assignes the load
-of a set of replicas. On the contrary, in distributed solutions there
-are many load-balancers that are connected to many (possibly
-overlapping) replicas. For example, Control-Law Balancing
-(CLB)~\cite{CLB} is a distributed load-balancing algorithm where every
-load-balancer receives information about the load of its replicas and
-constructs a probability space where least loaded nodes have higher
-probability of receiving the request to be served.  In this paper we
-are interested in centralized solutions that could be 
-brownout-compliant. \str{True?}
-
-\str{Reinforce citations for the static load-balancing.}
+In general, load-balancing strategies can be either centralized or
+distributed. A centralized solution is composed by a single
+load-balancer that distributes the incoming load to a set of
+replicas. On the contrary, in distributed solutions there are many
+load-balancers connected to many replicas. In this paper we are
+interested in how centralized solutions interact with self-adaptive
+cloud applications. The novelty is given by the presence of two
+different points of adaptation in the system, the behavior of the
+infrastructure is modified both by the action of the load-balancer and
+by the effect of the self-adaptivity introduced in cloud applications.
 
 Load-balancing solutions can be divided into two different types:
 static and dynamic policies. Static load-balancing refers to a fixed
@@ -34,12 +35,12 @@ load-balancing found many applications in load sharing on
 multiprocessor
 systems~\cite{StaticLoadBalancing:TSE,StaticOptimal:ACM}. Among the
 static load-balancing techniques the most commonly implemented are
-random balancing, and \textbf{Round Robin (RR)} based ones. Random
-balancing is based on random decisions, and despite being extremely
-simple to implement, his utility is questionable, since it does not
-take into account any factor in selecting the replica. Round robin
-solutions try to balance the load onto the replicas. A round robin
-algorithm selects the replica, eventually weighting the possible
+\textbf{Random} balancing, and \textbf{Round Robin (RR)} based
+ones. Random balancing is based on random decisions, and despite being
+extremely simple to implement, his utility is questionable, since it
+does not take into account any factor in selecting the replica. Round
+robin solutions try to balance the load onto the replicas. A round
+robin algorithm selects the replica, eventually weighting the possible
 alternatives based on a priori knowledge of their capabilities. In
 this case the algorithm is often referred to as \textbf{Weighted RR}.
 
@@ -56,17 +57,22 @@ used option is the choice of the fastest replica, therefore realizing
 a \textbf{Fastest Replica First (FRF)} load balancer.  
 \str{Describe FRF-EWMA here.}
 
-FRF and its variations are unlikely to work with brownout-compliant
+A variation of this algorithm is the \textbf{Two Random Choices
+  (2RC)}~\cite{2RC} one, that randomly chooses two replicas and
+assigns the request to the fastest one, i.e., the one with the lowest
+maximum latency.
+
+FRF and its modfications are unlikely to work with brownout-compliant
 applications, because each replica selects the amount of optional code
 executed to maintain the response times to a certain desired value,
 and there is no way to distinguish between a congested replica that is
 not serving optional content and a non-congested replica that could
-serve the optional content. Also with non-adaptive applications this
-algorithm can cause severe performance loss, since the current
-response time does not necessarily reflect the future response time
-and the internal replica queue can saturate at an unexpected rate,
-especially if the time taken to produce the answer is much greater
-than the arrival rate.
+serve the optional content together with more requests. Also with
+non-adaptive applications this algorithm can cause severe performance
+loss, since the current response time does not necessarily reflect the
+future response time and the internal replica queue can saturate at an
+unexpected rate, especially if the time taken to produce the answer is
+much greater than the arrival rate.
 
 Another adopted strategy is based on the connection count and
 generally called \textbf{Shortest Queue First (SQF)}, where the
@@ -78,41 +84,34 @@ load balancing solution using the remaining capacity of the replicas
 to determine how the next request should be
 managed~\cite{feedbackintensive}. The capacity is determined through a
 combination of factors like the remaining available CPU and memory,
-the network transmission and the current connection count.  These
-strategies may not be optimal if the requests can be very different
-from one another --- for example a request serves a plain HTML page
-while another requires looking up a lot of data in a database. This
-remark also suggests that the strategy is unlikely to work with
-brownout-compliant applications, where requests served with optional
-computations can be very different from the ones containing only the
-mandatory content.
-
-Stankovic proposed a Bayesian approach to the load-balancing problem
-for a multiprocessor load distribution~\cite{Stankovic:TC}. An
-estimator of the queue length per processor is kept updated and the
-next request is sent to the least congested computing unit. This
-approach is hardly applicable to brownout-compliant cloud applications
-because it does not take into account the replica control loop
-adjusting the percentage of optional code executed. Since in our case
-the load-balancer is the only entity routing requests to the replica,
-this approach is equivalent to the connection count policy. A
-variation of this algorithm is the \textbf{Two Random Choices
-  (2RC)}~\cite{2RC} one, that randomly chooses two replicas and
-assigns the request to the fastest one, i.e., the one with the lowest
-maximum latency.
+the network transmission and the current connection count. Stankovic
+proposed a Bayesian approach to the load-balancing problem for a
+multiprocessor load distribution~\cite{Stankovic:TC}. An estimator of
+the queue length per processor is kept updated and the next request is
+sent to the least congested computing unit. These approaches are
+hardly applicable to brownout-compliant cloud applications because
+they do not take into account the replica control loop adjusting the
+percentage of optional code executed. In general, often these
+strategies are not considered optimal if the requests can be very
+different from one another --- for example a request serves a plain
+HTML page while another requires looking up a lot of data in a
+database. This remark suggests that they might not work with
+brownout-compliant applications, since the requests served with
+optional components would possibly require very different resources
+than the ones that are fully served.
 
 In an attempt to overcome the mentioned limitations a merge of the
 fastest replica and the connection count approach was implemented
 where the replicas are ranked based on a linear combination of
 response times and number of routed requests. Also, the approach was
-extended with a \textbf{Predictive} estimator. To produce the ranking
-the difference between the past metrics and the current one was
-used. This is the solution implemented in the BIG-IP Local Traffic
-Manager~\cite{BIGIP}. One of the solutions proposed in this paper
-borrows the idea of looking at the difference between the past
-behavior and the current one, although our load-balancer observes the
-changes in the amount of optional code served and tries to maximize
-the requests served enabling the full computation.
+extended with a \textbf{Predictive} estimator. A Predictive load
+balancer would rank the replicas based on the difference between the
+past metrics and the current ones. This is the solution implemented in
+the BIG-IP Local Traffic Manager~\cite{BIGIP}. One of the solutions
+proposed in this paper borrows the idea of looking at the difference
+between the past behavior and the current one, although our solution
+observes the changes in the amount of optional code served and tries
+to maximize the requests served enabling the full computation.
 
 Dynamic solutions can be
 control-theoretical~\cite{multipathctlb,comparisonstaticdynamic} and
@@ -121,7 +120,6 @@ action~\cite{costofcontrol} or for the load trend~\cite{CasolariSA}.
 This is especially necessary where the load balancer acts also as a
 resource allocator, like in~\cite{Ardagnaalltogether}. In these cases,
 the induced sudden lack of the resource can result in poor
-performances. This is not an issue with centralized load-balancers for
-stateless requests that are typical in the cloud domain when
-geographical load-balancing is not considered.
-
+performances. However, we investigate only load-balancing solutions
+and we assume that the application is taking care of the potential
+lack of resources using the brownout paradigm.
