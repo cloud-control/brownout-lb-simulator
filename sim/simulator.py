@@ -538,6 +538,10 @@ class LoadBalancer:
 		if self.algorithm in [ 'weighted-RR', 'theta-diff', 'equal-thetas', 'optimization' ]:
 			request.chosenBackendIndex = \
 				weightedChoice(zip(range(0, len(self.backends)), self.weights))
+		elif self.algorithm == 'random':
+			# round robin
+			request.chosenBackendIndex = \
+				random.choice(range(0, len(self.backends)))
 		elif self.algorithm == 'RR':
 			# round robin
 			request.chosenBackendIndex = \
@@ -685,6 +689,9 @@ class LoadBalancer:
 				zip(self.weights, self.lastThetas, modifiedLastLastThetas) ]
 			preNormalizedSumOfWeights = sum(self.weights)
 			self.weights = [ x / preNormalizedSumOfWeights for x in self.weights ]
+		elif self.algorithm == 'random':
+			# random is not dynamic
+			pass
 		elif self.algorithm == 'SQF':
 			# shortest queue first is not dynamic
 			pass
@@ -859,7 +866,7 @@ class MarkovianArrivalProcess:
 # Setups up all entities, then runs simulation.
 def main():
 	algorithms = ("weighted-RR theta-diff optimization SQF FRF equal-thetas " + \
-		"FRF-EWMA predictive 2RC RR").split()
+		"FRF-EWMA predictive 2RC RR random").split()
 
 	# Parsing command line options to find out the algorithm
 	parser = argparse.ArgumentParser( \
