@@ -1,17 +1,29 @@
-Load-balancing is a standard component of Internet-scale 
+Load-balancing is a standard component of Internet-scale
 services~\cite{WangOSDI}, allowing them to achieve scalability and
 resilience~\citep{Barroso09,Hamilton07:LISA,clusteredbalancing}. Many
 load-balancing policies have been proposed, aiming at different
 optimizations, spanning from processor load~\cite{Stankovic:TC} to
 memory management~\cite{PattersonMemoryLB,MemoryLBACC}, web-server
 systems~\cite{Cardellini2003}, bounded latencies~\cite{TC-Abdelzaher}
-and iterative algorithms~\cite{BahiIterative}. Load-balancing 
+and iterative algorithms~\cite{BahiIterative}. Load-balancing
 strategies can be guided by many different aims, for example
 geografical~\cite{GeograficalSASO,geographicalwanbalancing} or driven
 by the electricity price was proposed to reduce the datacenter
 operation cost~\cite{LoadBalancingForElectricity:TCC}. Cloud
 applications have given a further boost to the
 research~\citep{Barroso09,Lu11:PerfEval,Lin12:IGCC}.
+
+Load-balancing strategies can be centralized or distributed. In a
+centralized solution there is one load-balancer that assignes the load
+of a set of replicas. On the contrary, in distributed solutions there
+are many load-balancers that are connected to many (possibly
+overlapping) replicas. For example, Control-Law Balancing
+(CLB)~\cite{CLB} is a distributed load-balancing algorithm where every
+load-balancer receives information about the load of its replicas and
+constructs a probability space where least loaded nodes have higher
+probability of receiving the request to be served.  In this paper we
+are interested in centralized solutions that could be brownout
+compliant. \str{True?}
 
 \str{Reinforce citations for the static load-balancing.}
 
@@ -41,7 +53,7 @@ situation.
 On the contrary, in dynamic load-balancing the choice of the replica
 is based on measurements about the current system state. One widely
 used option is the choice of the fastest replica, therefore realizing
-a \textbf{Fastest Replica First (FRF)} load balancer.
+a \textbf{Fastest Replica First (FRF)} load balancer.  
 \str{Describe FRF-EWMA here.}
 
 FRF and its variations are unlikely to work with brownout-compliant
@@ -86,8 +98,8 @@ the load-balancer is the only entity routing requests to the replica,
 this approach is equivalent to the connection count policy. A
 variation of this algorithm is the \textbf{Two Random Choices
   (2RC)}~\cite{2RC} one, that randomly chooses two replicas and
-assigns the request to the fastest one, i.e., the one with the
-lowest maximum latency.
+assigns the request to the fastest one, i.e., the one with the lowest
+maximum latency.
 
 In an attempt to overcome the mentioned limitations a merge of the
 fastest replica and the connection count approach was implemented
@@ -102,13 +114,13 @@ behavior and the current one, although our load-balancer observes the
 changes in the amount of optional code served and tries to maximize
 the requests served enabling the full computation.
 
-Dynamic solutions can be based on control
+Dynamic solutions can also be based on control
 theory~\cite{multipathctlb,comparisonstaticdynamic} and also account
-for the cost of applying the control action~\cite{costofcontrol} or for
-the load trend~\cite{CasolariSA}. This is especially necessary where 
-the load balancer acts also as a resource 
-allocator~\cite{Ardagnaalltogether} and the induced sudden lack of the 
-resource can result in poor performances. This is not an issue with the 
-stateless requests that are typical in the cloud domain if geographical
-load-balancing is not considered.
+for the cost of applying the control action~\cite{costofcontrol} or
+for the load trend~\cite{CasolariSA}. This is especially necessary
+where the load balancer acts also as a resource
+allocator~\cite{Ardagnaalltogether} and the induced sudden lack of the
+resource can result in poor performances. This is not an issue with
+the stateless requests that are typical in the cloud domain if
+geographical load-balancing is not considered.
 
