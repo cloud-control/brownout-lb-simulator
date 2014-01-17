@@ -31,13 +31,12 @@ algorithm selects the replica, eventually weighting the possible
 alternatives based on a priori knowledge of their capabilities. In
 this case the algorithm is often referred to as \textbf{Weighted RR}.
 
-Although in our comparison we use also a weighted round robin
-solution, in principle we are not interested in static
-load-balancing. In fact, the purpose of brownout-compliant
-applications and load-balancing is to account for the inherent
-fluctuations of a cloud environment. The same replica can receive
-different resources during its lifetime, therefore a static weight
-vector would not reflect the current situation.
+In principle we are not interested in static load-balancing. In fact,
+the purpose of brownout-compliant applications and load-balancing is
+to account for the inherent fluctuations of a cloud environment. The
+same replica can receive different resources during its lifetime,
+therefore a static weight vector would not reflect the current
+situation.
 
 On the contrary, in dynamic load-balancing the choice of the replica
 is based on measurements about the current system state. One widely
@@ -107,8 +106,9 @@ Dynamic solutions can be based on control
 theory~\cite{multipathctlb,comparisonstaticdynamic} and also account
 for the cost of applying the control action~\cite{costofcontrol} or for
 the load trend~\cite{CasolariSA}. This is especially necessary where 
-the load balancer acts also as a resource allocator and the induced 
-sudden lack of the resource can result in poor performances. This is 
-not an issue with the stateless requests that are typical in the cloud 
-domain.
+the load balancer acts also as a resource 
+allocator~\cite{Ardagnaalltogether} and the induced sudden lack of the 
+resource can result in poor performances. This is not an issue with the 
+stateless requests that are typical in the cloud domain if geographical
+load-balancing is not considered.
 
