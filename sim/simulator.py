@@ -685,7 +685,8 @@ class LoadBalancer:
 				if (self.lastThetas[i] == 1 and self.lastLastThetas[i] == 1):
 					modifiedLastLastThetas[i] = 0.99
 			# end of the quick fix
-			self.weights = [ max(x[0] + x[1] - x[2], 0.01) for x in \
+			gain = 0.5
+			self.weights = [ max(x[0] + gain*(x[1] - x[2]), 0.01) for x in \
 				zip(self.weights, self.lastThetas, modifiedLastLastThetas) ]
 			preNormalizedSumOfWeights = sum(self.weights)
 			self.weights = [ x / preNormalizedSumOfWeights for x in self.weights ]

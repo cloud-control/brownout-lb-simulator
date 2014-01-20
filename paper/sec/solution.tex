@@ -1,9 +1,23 @@
-\textcolor{blue}{\textit{\textbf{Martina:} We can describe here the
-    two different solutions. One the one based on the relative
-    difference between dimmer values we should work a little bit more
-    to avoid the undesired behavior that if the dimmer stays to the
-    highest value we stop sending stuff. I will take care of that and
-    of describing that solution here.}}
+This section describe three different solutions for balancing the load
+directed to self-adaptive brownout-compliant applications composed by
+multiple replicas. The first two strategies are heuristic solution
+that take into account the self-adaptivity of the replicas. The third
+alternative is based on optimization theory, with the aim of providing
+guarantees on the best possible behavior.
+
+\subsection{Variational principle-based heuristic}
+
+Our first solution is inspired by the predictive approach. In fact,
+the core of the predictive approach is to examine the variation of the
+involved quantities. Instead of examining the variations of the
+response times or of the number of connections per replica, the
+approach is based on the variations of the control variable $\theta$.
+
+\subsection{Equal dimmers}
+\str{Find a name for it and describe it. If we can prove something
+  about the solution, add the proof here.}
+
+\subsection{Optimization based load-balancing}
 
 \textcolor{red}{\textit{\textbf{Cristian:} Some stuff that might help
     to devise a solution. It can be proven (i.e., I have the proof on
