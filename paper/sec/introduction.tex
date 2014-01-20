@@ -1,17 +1,17 @@
 Cloud computing is expected to be one of the driving force of the
 future economy~\citep{WPonMckinsey13}. Already, it has dramatically
 changed the management of computing infrastructures. On one hand,
-public infrastructure providers, such as Amazon EC2, allow service providers to deploy
-their services on large infrastructures with no up-front
-cost~\citep{Buyya09:FGCS}. On the other hand, the flexibility offered
-by cloud technologies themselves favors the adoption of private
-clouds~\citep{Gulati11:HotCloud}, therefore, self-hosting service providers themselves are converting
-their computing infrastructures into small, internally-managed
-clouds.
+public infrastructure providers, such as Amazon EC2, allow service
+providers to deploy their services on large infrastructures with no
+up-front cost~\citep{Buyya09:FGCS}. On the other hand, the flexibility
+offered by cloud technologies themselves favors the adoption of
+private clouds~\citep{Gulati11:HotCloud}, therefore, self-hosting
+service providers themselves are converting their computing
+infrastructures into small, internally-managed clouds.
 
 One of the main advantages offered by cloud infrastructures is {\bf
-  elasticity}. A service provider that wants to deploy a new service on the
-cloud can rapidly provision the required computing resources,
+  elasticity}. A service provider that wants to deploy a new service
+on the cloud can rapidly provision the required computing resources,
 automatically acquiring and releasing computing resources as
 required~\citep{Herbst13:ICAC}.  Elasticity can be of two
 complementary types: vertical and horizontal. Vertical elasticity
@@ -22,56 +22,56 @@ machine or removing an existing one.
 %
 Horizontal elasticity calls for the introduction of a specialized
 component, called {\bf load-balancer}, that takes care of routing the
-end-user requests to one of the \acp{vm} composing the service. Load-balancing
-techniques have been widely studied and
+end-user requests to one of the \acp{vm} composing the
+service. Load-balancing techniques have been widely studied and
 adopted~\citep{Barroso09,Lu11:PerfEval,Lin12:IGCC,BeesBased:ADAPTIVE}.
 
 One of the main issues with cloud computing infrastructures, however,
 is {\bf robustness} to unexpected events. For example, flash-crowds
 are sudden increases of end-users, that may increase the required
 capacity by up to five times~\citep{Bodik10:SoCC}. Similarly, hardware
-failures may temporarily reduce the capacity of the infrastructure, while
-the failure is repaired~\citep{Barroso09}. Due to the large magnitude
-and short duration of such events, it may be economically too costly
-to keep enough spare capacity to properly deal with them. As a result,
-unexpected events may lead to infrastructure overload, which translates
-to unresponsive services, leading to dissatisfied end-users
-and revenue loss.
+failures may temporarily reduce the capacity of the infrastructure,
+while the failure is repaired~\citep{Barroso09}. Due to the large
+magnitude and short duration of such events, it may be economically
+too costly to keep enough spare capacity to properly deal with
+them. As a result, unexpected events may lead to infrastructure
+overload, which translates to unresponsive services, leading to
+dissatisfied end-users and revenue loss.
 
-Cloud services therefore greatly benefit from
-self-adaptation techniques~\cite{SalehieSelfadaptive:TAAS}, such as
-{\bf brownout}~\citep{cloudish-tr}. A brownout service
-adapts itself by reducing the amount of computations it executes
-to produce a response, so as to maintain response time around a given setpoint.
-In essence, some computations are
-marked as mandatory --- for example, the display of the product
-information in an e-commerce website --- while others are optional ---
-for example, the display of recommendations of similar products.
-Whenever an end-user request is received, the service can choose to execute
-or not the optional code based on the capacity available to it,
-to which it adapts by monitoring response times. Note that executing optional code directly
-translates into a better service for the end-user and more revenues for
-the service provider. This approach proved to be successful for dealing with
-unexpected events. However, brownout services were composed
-of a single replica, running inside a single \ac{vm}.
+Cloud services therefore greatly benefit from self-adaptation
+techniques~\cite{SalehieSelfadaptive:TAAS}, such as {\bf
+  brownout}~\citep{cloudish-tr}. A brownout service adapts itself by
+reducing the amount of computations it executes to produce a response,
+so as to maintain response time around a given setpoint.  In essence,
+some computations are marked as mandatory --- for example, the display
+of the product information in an e-commerce website --- while others
+are optional --- for example, the display of recommendations of
+similar products.  Whenever an end-user request is received, the
+service can choose to execute or not the optional code based on the
+capacity available to it, to which it adapts by monitoring response
+times. Note that executing optional code directly translates into a
+better service for the end-user and more revenues for the service
+provider. This approach proved to be successful for dealing with
+unexpected events~\citep{cloudish-tr}. However, brownout services were
+composed of a single replica, running inside a single \ac{vm}.
 
 In this paper, we extend the brownout paradigm to services featuring
-multiple replica, hosted inside individual \acp{vm}. We develop
-a load-balancer that takes into account the replica
-adaptation to decide how to forward requests to replicas.
-Besides enabling horizontal elasticity, having a load-balancer and multiple replicas
-makes services fault-tolerant. Existing, state-of-the-art
-load-balancers may forward requests based on the response-time of each
-replica, which leads to inefficient decisions for brownout services.
-Indeed, such services already keep their response-time
-at a given setpoint, at the expense of reducing the amount of optional
-content served. Hence, by measuring response-time alone, it is not possible
-to discriminate between a replica that is avoiding overload by not
-executing the optional code and a replica that is not threatened with
-overload executing all optional code, both achieving low response
-times.  Therefore, existing load-balancing techniques that monitor
-response times should be improved to migrate load away from replicas
-not executing optional code.
+multiple replica, hosted inside individual \acp{vm}. We develop a
+load-balancer that takes into account the replica adaptation to decide
+how to forward requests to replicas.  Besides enabling horizontal
+elasticity, having a load-balancer and multiple replicas makes
+services fault-tolerant. Existing, state-of-the-art load-balancers may
+forward requests based on the response-time of each replica, which
+leads to inefficient decisions for brownout services.  Indeed, such
+services already keep their response-time at a given setpoint, at the
+expense of reducing the amount of optional content served. Hence, by
+measuring response-time alone, it is not possible to discriminate
+between a replica that is avoiding overload by not executing the
+optional code and a replica that is not threatened with overload
+executing all optional code, both achieving low response times.
+Therefore, existing load-balancing techniques that monitor response
+times should be improved to migrate load away from replicas not
+executing optional code.
 
 Our challenge is to find a load-balancing methodology that maximizes
 the amount of served optional content, provided that every replica
@@ -81,14 +81,14 @@ to maintain the maximum response time below a configured target.
 Our contribution is summarized as follows.
 \begin{itemize}
 \item We discuss load-balancing architectures and the required
-  enhancements to the replicas that allow to deal with
-  brownout services efficiently.
-\item We propose two load-balancing policies that aim at maximizing
-  the performance of brownout services, in terms
-  of frequency of execution of the optional code, therefore
-  maximizing the total revenue for the service provider.
+  enhancements to the replicas that allow to deal with brownout
+  services efficiently.
+\item We propose load-balancing policies that aim at maximizing the
+  performance of brownout services, in terms of frequency of execution
+  of the optional code, therefore maximizing the total revenue for the
+  service provider.
 \item We evaluate existing load-balancing strategies and compare them
-  with the two proposed approaches, demonstrating the need for a
+  with the proposed approaches, demonstrating the need for a
   brownout-aware load-balancer and showing that the proposed policies
   outperform existing techniques.
 \end{itemize}
