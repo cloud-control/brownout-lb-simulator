@@ -11,7 +11,40 @@ Our first solution is inspired by the predictive approach. In fact,
 the core of the predictive approach is to examine the variation of the
 involved quantities. Instead of examining the variations of the
 response times or of the number of connections per replica, the
-approach is based on the variations of the control variable $\theta$.
+approach is based on the how the control variables $\theta_i$ are
+changing within each replica.
+
+The replica weights $w_i$ are initialized to $\frac{1}{n}$ where $n$
+is the number of replicas. The load-balancer periodically updates the
+values of the weights based on the values of $\theta$ received by the
+replicas. At time $k$, denoting with $\Delta \theta_i (k)$ the
+variation $\theta_i (k) - \theta_i (k-1)$, the new weight $w_i (k)$ is
+computed as
+\begin{equation}
+  w_i(k) = \cfrac{w_i (k-1) + \gamma \cdot \Delta \theta_i (k)}
+                 {\sum_j w_j (k-1) + \gamma \cdot \Delta \theta_j (k)}
+\label{eq:theta-diff}
+\end{equation}
+where $\gamma$ is simply a fixed gain that takes into account the
+relative difference between the variation of the control variable and
+the weights, in our experiments its value is set to $0.5$. The
+approach determines the variation of the control variables $\theta_i$
+and corresponingly react. If the percentage of optional content served
+is increasing, the replica is assumed to be less loaded, and more
+traffic can be sent to it. On the contrary, when the optional content
+diminish, the replica will receive less traffic, to increase the
+control variable if possible.
+
+As stated in Equation~\eqref{eq:theta-diff}, the approach has one main
+drawback. If the value of $\theta_i$ is constant and equal to $1$ its
+variation $\Delta \theta_i$ is equal to zero. However, the replica
+could possibly serve more requests, since the optional computations
+are always enabled. Therefore, in case we detect such a condition, we
+force $\Delta \theta_i$ to be equal to $0.01$ to indicate that the
+approach should probe the replica and try to send it more requests. In
+case the value of $\theta_i$ is constant and equal to zero, the
+approach should send less requests to the replica, so no adjustments
+are made for such a case.
 
 \subsection{Equal dimmers}
 \str{Find a name for it and describe it. If we can prove something
