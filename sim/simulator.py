@@ -12,6 +12,7 @@ import cvxopt
 import os
 import random
 import sys
+import math
 import argparse
 
 ## @package simulator Main simulator namespace
@@ -82,6 +83,7 @@ class Simulator:
 		self.outputDirectory = outputDirectory
 		self.optionalOn = 0
 		self.optionalOff = 0
+		self.stdServiceTime = 0
 
 	## Adds a new event
 	# @param delay non-negative float representing in how much time should the
@@ -512,6 +514,10 @@ class LoadBalancer:
 		self.ewmaResponseTime = []
 		## number of sample to use for computing average response time (parameter for FRF-EWMA algorithm)
 		self.ewmaNumSamples = 10
+		## average service time and standard deviation for performance indexes
+		self.averageServiceTime = 0
+		self.intermediateForVariance = 0 	
+		self.stdServiceTime = 0
 		
 		# Launch control loop
 		self.sim.add(0, self.runControlLoop)
@@ -618,7 +624,19 @@ class LoadBalancer:
 		self.ewmaResponseTime[request.chosenBackendIndex] = \
 			ewmaAlpha * (request.completion - request.arrival) + \
 			(1 - ewmaAlpha) * self.ewmaResponseTime[request.chosenBackendIndex]
-		
+	
+		# Compute performance indexes
+		serviceTime = request.completion - request.arrival
+		delta = serviceTime - self.averageServiceTime
+		self.averageServiceTime = self.averageServiceTime + delta / self.numRequests
+		self.intermediateForVariance += delta * (serviceTime - self.averageServiceTime)
+		if self.numRequests > 1:
+			variance = self.intermediateForVariance / (self.numRequests - 1)
+		else:
+			variance = 0
+		self.stdServiceTime = math.sqrt(variance)
+		self.sim.stdServiceTime = self.stdServiceTime
+	
 		# Call original onCompleted
 		request.onCompleted()
 
@@ -951,7 +969,7 @@ def main():
 		raise Exception("Scenario does not define end-of-simulation")
 	sim.run(until = otherParams['simulateUntil'])
 	recommendationPercentage = float(sim.optionalOn) / float(sim.optionalOff + sim.optionalOn)
-	sim.log(sim, loadBalancer.algorithm + ", total recommendation percentage {0}", recommendationPercentage)
+	sim.log(sim, loadBalancer.algorithm + ", total recommendation percentage {0}, standard deviation {1}", recommendationPercentage, sim.stdServiceTime)
 	sim.output('final-results', "{algo:15}, {res:.5f}".format(algo = loadBalancer.algorithm, res = recommendationPercentage))
 
 def responseTimeTest():
