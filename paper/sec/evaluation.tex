@@ -1,11 +1,30 @@
-\textcolor{blue}{\textit{\textbf{Martina:} How to evaluate our
-    strategies:
-    \begin{itemize}
-    \item percentage of requests served with optional code turned on
-    \item standard deviations of response times: they call it user-perceived-stability~\cite{GeograficalSASO}
-    \item more?
-    \end{itemize}
-}}.
+In this section we describe our experimental evaluation, discussing
+the performance indicators used to compare different strategies, the
+simulator developed and used to emulate the behavior of
+brownout-compliant replicas driven by the load-balancer and our case
+studies.
+
+\subsection{Performance indicators}
+
+Performance measures are necessary to objectively compare different
+algorithms. While our first performance indicator is clearly defined
+as the \textbf{percentage $\%_{on}$} of the total requests served with
+the optional content enabled, we also would like to introduce some
+other performance metrics to compare the implemented load-balancing
+techniques.
+
+Another metric considered for this study is the \textbf{user-perceived
+  stability $\sigma_u$}~\cite{GeograficalSASO}. This metric refers to
+the variation of perfomance as observed by the users, and it is
+measured as the standard deviation of the vector of response
+times. Its purpose is to measure the ability of the replicas to
+respond timely to the client requests. The entire brownout framework
+aims at stabilizing the response times, therefore it should achieve
+low user-perceived stability, irregardless of the presence of the
+load-balancer. However, the load-balancing algorithm clearly
+influences the perceived latencies, therefore it is logical to check
+whether the newly developed algorithms achieve a better perceived
+stability with respect to the classical ones.
 
 \subsection{Simulator}
 
