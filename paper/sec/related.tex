@@ -75,7 +75,14 @@ the network transmission and the current connection count. Stankovic
 proposed a Bayesian approach to the load-balancing problem for a
 multiprocessor load distribution~\cite{Stankovic:TC}. An estimator of
 the queue length per processor is kept updated and the next request is
-sent to the least congested computing unit. These approaches are
+sent to the least congested computing unit.
+\str{In light of a lengthy RW section, could we "compress" these references?
+"Other approaches have been proposed that base their decision on remaining
+capacity. However, due to the fact that brownout applications keep CPU
+utilization around 60-70\% to prepare for possible request bursts,
+deciding on remaining capacity alone is, just as with response time,
+not an indicator of how well a brownout replica is performing."}
+These approaches are
 hardly applicable to brownout-compliant cloud applications because
 they do not take into account the replica control loop adjusting the
 percentage of optional code executed. In general, often these
