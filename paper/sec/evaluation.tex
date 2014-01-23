@@ -30,34 +30,26 @@ stability with respect to the classical ones.
 
 \subsection{Simulator}
 
-\textcolor{blue}{\textit{\textbf{Martina:} We should here describe our
-    simulator}}.
+\str{Describe the simulator}
 
-\subsection{Extended case study}
+\str{State that implementing new algorithms is easy}
 
-\textcolor{blue}{\textit{\textbf{Martina:} Here we should have one
-    extended case study that we describe properly. A certain amount of
-    time where a few things happen --- new clients entering the
-    system, old clients abandoning the system and it would also be
-    nice to change the execution time for mandatory and optional code
-    (in this last way we can simulate the fact that we have less cores
-    or more cores available and this is changed by the infrastructure
-    provider without our control). We should demonstrate that in this
-    extended case study we do better than some existing load-balancing
-    policies. Any idea on policies that we should simulate?}}.
+\str{Stress the fact that the scenario-based approach makes the
+  simulator very flexible and it is therefore very easy to support
+  multiple test cases}
 
-\textcolor{red}{\textit{\textbf{Cristian:} Also, we should test the
-    load-balancer when the number of replicas changes.}}
+\subsection{Reacting to clients behavior}
 
-\subsection{Aggregate case study}
+\begin{itemize}
+\item \str{Clients entering at different times}
+\item \str{Clients leaving the system at some point}
+\end{itemize}
 
-\textcolor{blue}{\textit{\textbf{Martina:} We can run some simulations
-    and presents some aggregate indexes instead of time series --- for
-    example the total percentage of recommendations served by our
-    strategy and existing ones and the maximum response time through
-    the simulation lenght with our and existing strategy. Ideally the
-    subsection above should have graphs and this one should result in
-    a table with a lot of different case studies.}}.
+\subsection{Reacting to infrastructure resources}
 
-
+\begin{itemize}
+\item \str{Change execution time for mandatory and optional, therefore
+    simulating the change in resources provided to the replicas}
+\item \str{Change the number of replicas}
+\end{itemize}
 
