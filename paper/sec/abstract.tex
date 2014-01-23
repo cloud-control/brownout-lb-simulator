@@ -1,15 +1,27 @@
-\str{Substitute with real abstract.}
-Lorem ipsum dolor sit amet, consectetur adipiscing elit. Integer
-ullamcorper non purus egestas gravida. Nam vestibulum libero sit amet
-pulvinar mattis. Mauris eu urna sed felis sagittis vehicula. Nunc ac
-hendrerit orci. Cras interdum justo id rutrum lobortis. Nulla aliquet
-non lacus non interdum. Proin eu tortor eros.
+% Motivation
+Cloud applications have to face unexpected events like flash crowds
+and hardware failures. Despite these common events, applications
+should behave predictably, providing bounded latencies to the
+clients. This problem has been partially solved by enabling
+self-adaptive features inside cloud applications and by introducing
+replicas for redundancy. Adaptive applications are now able to tune
+their behavior to provide responses in a finite and predictable amount
+of time.
 
-Fusce tellus nisi, euismod non nulla a, eleifend molestie orci. Sed
-tincidunt turpis quam, nec ultricies nisl pulvinar ac. Integer
-accumsan ante ante, eu tristique est varius quis. Suspendisse a leo ut
-augue luctus blandit. Mauris ante diam, gravida sit amet mi vel,
-accumsan ullamcorper velit. Suspendisse eu adipiscing felis, non
-mattis massa. Maecenas urna purus, commodo quis mi quis, molestie
-ultricies ipsum. Duis tincidunt, justo sed volutpat molestie, velit
-sem rutrum dui, eget tristique sem tortor eget nunc.
+% Problem statement
+However, self-adaptivity interferes with load-balancing strategies,
+that should balance the load to the different application
+replicas. These strategies are often based on the response times, that
+are controlled by the self-adaptive features of the application, not
+being anymore informative of the replica's behavior.
+
+% Contribution
+We therefore propose different load-balancing strategies, that take
+into account the application's self adaptive features and
+correspondingly distribute the load to maximize the applications
+performance. We implemente our strategies in self-adaptive
+applications simulator, together with some state of the art
+solutions. This paper compares the obtained results in multiple
+scenarios.
+
+\str{Add one quick sentence about results}
