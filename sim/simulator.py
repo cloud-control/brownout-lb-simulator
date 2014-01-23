@@ -541,7 +541,7 @@ class LoadBalancer:
 	def request(self, request):
 		#self.sim.log(self, "Got request {0}", request)
 		request.arrival = self.sim.now
-		if self.algorithm in [ 'weighted-RR', 'theta-diff', 'equal-thetas', 'optimization' ]:
+		if self.algorithm in [ 'weighted-RR', 'theta-diff', 'theta-diff-plus', 'equal-thetas', 'optimization' ]:
 			request.chosenBackendIndex = \
 				weightedChoice(zip(range(0, len(self.backends)), self.weights))
 		elif self.algorithm == 'random':
@@ -706,6 +706,13 @@ class LoadBalancer:
 			gain = 0.5
 			self.weights = [ max(x[0] + gain*(x[1] - x[2]), 0.01) for x in \
 				zip(self.weights, self.lastThetas, modifiedLastLastThetas) ]
+			preNormalizedSumOfWeights = sum(self.weights)
+			self.weights = [ x / preNormalizedSumOfWeights for x in self.weights ]
+		elif self.algorithm == 'theta-diff-plus':
+			Kp = 5
+			Ti = 50
+			self.weights = [ max(x[0] + Kp * x[0] * (x[1] - x[2]) + Kp*x[0]/Ti * (x[1]), 0.01) for x in \
+                            zip(self.weights, self.lastThetas, self.lastLastThetas) ]
 			preNormalizedSumOfWeights = sum(self.weights)
 			self.weights = [ x / preNormalizedSumOfWeights for x in self.weights ]
 		elif self.algorithm == 'random':
@@ -885,7 +892,7 @@ class MarkovianArrivalProcess:
 # Setups up all entities, then runs simulation.
 def main():
 	algorithms = ("weighted-RR theta-diff optimization SQF FRF equal-thetas " + \
-		"FRF-EWMA predictive 2RC RR random").split()
+		"FRF-EWMA predictive 2RC RR random theta-diff-plus").split()
 
 	# Parsing command line options to find out the algorithm
 	parser = argparse.ArgumentParser( \

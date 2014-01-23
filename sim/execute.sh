@@ -2,12 +2,12 @@
 
 mkdir -p results
 
-algs=( random RR weighted-RR theta-diff optimization SQF FRF equal-thetas FRF-EWMA predictive 2RC )
+algs=( random RR weighted-RR theta-diff theta-diff-plus optimization SQF FRF equal-thetas FRF-EWMA predictive 2RC )
 
 for algorithm in "${algs[@]}"
 do
-	mkdir -p results/${algorithm}
-	./simulator.py --algorithm ${algorithm} --outdir results/${algorithm} $@ &
+    mkdir -p results/${algorithm}
+    ./simulator.py --algorithm ${algorithm} --outdir results/${algorithm} $@ &
 done
 wait
 
