@@ -8,43 +8,48 @@ guarantees on the best possible behavior.
 \subsection{Variational principle-based heuristic}
 
 Our first solution is inspired by the predictive approach. In fact,
-the core of the predictive approach is to examine the variation of the
-involved quantities. Instead of examining the variations of the
-response times or of the number of connections per replica, the
-approach is based on the how the control variables $\theta_i$ are
+the core of the predictive solution is to examine the variation of the
+involved quantities. While in its classical form, this solution relies
+on variations of response times or connections per replica, our
+solution is based on the how the control variables $\theta_i$ are
 changing within each replica.
+
+The approach determines the variation of the control variables
+$\theta_i$ and corresponingly react. If the percentage of optional
+content served is increasing, the replica is assumed to be less
+loaded, and more traffic can be sent to it. On the contrary, when the
+optional content diminish, the replica will receive less traffic, to
+increase the control variable if possible.
 
 The replica weights $w_i$ are initialized to $\frac{1}{n}$ where $n$
 is the number of replicas. The load-balancer periodically updates the
-values of the weights based on the values of $\theta$ received by the
-replicas. At time $k$, denoting with $\Delta \theta_i (k)$ the
-variation $\theta_i (k) - \theta_i (k-1)$, the new weight $w_i (k)$ is
-computed as
+values of the weights based on the values of $\theta_i$ received by
+the replicas. At time $k$, denoting with $\Delta \theta_i (k)$ the
+variation $\theta_i (k) - \theta_i (k-1)$, the solution computes a
+potential weight $w_i(k+1)$ according to
 \begin{equation}
-  w_i(k) = \cfrac{w_i (k-1) + \gamma \cdot \Delta \theta_i (k)}
-                 {\sum_j w_j (k-1) + \gamma \cdot \Delta \theta_j (k)}
+  \tilde{w}_i(k+1) = w_i(k) \cdot 
+\left[ 1 + \gamma_p \, \Delta \theta_i (k) + \gamma_i \, \theta_i (k) \right] ,
 \label{eq:theta-diff}
 \end{equation}
-where $\gamma$ is simply a fixed gain that takes into account the
-relative difference between the variation of the control variable and
-the weights, in our experiments its value is set to $0.5$. The
-approach determines the variation of the control variables $\theta_i$
-and corresponingly react. If the percentage of optional content served
-is increasing, the replica is assumed to be less loaded, and more
-traffic can be sent to it. On the contrary, when the optional content
-diminish, the replica will receive less traffic, to increase the
-control variable if possible.
+where $\gamma_p$ and $\gamma_i$ are constant gains, respectivelly
+related to a proportional and an integral load-balancing action. The
+computed values do not respect the constraint that their sum is equal
+to 1, so they are then rescaled according to
+\begin{equation}
+  w_i (k) = \cfrac{\tilde{w}_i (k)}{\sum_i \tilde{w}_i (k)}.
+\label{eq:theta-diff-rescale}
+\end{equation}
 
-As stated in Equation~\eqref{eq:theta-diff}, the approach has one main
-drawback. If the value of $\theta_i$ is constant and equal to $1$ its
-variation $\Delta \theta_i$ is equal to zero. However, the replica
-could possibly serve more requests, since the optional computations
-are always enabled. Therefore, in case we detect such a condition, we
-force $\Delta \theta_i$ to be equal to $0.01$ to indicate that the
-approach should probe the replica and try to send it more requests. In
-case the value of $\theta_i$ is constant and equal to zero, the
-approach should send less requests to the replica, so no adjustments
-are made for such a case.
+Once $\gamma_p$ is fixed to a selected value, increasing the integral
+gain $\gamma_i$ calls for a stronger action on the load-balancing
+side, which means that the load-balancer would take decisions very
+much influenced by the current values of $\theta_i$, therefore greatly
+improving performance at the cost of a more nervous control action. On
+the contrary, decreasing $\gamma_i$ would stabilize the control
+signals, possibly losing performance due to a slower reaction
+time. The choice of the integral gain allows to exploit the trade-off
+between performance and robustness.
 
 \subsection{Equal dimmers}
 \str{Find a name for it and describe it. If we can prove something
