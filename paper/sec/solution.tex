@@ -32,10 +32,15 @@ potential weight $w_i(k+1)$ according to
 \left[ 1 + \gamma_p \, \Delta \theta_i (k) + \gamma_i \, \theta_i (k) \right] ,
 \label{eq:theta-diff}
 \end{equation}
-where $\gamma_p$ and $\gamma_i$ are constant gains, respectivelly
-related to a proportional and an integral load-balancing action. The
-computed values do not respect the constraint that their sum is equal
-to 1, so they are then rescaled according to
+where $\gamma_p$ and $\gamma_i$ are constant gains, respectively
+related to a proportional and an integral load-balancing action. As
+calculated, $\tilde{w}_i$ values can be negative. This is clearly not
+feasible, therefore negative values are truncated to a small but still
+positive weight. Using a positive weight instead of zero allows us to
+probe the replica and see whether it is favorably responding to new
+incoming requests or not. Moreover, the computed values do not respect
+the constraint that their sum is equal to 1, so they are then
+re-scaled according to
 \begin{equation}
   w_i (k) = \cfrac{\tilde{w}_i (k)}{\sum_i \tilde{w}_i (k)}.
 \label{eq:theta-diff-rescale}
@@ -51,7 +56,7 @@ signals, possibly losing performance due to a slower reaction
 time. The choice of the integral gain allows to exploit the trade-off
 between performance and robustness.
 
-\subsection{Equal dimmers}
+\subsection{Equality principle-based heuristic}
 \str{Find a name for it and describe it. If we can prove something
   about the solution, add the proof here.}
 
