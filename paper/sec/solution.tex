@@ -26,7 +26,7 @@ is the number of replicas. The load-balancer periodically updates the
 values of the weights based on the values of $\theta_i$ received by
 the replicas. At time $k$, denoting with $\Delta \theta_i (k)$ the
 variation $\theta_i (k) - \theta_i (k-1)$, the solution computes a
-potential weight $w_i(k+1)$ according to
+potential weight $\tilde{w}_i(k+1)$ according to
 \begin{equation}
   \tilde{w}_i(k+1) = w_i(k) \cdot 
 \left[ 1 + \gamma_p \, \Delta \theta_i (k) + \gamma_i \, \theta_i (k) \right] ,
@@ -57,8 +57,32 @@ time. The choice of the integral gain allows to exploit the trade-off
 between performance and robustness.
 
 \subsection{Equality principle-based heuristic}
-\str{Find a name for it and describe it. If we can prove something
-  about the solution, add the proof here.}
+
+The second innovative policy presented here is based on the principle
+that in the best conditions, every replica should have a similar
+behavior, therefore the control variables $\theta_i$ should be as
+close as possible to one another. This approach selects weights that
+would encourage the control variables to converge to a single value.
+
+The heuristic computes a potential weight $\tilde{w}_i(k+1)$ according
+to
+\begin{equation}
+  \tilde{w}_i(k+1) = w_i(k) + \gamma_e 
+\left[ \theta_i (k) - \cfrac{\sum_j \theta_j (k) }{n} \right] ,
+\label{eq:equal-thetas}
+\end{equation}
+where $\gamma_e$ is a paramter of the algorithm and accounts for how
+fast the algorithm should converge. The weights are simply modified
+proportionally to the difference between the current control value and
+the average control value set by the replicas. Clearly, the same
+saturation and normalization described in Equation
+\eqref{eq:theta-diff-rescale} has to be applied to the proposed
+solution, to ensure that the sum of the weights is equal to one and
+they have positive values --- i.e., that all the incoming traffic is
+directed to the replicas and that each replica receives at least some
+request.
+
+\str{Comment on the parameter $\gamma_e$}
 
 \subsection{Optimization based load-balancing}
 \str{Find a name for it and describe it. Prove what we can prove about
