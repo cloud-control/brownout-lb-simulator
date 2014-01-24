@@ -56,22 +56,18 @@ unexpected events~\citep{cloudish-tr}. However, brownout services were
 composed of a single replica, running inside a single \ac{vm}.
 
 In this paper, we extend the brownout paradigm to services featuring
-multiple replica, hosted inside individual \acp{vm}. We develop a
+multiple replicas, hosted inside individual \acp{vm}. We develop a
 load-balancer that takes into account the replica adaptation to decide
 how to forward requests to replicas.  Besides enabling horizontal
 elasticity, having a load-balancer and multiple replicas makes
-services fault-tolerant. Existing, state-of-the-art load-balancers may
-forward requests based on the response-time of each replica, which
-leads to inefficient decisions for brownout services.  Indeed, such
-services already keep their response-time at a given setpoint, at the
-expense of reducing the amount of optional content served. Hence, by
-measuring response-time alone, it is not possible to discriminate
+services fault-tolerant.
+Existing, state-of-the-art load-balancers
+forward requests based on metrics that cannot discriminate
 between a replica that is avoiding overload by not executing the
 optional code and a replica that is not threatened with overload
-executing all optional code, both achieving low response times.
-Therefore, existing load-balancing techniques that monitor response
-times should be improved to migrate load away from replicas not
-executing optional code.
+executing all optional code.
+Therefore, existing load-balancing techniques must be improved to
+migrate load away from replicas not executing optional code.
 
 Our challenge is to find a load-balancing methodology that maximizes
 the amount of served optional content, provided that every replica

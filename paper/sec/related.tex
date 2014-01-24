@@ -29,50 +29,37 @@ infrastructure is modified both by the action of the load-balancer and
 by the effect of the self-adaptivity introduced in cloud applications.
 
 Load-balancing solutions can be divided into two different types:
-static and dynamic policies. Static load-balancing refers to a fixed
-strategy to select the next replica to be loaded. Static
-load-balancing found many applications in load sharing on
-multiprocessor
-systems~\cite{StaticLoadBalancing:TSE,StaticOptimal:ACM}. Among the
-static load-balancing techniques the most commonly implemented are
-\textbf{Random} balancing, and \textbf{Round Robin (RR)} based
-ones. Random balancing is based on random decisions, and despite being
-extremely simple to implement, his utility is questionable, since it
-does not take into account any factor in selecting the replica. Round
-robin solutions try to balance the load onto the replicas. A round
-robin algorithm selects the replica, eventually weighting the possible
-alternatives based on a priori knowledge of their capabilities. In
-this case the algorithm is often referred to as \textbf{Weighted RR}.
+static and dynamic. Static load-balancing refers to a fixed, non-adaptive
+strategy to select a replica to direct traffic to~\cite{StaticLoadBalancing:TSE,StaticOptimal:ACM}.
+The most commonly used techniques is based on selecting each replica in turn, called \textbf{Round Robin (RR)}. It can be implemented either deterministically, by storing the last selected replica, or probabilistically, by picking a replica at random.
+This technique can further be improved by weighting the replica selection based on a priori
+knowledge of their relative capacity, refered to as \textbf{Weighted RR}.
+However, due to their non-adaptive nature, such techniques cannot be applied to
+brownout-compliant load-balancing as they do not take into account
+the inherent fluctuations of a cloud environment, which leads to changing
+capabilities of replicas.
 
-In principle we are not interested in static load-balancing. In fact,
-the purpose of brownout-compliant applications and load-balancing is
-to account for the inherent fluctuations of a cloud environment. The
-same replica can receive different resources during its lifetime,
-therefore a static weight vector would not reflect the current
-situation.
-
-On the contrary, in dynamic load-balancing the choice of the replica
-is based on measurements about the current system state. One widely
-used option is the choice of the fastest replica, therefore realizing
-a \textbf{Fastest Replica First (FRF)} load balancer.  
-\str{Describe FRF-EWMA here.}
-
-A variation of this algorithm is the \textbf{Two Random Choices
-  (2RC)}~\cite{2RC} one, that randomly chooses two replicas and
+On the contrary, dynamic load-balancing is an adaptive technique, in
+which the choice of the replica is based on measurements of the current system.
+One popular option is to chose the replica which had the lowest response time in the past.
+We refer to this algorithm as \textbf{Fastest Replica First (FRF)} if the choice is based on the last
+measured response time of each replica, and \textbf{FRF-EWMA} is the choice is based on
+Exponentially Weighted Moving Average over the past response times of each replica.
+A variation of this algorithm is \textbf{Two Random Choices
+  (2RC)}~\cite{2RC}, that randomly chooses two replicas and
 assigns the request to the fastest one, i.e., the one with the lowest
-maximum latency.
+maximum response time.
 
-FRF and its modfications are unlikely to work with brownout-compliant
-applications, because each replica selects the amount of optional code
-executed to maintain the response times to a certain desired value,
-and there is no way to distinguish between a congested replica that is
-not serving optional content and a non-congested replica that could
-serve the optional content together with more requests. Also with
-non-adaptive applications this algorithm can cause severe performance
-loss, since the current response time does not necessarily reflect the
-future response time and the internal replica queue can saturate at an
-unexpected rate, especially if the time taken to produce the answer is
-much greater than the arrival rate.
+Unfortunately, through experimental results, we were able to determine
+that FRF, FRF-EWMA and 2RC are unsuitable for brownout applications. They base
+their decision on response times alone, which
+leads to inefficient decisions for brownout services.  Indeed, such
+services already keep their response-time at a given setpoint, at the
+expense of reducing the amount of optional content served. Hence, by
+measuring response-time alone, it is not possible to discriminate
+between a replica that is avoiding overload by not executing the
+optional code and a replica that is not threatened with overload
+executing all optional code, both achieving low response times.
 
 Another adopted strategy is based on the connection count and
 generally called \textbf{Shortest Queue First (SQF)}, where the
@@ -88,7 +75,14 @@ the network transmission and the current connection count. Stankovic
 proposed a Bayesian approach to the load-balancing problem for a
 multiprocessor load distribution~\cite{Stankovic:TC}. An estimator of
 the queue length per processor is kept updated and the next request is
-sent to the least congested computing unit. These approaches are
+sent to the least congested computing unit.
+\str{In light of a lengthy RW section, could we "compress" these references?
+"Other approaches have been proposed that base their decision on remaining
+capacity. However, due to the fact that brownout applications keep CPU
+utilization around 60-70\% to prepare for possible request bursts,
+deciding on remaining capacity alone is, just as with response time,
+not an indicator of how well a brownout replica is performing."}
+These approaches are
 hardly applicable to brownout-compliant cloud applications because
 they do not take into account the replica control loop adjusting the
 percentage of optional code executed. In general, often these
