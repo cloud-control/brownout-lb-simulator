@@ -83,6 +83,7 @@ class Simulator:
 		self.outputDirectory = outputDirectory
 		self.optionalOn = 0
 		self.optionalOff = 0
+		self.avgServiceTime = 0
 		self.stdServiceTime = 0
 
 	## Adds a new event
@@ -285,9 +286,9 @@ class Server:
 	# Ask Martina for details. :P
 	def runControlLoop(self):
 		if self.latestLatencies:
-			# XXX: original algorithm is with max, change this back to max once we
-			# completed debugging the optimizer
-			serviceTime = avg(self.latestLatencies)
+			# Possible choices: max or avg latency control
+			# serviceTime = avg(self.latestLatencies) # avg latency
+			serviceTime = max(self.latestLatencies) # max latency
 			serviceLevel = self.theta
 
 			# choice of the estimator:
@@ -306,7 +307,8 @@ class Server:
 			# NOTE: control knob allowing slow increase
 			if error > 0:
 				error *= 0.1
-			serviceLevel += (1 / self.alpha) * (1 - self.pole) * error
+			variation = (1 / self.alpha) * (1 - self.pole) * error
+			serviceLevel += 0.5 * variation
 
 			# saturation, it's a probability
 			self.theta = min(max(serviceLevel, 0.0), 1.0)
@@ -636,6 +638,7 @@ class LoadBalancer:
 			variance = 0
 		self.stdServiceTime = math.sqrt(variance)
 		self.sim.stdServiceTime = self.stdServiceTime
+		self.sim.avgServiceTime = self.averageServiceTime
 	
 		# Call original onCompleted
 		request.onCompleted()
@@ -708,10 +711,10 @@ class LoadBalancer:
 				zip(self.weights, self.lastThetas, modifiedLastLastThetas) ]
 			preNormalizedSumOfWeights = sum(self.weights)
 			self.weights = [ x / preNormalizedSumOfWeights for x in self.weights ]
-		elif self.algorithm == 'theta-diff-plus':
-			Kp = 5
-			Ti = 50
-			self.weights = [ max(x[0] + Kp * x[0] * (x[1] - x[2]) + Kp*x[0]/Ti * (x[1]), 0.01) for x in \
+		elif self.algorithm == 'theta-diff-plus': # 0.89468 std=2.358 with Kp=1 Ti=5
+			Kp = 0.5 # 1
+			Ti = 1.0 # 2.375
+			self.weights = [ max(x[0] * (1 + Kp * (x[1] - x[2]) + (Kp/Ti) * x[1]), 0.01) for x in \
                             zip(self.weights, self.lastThetas, self.lastLastThetas) ]
 			preNormalizedSumOfWeights = sum(self.weights)
 			self.weights = [ x / preNormalizedSumOfWeights for x in self.weights ]
@@ -976,7 +979,9 @@ def main():
 		raise Exception("Scenario does not define end-of-simulation")
 	sim.run(until = otherParams['simulateUntil'])
 	recommendationPercentage = float(sim.optionalOn) / float(sim.optionalOff + sim.optionalOn)
-	sim.log(sim, loadBalancer.algorithm + ", total recommendation percentage {0}, standard deviation {1}", recommendationPercentage, sim.stdServiceTime)
+	sim.log(sim, loadBalancer.algorithm + \
+	    ", total recommendation percentage {0}, standard deviation {1} on mean {2}", \
+	    recommendationPercentage, sim.stdServiceTime, sim.avgServiceTime)
 	sim.output('final-results', "{algo:15}, {res:.5f}".format(algo = loadBalancer.algorithm, res = recommendationPercentage))
 
 def responseTimeTest():
