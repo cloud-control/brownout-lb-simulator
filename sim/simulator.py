@@ -531,7 +531,9 @@ class LoadBalancer:
 		self.lastThetas.append(self.initialTheta) # to be updated at onComplete
 		self.lastLastThetas.append(self.initialTheta) # to be updated at onComplete
 		self.lastLatencies.append([]) # to be updated at onComplete
+		self.lastLastLatencies.append([])
 		self.queueLengths.append(0) # to be updated in request and onComplete
+		self.lastQueueLengths.append(0)
 		self.numRequestsPerReplica.append(0) # to be updated in request
 		self.numLastRequestsPerReplica.append(0) # to be updated in runControlLoop
 		self.ewmaResponseTime.append(0) # to be updated in onComplete
