@@ -657,8 +657,13 @@ class LoadBalancer:
 			arrivalRate = float(self.numRequests - self.lastNumRequests) / float(self.controlPeriod)
 			# TODO: we have to substitute these vectors (mu and M) 
 			# with estimations of their values
-			mu = cvxopt.div(1,matrix([0.001 * 1, 0.001 * 2, 0.001 * 3, 0.001 * 50, 0.001 * 50]))
-			M = cvxopt.div(1,matrix([0.07 * 1, 0.07 * 2, 0.07 * 3, 0.07 * 10, 0.07 * 10]))
+			mutmp = matrix(np.zeros((len(self.weights), 1)))
+			Mtmp = matrix(np.zeros((len(self.weights), 1)))
+			for i in range(0, len(self.weights)):
+				mutmp[i] = self.backends[i].serviceTimeN
+				Mtmp[i] = self.backends[i].serviceTimeY
+			mu = cvxopt.div(1,mutmp)
+			M = cvxopt.div(1,Mtmp)
 			A = matrix(np.ones((1, len(self.weights)))) # A and b are constraints for the sum of weights to be 1.0
 			b = matrix(1.0, (1,1), 'd')
 			m, n = A.size
