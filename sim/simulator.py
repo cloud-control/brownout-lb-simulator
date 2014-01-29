@@ -757,17 +757,18 @@ class LoadBalancer:
 				# Gain
 				gamma = self.equal_theta_gain
 				
-				# Calculate error to the average
+				# Calculate the negative deviation from the average
 				e = self.lastThetas[i] - avg(self.lastThetas)
-				# "Integrate"
+				# Integrate the negative deviation from the average
 				self.weights[i] += gamma * e
 				# Bound
 				if self.weights[i] < 0.001:
 					self.weights[i] = 0.001
 			
 			# Normalize
+			weightSum = sum(self.weights)
 			for i in range(0,len(self.backends)):
-				self.weights[i] = self.weights[i] / sum(self.weights)
+				self.weights[i] = self.weights[i] / weightSum
 		else:
 			raise Exception("Unknown load-balancing algorithm " + self.algorithm)
 
