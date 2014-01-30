@@ -2,7 +2,7 @@
 
 mkdir -p results
 
-algs=( random RR weighted-RR theta-diff theta-diff-plus optimization SQF FRF equal-thetas FRF-EWMA predictive 2RC )
+algs=( random RR weighted-RR theta-diff theta-diff-plus optimization SQF FRF equal-thetas FRF-EWMA predictive 2RC ctl-simplify )
 
 for algorithm in "${algs[@]}"
 do

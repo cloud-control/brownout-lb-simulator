@@ -295,14 +295,14 @@ class Server:
 			# ------- bare estimator
 			# self.alpha = serviceTime / serviceLevel # very rough estimate
 			# ------- RLS estimation algorithm
-			intermediateAlpha = serviceTime - self.alpha*self.theta
-			rlsG = self.rlsP * self.theta / \
-				(self.rlsForgetting + self.theta*self.rlsP*self.theta)
-			self.rlsP = (1/self.rlsForgetting) * self.rlsP \
-				- rlsG*self.theta*(1/self.rlsForgetting)*self.rlsP
-			self.alpha = self.alpha + intermediateAlpha * rlsG
+			a = self.rlsP*serviceLevel
+			g = 1 / (serviceLevel*a + self.rlsForgetting)
+			k = g*a
+			e = serviceTime - serviceLevel*self.alpha
+			self.alpha = self.alpha + k*e
+			self.rlsP  = (self.rlsP - g * a*a) / self.rlsForgetting
 			# end of the estimator - in the end self.alpha should be set
-	
+			
 			error = self.setPoint - serviceTime
 			# NOTE: control knob allowing slow increase
 			if error > 0:
@@ -520,6 +520,9 @@ class LoadBalancer:
 		self.averageServiceTime = 0
 		self.intermediateForVariance = 0 	
 		self.stdServiceTime = 0
+		## for the ctl-simplify algorithm
+		self.ctlRlsP = []
+		self.ctlAlpha = []
 		
 		# Launch control loop
 		self.sim.add(0, self.runControlLoop)
@@ -531,10 +534,15 @@ class LoadBalancer:
 		self.lastThetas.append(self.initialTheta) # to be updated at onComplete
 		self.lastLastThetas.append(self.initialTheta) # to be updated at onComplete
 		self.lastLatencies.append([]) # to be updated at onComplete
+		self.lastLastLatencies.append([])
 		self.queueLengths.append(0) # to be updated in request and onComplete
+		self.lastQueueLengths.append(0)
 		self.numRequestsPerReplica.append(0) # to be updated in request
 		self.numLastRequestsPerReplica.append(0) # to be updated in runControlLoop
 		self.ewmaResponseTime.append(0) # to be updated in onComplete
+		## for ctl-simplify
+		self.ctlRlsP.append(1000)
+		self.ctlAlpha.append(1)
 
 		self.weights = [ 1.0 / len(self.backends) ] * len(self.backends)
 
@@ -543,7 +551,7 @@ class LoadBalancer:
 	def request(self, request):
 		#self.sim.log(self, "Got request {0}", request)
 		request.arrival = self.sim.now
-		if self.algorithm in [ 'weighted-RR', 'theta-diff', 'theta-diff-plus', 'equal-thetas', 'optimization' ]:
+		if self.algorithm in [ 'weighted-RR', 'theta-diff', 'theta-diff-plus', 'equal-thetas', 'optimization', 'ctl-simplify' ]:
 			request.chosenBackendIndex = \
 				weightedChoice(zip(range(0, len(self.backends)), self.weights))
 		elif self.algorithm == 'random':
@@ -766,6 +774,35 @@ class LoadBalancer:
 			# Normalize
 			for i in range(0,len(self.backends)):
 				self.weights[i] = self.weights[i] / sum(self.weights)
+		elif self.algorithm == 'ctl-simplify':
+			p = 0.90
+			rlsForgetting = 0.95
+			# RLS for alpha
+			a = [ x[0]*x[1] \
+				  for x in zip(self.ctlRlsP,self.weights) ]
+			g = [ 1 / (x[0]*x[1] + rlsForgetting) \
+			      for x in zip(self.weights,a) ]
+			k = [ x[0]*x[1] \
+				  for x in zip(g,a)]
+			e = [ x[0] - x[1]*x[2]\
+				  for x in zip(self.queueLengths,self.weights,self.ctlAlpha)]
+			self.ctlAlpha = [ min(x[0] + x[1]*x[2],1.0)\
+							  for x in zip(self.ctlAlpha,k,e)]
+			self.ctlRlsP  = [ (x[0] - x[1] * x[2]*x[2]) / rlsForgetting \
+							  for x in zip(self.ctlRlsP,g,a)]
+						
+			l = (self.numRequests - self.lastNumRequests) / self.controlPeriod
+			xo = -1.0 # desired queue length
+			if l == 0:
+				for i in range(0,len(self.backends)):
+					self.weights[i] = 1/len(self.backends)
+			else:
+				self.weights = [ max(x[0] + ((1-p)/l)* x[2] * (xo -x[1]) \
+						- (1-p)/l* (xo - x[3]), 0.01) for x in \
+						zip(self.weights, self.queueLengths, self.ctlAlpha, self.lastQueueLengths) ]
+			# Normalize
+			for i in range(0,len(self.backends)):
+				self.weights[i] = self.weights[i] / sum(self.weights)
 		else:
 			raise Exception("Unknown load-balancing algorithm " + self.algorithm)
 
@@ -895,7 +932,7 @@ class MarkovianArrivalProcess:
 # Setups up all entities, then runs simulation.
 def main():
 	algorithms = ("weighted-RR theta-diff optimization SQF FRF equal-thetas " + \
-		"FRF-EWMA predictive 2RC RR random theta-diff-plus").split()
+		"FRF-EWMA predictive 2RC RR random theta-diff-plus ctl-simplify").split()
 
 	# Parsing command line options to find out the algorithm
 	parser = argparse.ArgumentParser( \
@@ -925,14 +962,14 @@ def main():
 		parser.print_help()
 		quit()
 
-	serverControlPeriod = 10
+	serverControlPeriod = 1
 	solvers.options['show_progress'] = False # suppress output of cvxopt solver
 
 	random.seed(1)
 	sim = Simulator(outputDirectory = args.outdir)
 	servers = []
 	clients = []
-	loadBalancer = LoadBalancer(sim, controlPeriod = 1)
+	loadBalancer = LoadBalancer(sim, controlPeriod = 10)
 
 	# For static algorithm set the weights
 	if algorithm == 'static':
