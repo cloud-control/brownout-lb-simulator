@@ -15,7 +15,7 @@ solution is based on the how the control variables $\theta_i$ are
 changing within each replica.
 
 The approach determines the variation of the control variables
-$\theta_i$ and corresponingly react. If the percentage of optional
+$\theta_i$ and correspondingly react. If the percentage of optional
 content served is increasing, the replica is assumed to be less
 loaded, and more traffic can be sent to it. On the contrary, when the
 optional content diminish, the replica will receive less traffic, to
@@ -71,7 +71,7 @@ to
 \left[ \theta_i (k) - \cfrac{\sum_j \theta_j (k) }{n} \right] ,
 \label{eq:equal-thetas}
 \end{equation}
-where $\gamma_e$ is a paramter of the algorithm and accounts for how
+where $\gamma_e$ is a parameter of the algorithm and accounts for how
 fast the algorithm should converge. The weights are simply modified
 proportionally to the difference between the current control value and
 the average control value set by the replicas. Clearly, the same
@@ -85,8 +85,35 @@ request.
 \str{Comment on the parameter $\gamma_e$}
 
 \subsection{Optimization based load-balancing}
-\str{Find a name for it and describe it. Prove what we can prove about
-  the solution.}
+A different approach to load balancing is to update the replica weights according to the solution of an optimization problem, where the objective is to maximize the quantity (\ref{objective}). We model each replica $i$ as a $M/G/1/PS$ queueing system with the probability density functions for service times $S_i$ given by
+\begin{align}
+f_{S_i} (t) = (1-\theta) \mu_i e^{-\mu_i t} + \theta M_i e^{-M_i t}
+\end{align}
+which is a mixture of two exponentially distributed service times corresponding to serving all clients with or without optional content. As processor sharing is the adopted scheduling principle, the mean response times in the systems will behave as corresponding $M/M/1$ systems with effective service rates
+\begin{align}
+\mu_i^* = \left[ E[S_i] \right]^{-1} = \left[ \frac{1-\theta}{\mu_i} + \frac{\theta}{M_i} \right]^{-1} \label{mueff}
+\end{align}
+In order to get the prescribed mean response times $t_i^*$, the required service rate can be calculated as
+\begin{align}
+t_i & = \frac{1}{\mu_i^*-\lambda w_i} = t_i^* \\
+\Longrightarrow \mu_i^* & = \frac{1+t_i^*\lambda w_i}{t_i^*} \label{muneed}
+\end{align}
+Combining (\ref{mueff}) and (\ref{muneed}), the required dimmer values can be solved for:
+\begin{align}
+\theta_i^* = \frac{M_i \left( \mu_i t_i^* - 1 -\lambda w_i t_i^* \right)}{{\left( 1+\lambda w_i t_i^* \right) \left(\mu_i-M_i \right)}} = \frac{A_i - B_i w_i}{C_i + D_i w_i}
+\end{align}
+Now, here should be some more text about constraints on the weights from the fact that $0 \leq \theta_i^* \leq 1$, but we'll skip that for now and just go ahead and show the constraints:
+\begin{align}
+\frac{C_i-A_i}{B_i+D_i} \leq w_i \leq \frac{A_i}{B_i}
+\end{align}
+The optimization problem can now formally be stated as
+\begin{align}
+\max_{w_i} & J = \sum_i w_i \theta_i = \sum_i w_i  \frac{A_i - B_i w_i}{C_i + D_i w_i} \\
+\textnormal{s.t. } & \sum_i w_i = 1 \\
+& \max (0,\frac{C_i-A_i}{B_i+D_i}) \leq w_i \leq \frac{A_i}{B_i}
+\end{align}
+Since the objective function $J$ is concave in $w_i$ and the constraints are linear (SHOW!), this is a concave optimization problem.
+\str{Todo: move queueing theory stuff and service rate things elsewhere? Insert motivations and expand existing ones. Add more in stationarity and issues with that.}
 
 % \textcolor{red}{\textit{\textbf{Cristian:} Some stuff that might help
 %     to devise a solution. It can be proven (i.e., I have the proof on
