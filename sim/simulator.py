@@ -243,11 +243,11 @@ class Server:
 		## initialization for the RLS estimator (controller variable)
 		self.rlsP = 1000
 		## RLS forgetting factor (controller parameter)
-		self.rlsForgetting = 0.2
+		self.rlsForgetting = 0.95
 		## Current alpha (controller variable)
 		self.alpha = 1
 		## Pole (controller parameter)
-		self.pole = 0.9
+		self.pole = 0.99
 		## latencies measured during last control period (controller input)
 		self.latestLatencies = []
 		## dimmer value (controller output)
@@ -305,10 +305,10 @@ class Server:
 			
 			error = self.setPoint - serviceTime
 			# NOTE: control knob allowing slow increase
-			if error > 0:
-				error *= 0.1
+			#if error > 0:
+			#	error *= 0.1
 			variation = (1 / self.alpha) * (1 - self.pole) * error
-			serviceLevel += 0.5 * variation
+			serviceLevel += self.controlPeriod * variation
 
 			# saturation, it's a probability
 			self.theta = min(max(serviceLevel, 0.0), 1.0)
@@ -719,14 +719,14 @@ class LoadBalancer:
 				if (self.lastThetas[i] == 1 and self.lastLastThetas[i] == 1):
 					modifiedLastLastThetas[i] = 0.99
 			# end of the quick fix
-			gain = 0.5
+			gain = 0.25
 			self.weights = [ max(x[0] + gain*(x[1] - x[2]), 0.01) for x in \
 				zip(self.weights, self.lastThetas, modifiedLastLastThetas) ]
 			preNormalizedSumOfWeights = sum(self.weights)
 			self.weights = [ x / preNormalizedSumOfWeights for x in self.weights ]
-		elif self.algorithm == 'theta-diff-plus': # 0.89468 std=2.358 with Kp=1 Ti=5
-			Kp = 0.5 # 1
-			Ti = 1.0 # 2.375
+		elif self.algorithm == 'theta-diff-plus': 
+			Kp = 0.5
+			Ti = 5.0 
 			self.weights = [ max(x[0] * (1 + Kp * (x[1] - x[2]) + (Kp/Ti) * x[1]), 0.01) for x in \
                             zip(self.weights, self.lastThetas, self.lastLastThetas) ]
 			preNormalizedSumOfWeights = sum(self.weights)
@@ -773,16 +773,16 @@ class LoadBalancer:
 				# Integrate the negative deviation from the average
 				self.weights[i] += gamma * e
 				# Bound
-				if self.weights[i] < 0.001:
-					self.weights[i] = 0.001
+				if self.weights[i] < 0.01:
+					self.weights[i] = 0.01
 			
 			# Normalize
 			weightSum = sum(self.weights)
 			for i in range(0,len(self.backends)):
 				self.weights[i] = self.weights[i] / weightSum
 		elif self.algorithm == 'ctl-simplify':
-			p = 0.90
-			rlsForgetting = 0.95
+			p = 0.99
+			rlsForgetting = 0.99
 			# RLS for alpha
 			a = [ x[0]*x[1] \
 				  for x in zip(self.ctlRlsP,self.weights) ]
@@ -798,7 +798,7 @@ class LoadBalancer:
 							  for x in zip(self.ctlRlsP,g,a)]
 						
 			l = (self.numRequests - self.lastNumRequests) / self.controlPeriod
-			xo = -1.0 # desired queue length
+			xo = -10.0 # desired queue length
 			if l == 0:
 				for i in range(0,len(self.backends)):
 					self.weights[i] = 1/len(self.backends)
@@ -957,7 +957,7 @@ def main():
 	parser.add_argument('--equal-theta-gain',
 		type = float,
 		help = 'Gain in the equal-theta algorithm',
-		default = 0.117)
+		default = 0.025) #0.117)
 	parser.add_argument('--scenario',
 		help = 'Specify a scenario in which to test the system',
 		default = os.path.join(os.path.dirname(sys.argv[0]), 'scenarios', 'A.py'))
@@ -968,14 +968,14 @@ def main():
 		parser.print_help()
 		quit()
 
-	serverControlPeriod = 1
+	serverControlPeriod = 0.5
 	solvers.options['show_progress'] = False # suppress output of cvxopt solver
 
 	random.seed(1)
 	sim = Simulator(outputDirectory = args.outdir)
 	servers = []
 	clients = []
-	loadBalancer = LoadBalancer(sim, controlPeriod = 10)
+	loadBalancer = LoadBalancer(sim, controlPeriod = 1.0)
 
 	# For static algorithm set the weights
 	if algorithm == 'static':
