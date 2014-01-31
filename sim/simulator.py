@@ -287,9 +287,9 @@ class Server:
 	def runControlLoop(self):
 		if self.latestLatencies:
 			# Possible choices: max or avg latency control
-			# serviceTime = avg(self.latestLatencies) # avg latency
+			serviceTime = avg(self.latestLatencies) # avg latency
 			# serviceTime = max(self.latestLatencies) # max latency
-			serviceTime = np.percentile(self.latestLatencies, 95) # 95 percentile
+			# serviceTime = np.percentile(self.latestLatencies, 95) # 95 percentile
 			serviceLevel = self.theta
 
 			# choice of the estimator:
