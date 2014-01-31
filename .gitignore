@@ -12,4 +12,5 @@ sim/latex
 sim/results
 
 # PDF of the paper
-paper/cdc.pdf
+cdc-paper/cdc.pdf
+icac-paper/icac.pdf
