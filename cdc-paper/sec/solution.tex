@@ -58,7 +58,7 @@ between performance and robustness.
 
 \subsection{Equality principle-based heuristic}
 
-The second innovative policy presented here is based on the principle
+The second innovative policy presented here is based on the heuristic principle
 that in the best conditions, every replica should have a similar
 behavior, therefore the control variables $\theta_i$ should be as
 close as possible to one another. This approach selects weights that
@@ -67,12 +67,13 @@ would encourage the control variables to converge to a single value.
 The heuristic computes a potential weight $\tilde{w}_i(k+1)$ according
 to
 \begin{equation}
-  \tilde{w}_i(k+1) = w_i(k) + \gamma_e 
-\left[ \theta_i (k) - \cfrac{\sum_j \theta_j (k) }{n} \right] ,
+  \tilde{w}_i(k+1) = w_i(k) + \gamma_e e_i(k)
 \label{eq:equal-thetas}
 \end{equation}
-where $\gamma_e$ is a parameter of the algorithm and accounts for how
-fast the algorithm should converge. The weights are simply modified
+where
+$$e_i(k)=\left[ \theta_i (k) - \cfrac{\sum_j \theta_j (k) }{n} \right]$$
+and $\gamma_e$ is a non-zero positive paramter of the algorithm which accounts
+for how fast the algorithm should converge. The weights are simply modified
 proportionally to the difference between the current control value and
 the average control value set by the replicas. Clearly, the same
 saturation and normalization described in Equation
@@ -81,6 +82,19 @@ solution, to ensure that the sum of the weights is equal to one and
 they have positive values --- i.e., that all the incoming traffic is
 directed to the replicas and that each replica receives at least some
 request.
+
+By inserting the expression for $\tilde w_i$ from \eqref{eq:equal-thetas}
+in the normalization equation \eqref{eq:theta-diff-rescale} we get the system
+\begin{equation}
+  w_i(k+1)=\cfrac{w_i(k)+\gamma_ee_i(k)}{\sum_jw_j(k)+\gamma_e\sum_je_j(k)}
+\label{eq:weights}
+\end{equation}
+Since we normalized all weights $w_i(k)$ to sum to one ($\sum_jw_j(k)=1$), and
+$$\sum_je_j(k)=\sum_j\left[\theta_j(k)-\frac{\sum_l\theta_l(k)}{n}\right]=0$$
+we get that \eqref{eq:weights} in stationarity is
+$$w_i(k)=w_i(k)+\gamma_ee_i(k)$$
+and the only solution for this is that $e_i(k)=0$, all dimmers are equal in
+stationarity.
 
 \str{Comment on the parameter $\gamma_e$}
 
