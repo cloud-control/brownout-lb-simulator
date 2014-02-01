@@ -287,9 +287,9 @@ class Server:
 	def runControlLoop(self):
 		if self.latestLatencies:
 			# Possible choices: max or avg latency control
-			serviceTime = avg(self.latestLatencies) # avg latency
+			# serviceTime = avg(self.latestLatencies) # avg latency
 			# serviceTime = max(self.latestLatencies) # max latency
-			# serviceTime = np.percentile(self.latestLatencies, 95) # 95 percentile
+			serviceTime = np.percentile(self.latestLatencies, 95) # 95 percentile
 			serviceLevel = self.theta
 
 			# choice of the estimator:
@@ -490,6 +490,8 @@ class LoadBalancer:
 		self.backends = []
 		## weights determining how to load-balance requests (control output)
 		self.weights = []
+		## last deviation of theta from the average (for equal-thetas)
+		self.lastThetaErrors = []
 		## dimmer values measured during the previous control period (control input)
 		self.lastThetas = []
 		## dimmer values measured during before previous control period
@@ -532,6 +534,7 @@ class LoadBalancer:
 	# @param backend the server to add
 	def addBackend(self, backend):
 		self.backends.append(backend)
+		self.lastThetaErrors.append(0)
 		self.lastThetas.append(self.initialTheta) # to be updated at onComplete
 		self.lastLastThetas.append(self.initialTheta) # to be updated at onComplete
 		self.lastLatencies.append([]) # to be updated at onComplete
@@ -772,7 +775,9 @@ class LoadBalancer:
 				# Calculate the negative deviation from the average
 				e = self.lastThetas[i] - avg(self.lastThetas)
 				# Integrate the negative deviation from the average
-				self.weights[i] += gamma * e
+				self.weights[i] += gamma * e # + Kp * (e - self.lastThetaErrors[i])
+				self.lastThetaErrors[i] = e
+
 				# Bound
 				if self.weights[i] < 0.01:
 					self.weights[i] = 0.01
