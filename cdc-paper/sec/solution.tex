@@ -58,7 +58,7 @@ between performance and robustness.
 
 \subsection{Equality principle-based heuristic}
 
-The second innovative policy presented here is based on the principle
+The second innovative policy presented here is based on the heuristic principle
 that in the best conditions, every replica should have a similar
 behavior, therefore the control variables $\theta_i$ should be as
 close as possible to one another. This approach selects weights that
@@ -67,12 +67,13 @@ would encourage the control variables to converge to a single value.
 The heuristic computes a potential weight $\tilde{w}_i(k+1)$ according
 to
 \begin{equation}
-  \tilde{w}_i(k+1) = w_i(k) + \gamma_e 
-\left[ \theta_i (k) - \cfrac{\sum_j \theta_j (k) }{n} \right] ,
+  \tilde{w}_i(k+1) = w_i(k) + \gamma_e e_i(k)
 \label{eq:equal-thetas}
 \end{equation}
-where $\gamma_e$ is a parameter of the algorithm and accounts for how
-fast the algorithm should converge. The weights are simply modified
+where
+$$e_i(k)=\left[ \theta_i (k) - \cfrac{\sum_j \theta_j (k) }{n} \right]$$
+and $\gamma_e$ is a non-zero positive paramter of the algorithm which accounts
+for how fast the algorithm should converge. The weights are simply modified
 proportionally to the difference between the current control value and
 the average control value set by the replicas. Clearly, the same
 saturation and normalization described in Equation
@@ -82,61 +83,110 @@ they have positive values --- i.e., that all the incoming traffic is
 directed to the replicas and that each replica receives at least some
 request.
 
+By inserting the expression for $\tilde w_i$ from \eqref{eq:equal-thetas}
+in the normalization equation \eqref{eq:theta-diff-rescale} we get the system
+\begin{equation}
+  w_i(k+1)=\cfrac{w_i(k)+\gamma_ee_i(k)}{\sum_jw_j(k)+\gamma_e\sum_je_j(k)}
+\label{eq:weights}
+\end{equation}
+Since we normalized all weights $w_i(k)$ to sum to one ($\sum_jw_j(k)=1$), and
+$$\sum_je_j(k)=\sum_j\left[\theta_j(k)-\frac{\sum_l\theta_l(k)}{n}\right]=0$$
+we get that \eqref{eq:weights} in stationarity is
+$$w_i(k)=w_i(k)+\gamma_ee_i(k)$$
+and the only solution for this is that $e_i(k)=0$, all dimmers are equal in
+stationarity.
+
 \str{Comment on the parameter $\gamma_e$}
 
 \subsection{Optimization based load-balancing}
-A different approach to load balancing is to update the replica weights according to the solution of an optimization problem, where the objective is to maximize the quantity (\ref{objective}). We model each replica $i$ as a $M/G/1/PS$ queueing system with the probability density functions for service times $S_i$ given by
-\begin{align}
-f_{S_i} (t) = (1-\theta) \mu_i e^{-\mu_i t} + \theta M_i e^{-M_i t}
-\end{align}
-which is a mixture of two exponentially distributed service times corresponding to serving all clients with or without optional content. As processor sharing is the adopted scheduling principle, the mean response times in the systems will behave as corresponding $M/M/1$ systems with effective service rates
-\begin{align}
-\mu_i^* = \left[ E[S_i] \right]^{-1} = \left[ \frac{1-\theta}{\mu_i} + \frac{\theta}{M_i} \right]^{-1} \label{mueff}
-\end{align}
-In order to get the prescribed mean response times $t_i^*$, the required service rate can be calculated as
-\begin{align}
-t_i & = \frac{1}{\mu_i^*-\lambda w_i} = t_i^* \\
-\Longrightarrow \mu_i^* & = \frac{1+t_i^*\lambda w_i}{t_i^*} \label{muneed}
-\end{align}
-Combining (\ref{mueff}) and (\ref{muneed}), the required dimmer values can be solved for:
-\begin{align}
-\theta_i^* = \frac{M_i \left( \mu_i t_i^* - 1 -\lambda w_i t_i^* \right)}{{\left( 1+\lambda w_i t_i^* \right) \left(\mu_i-M_i \right)}} = \frac{A_i - B_i w_i}{C_i + D_i w_i}
-\end{align}
-Now, here should be some more text about constraints on the weights from the fact that $0 \leq \theta_i^* \leq 1$, but we'll skip that for now and just go ahead and show the constraints:
-\begin{align}
-\frac{C_i-A_i}{B_i+D_i} \leq w_i \leq \frac{A_i}{B_i}
-\end{align}
-The optimization problem can now formally be stated as
-\begin{align}
-\max_{w_i} & J = \sum_i w_i \theta_i = \sum_i w_i  \frac{A_i - B_i w_i}{C_i + D_i w_i} \\
-\textnormal{s.t. } & \sum_i w_i = 1 \\
-& \max (0,\frac{C_i-A_i}{B_i+D_i}) \leq w_i \leq \frac{A_i}{B_i}
-\end{align}
-Since the objective function $J$ is concave in $w_i$ and the constraints are linear (SHOW!), this is a concave optimization problem.
-\str{Todo: move queueing theory stuff and service rate things elsewhere? Insert motivations and expand existing ones. Add more in stationarity and issues with that.}
 
-% \textcolor{red}{\textit{\textbf{Cristian:} Some stuff that might help
-%     to devise a solution. It can be proven (i.e., I have the proof on
-%     a piece of paper), that the effective service rate of a replica
-%     is: $$\mu_{i,eff}=\frac{1}{\frac{1-\theta_i}{\mu_i}+\frac{\theta_i}{M_i}}$$
-%     \\
-%     The respose time of a replica, as per M/M/1 queues, is:
-%     \\
-%     $$t_i=\frac{1}{\mu_{i,eff}-\lambda_i}$$
-%     \\
-%     Knowing that the controller tries to maintain $t_i=\tau_i$, one
-%     can compute $\theta_i$ by inverting the equation above.
-% }}
-	
-% \textbf{Proof for effective service rate.} Let $x_i = 1/\mu_i$ be the service time of a request served with mandatory content and $X_i = 1/M_i$ be the service time of a request served with both mandatory and optional content. Let us compute the time required to serve a burst of $n$ requests, i.e., $n$ requests that arrive at the same time, with a dimmer value of $\theta_i$:
+The third approach presented here is to update the replica weights
+based on the solution of an optimization problem, where the objective
+is to maximize the quantity denoted by Equation~\eqref{eq:objective}.
 
-% $$t=n (1-\theta_i) x_i + n \theta_i X_i$$
+In this solution, each replica is modeled as an $M/G/1$ queue with a
+Processor Sharing (PS) discipline. The arrival clients are Markovian
+(M) processes, the service times have a general (G) distribution and
+each replica consists of a single server. According to the processor
+sharing discipline, all clients are served immediately after their
+arrival and share a fraction of the available computation power.
 
-% Hence, the effective service rate is:
+We use a general distribution for service times to account for the
+brownout adaptation. For each replica $i$ we define $f_{S_i}$, the
+probability density function for service times $S_i$, as
+\begin{align}
+  f_{S_i} (t) = (1 - \theta_i) \cdot \mu_i \cdot e^{-\mu_i \cdot t} +
+  \theta_i \cdot M_i \cdot e^{-M_i \cdot t} ,
+\label{eq:pdf-servicetimes}
+\end{align}
+where $t$ represents time, $\theta_i$ is the probability of activating
+the optional components, $\mu_i$ denotes the service rate for requests
+that do not have optional components enabled and $M_i$ is the service
+rates for requests where the optional part is computed. Therefore, the
+expression~\eqref{eq:pdf-servicetimes} is a mixture of two
+exponentially distributed service times corresponding to serving all
+clients with or without optional content. Although the replicas are
+modeled as $M/G/1$ queues, the processor sharing discipline is
+adopted. Therefore, the mean replicas response times can be computed
+based on theoretical results on the $M/M/1$ queues, selecting
+appropriate service rates. Each replica $i$ has an effective service
+rate
+\begin{equation}
+  \mu_i^* = \left[ E[S_i] \right]^{-1} = \left[ \frac{1-\theta_i}{\mu_i}
+    + \frac{\theta_i}{M_i} \right]^{-1} .
+  \label{eq:effective-service-rate}
+\end{equation}
 
-% \begin{eqnarray*}
-% \mu_{eff,i} & = & n/t \\
-% & = & \frac{1}{(1-\theta_i) x_i + \theta_i X_i} \\
-% & = & \frac{1}{\frac{1-\theta_i}{\mu_i} + \frac{\theta_i}{M_i}}
-% \end{eqnarray*}
+It is possible to compute the value of the service rate that respects
+the replica objective that the mean response times $t_i$ is equal to
+the desired value $t_i^*$, that is given to the brownout-compliant
+replica.
+\begin{align}
+  t_i & = \frac{1}{\mu_i^*-\lambda w_i} = t_i^* \\
+  \Longrightarrow \mu_i^* & = \frac{1+t_i^*\lambda w_i}{t_i^*} 
+  \label{eq:desired-service-rate}
+\end{align}
+Combining Equation~\eqref{eq:effective-service-rate} and
+\eqref{eq:desired-service-rate}, it is possible compute the optimal
+values of $\theta_i$ that would respect the response time
+constraints. These values, $\theta_i^*$, are
+\begin{equation}
+  \theta_i^* = \frac{M_i \cdot \left( \mu_i t_i^* - 1 -\lambda w_i
+      t_i^* \right)}{{\left( 1+\lambda w_i t_i^* \right) \cdot
+      \left(\mu_i-M_i \right)}} = \frac{A_i - B_i w_i}{C_i + D_i w_i}.
+  \label{eq:optimal-thetas}
+\end{equation}
 
+Recalling that $\theta_i$ is the probability of executing the optional
+components when producing the response, the values $\theta_i^*$ should
+be constrained to belong to the interval $[0, 1]$. Imposing this
+condition provides the following inequalities.
+\begin{equation}
+  \frac{C_i-A_i}{B_i+D_i} \leq w_i \leq \frac{A_i}{B_i}
+  \label{eq:constraints-optimal-thetas}
+\end{equation}
+Using these inequalities as constraints, it is possible to formally
+state the optimization problem as
+\begin{equation}
+\begin{array}{rl}
+  \max_{w_i} \;\;\; & J = \sum_i w_i \theta_i = \sum_i w_i  \frac{A_i - B_i w_i}{C_i + D_i w_i} \\
+  \textnormal{s.t.} \;\;\; & \sum_i w_i = 1 \\
+  & \max (0,\frac{C_i-A_i}{B_i+D_i}) \leq w_i \leq \frac{A_i}{B_i}
+\end{array}
+  \label{eq:optimization-problem}
+\end{equation}
+
+The objective function $J$ is concave in $w_i$ and the constraints are
+linear. \str{Show these two.} Therefore the optimization problem is
+concave. \str{Add a ``common language'' description of the
+  optimization strategy. It basically does this and that.}
+
+Notice that solving the optimization
+problem~\eqref{eq:optimization-problem} guarantees that the best
+possible solution is found, but however requires a lot of knowledge
+about the single replica. In fact, while other solutions require to
+know only the incoming traffic and the control variables for each
+replica, the solution here relies on the knowledge of the service time
+of requests with and without optional content $M_i$ and $\mu_i$ that
+might not be available and could require additional computation to be
+estimated correctly.
