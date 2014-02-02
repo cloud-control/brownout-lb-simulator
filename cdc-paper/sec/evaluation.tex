@@ -30,17 +30,62 @@ of the user-perceived stability, we also report the \textbf{average
 achieve a low response time with possibly high fluctuations from
 solutions that achieve a higher but more stable response time.
 
-\str{Do we want to add more performance indicators?}
-
 \subsection{Simulator}
 
-\str{Describe the simulator}
+To test our load-balancing strategies, together with existing state 
+of the art solutions, we implemented a simulator for brownout-compliant 
+applications. In the simulator, it is very easy to plug-in new 
+load-balancing algorithms. The simulator is based on the concepts of 
+\emph{Client},  \emph{Request}, \emph{LoadBalancer}, \emph{Replica} 
+and \emph{Link}.
 
-\str{State that implementing new algorithms is easy}
+When a new client is defined, it can behave according to the open-loop 
+client model, where it simply issues a certain number of unrelated
+requests (as it is true for clients that respect the Markovian assumption),
+or according to che closed-loop one. Closed-loop clients issue a request
+and wait for the response, whenever they receive the response they think
+for some time and subsequently continue using the application with another
+request. While this second model is more realistic, the first one is still
+useful to simulate the behavior of the mass. The simulator implements
+both of them, to allow for complete test.
 
-\str{Stress the fact that the scenario-based approach makes the
-  simulator very flexible and it is therefore very easy to support
-  multiple test cases}
+Requests are received by the load-balancer, that directs them towards
+different replicas. The load-balancer can work on a per-request basis or
+based on weights. The first case is used to simulate policies like
+Round Robin, Random, Shortest Queue First and so on, that do not rely on
+the concept of weights. The weighted load-balancer is used to simulate the
+strategies proposed in this paper, as well as state of the art solutions
+like the Weighted Round Robin. 
+
+Each replica simulates the computation necessary to serve the request
+and chooses if it should be executed with or without the optional components
+activated. Service times depend on that. The replicas are also executing
+an internal control loop to select their control variables, the probability
+of executing the optional components. Details on how the interal control 
+loops are realized can be found on~\cite{cloudish-tr}.
+
+Finally, there are network links connecting the load-balancer and the
+replicas. These link are part of the simulator, to study the effect of
+network delays in communicating the necessary feedback information for the
+load-balancer execution.
+
+The simulator receives as input a \emph{Scenario}, which describes what
+can happen during the simulation. The scenario definition supports the
+insertion of new clients and the removal of existing ones. It also allows
+to turn on and off replicas at specific times during the execution and to
+change the service times for every replica, both for the optional
+components and for the mandatory ones. This simulates a change in the
+amount of resources given to the machine hosting the replica and it is
+based on the assumption that these changes are unpredictable and can
+happen at the architecture level, for example due to the cloud provider
+co-locating more applications onto the same physical hardware, therefore
+reducing their computation capability.
+
+With the scenarios, it is very easy to simulate different working
+conditions and to have a complete overview of the changes that might
+happen during the load-balancing and replica execution. In the following,
+we describe two sets of experiments conducted to compare the load-balancing
+strategies when subject to different execution conditions.
 
 \subsection{Reacting to clients behavior}
 
