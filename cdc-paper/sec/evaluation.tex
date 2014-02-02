@@ -89,20 +89,18 @@ strategies when subject to different execution conditions.
 
 \subsection{Reacting to clients behavior}
 
-The aim of this first set of tests is to evaluate the performance of
+The aim of this first test is to evaluate the performance of
 different algorithms when new clients are arriving and some other clients
-disconnect. We present two different experiments, one showing the detailed
-time series for the involved quantities and the second showing only
-aggregate data.
+disconnect.
 
-In the first case, the infrastructure is composed by four replicas. The
-fist replica is the fastest and requires $0.05$ seconds to serve a
-request with the optional components, while only $0.005$ are necessary to
-produce the answer without optional components. The second replica is slower
-and takes $0.25$ to produce a full request and $0.025$ seconds to produce
-the mandatory content. The third and fourth replicas are even slower, 
-taking $0.5$ seconds for the full content and $0.05$ for the mandatory 
-content only.
+We present an experiment where the infrastructure is composed by four 
+replicas. The fist replica is the fastest and requires $0.05$ seconds to 
+serve a request with the optional components, while only $0.005$ are 
+necessary to produce the answer without optional components. The second 
+replica is slower and takes $0.25$ to produce a full request and $0.025$ 
+seconds to produce the mandatory content. The third and fourth replicas 
+are even slower, taking $0.5$ seconds for the full content and $0.05$ for 
+the mandatory content only.
 
 Clients are added according to the closed-loop model. $50$ clients are
 accessing the system at the beginning of the simulation, time $0$ and $10$ of 
@@ -113,9 +111,38 @@ $40$ clients and the simulation is ended at time $1000$.
 \begin{figure}
 \centering
 \input{img/clientchanges-full}
-\caption{Results}
+\caption{Results of a simulation with four replicas and clients entering
+and leaving the system at different times. The left column shows the
+effective weights computed by the load-balancing policies while the
+right column shows the control variables for each replica. The first
+replica is depicted in black solid lines, the second replica is shown
+in blue dashed lines, the third replica in red dotted lines.}
 \label{fig:clientchanges-full}
 \end{figure}
+
+\begin{figure}
+\centering
+\input{img/clientchanges-boxplot}
+\vspace{-4mm}
+\caption{Caption.}
+\label{fig:clientchanges-boxplot}
+\end{figure}
+
+The right column in Figure~\ref{fig:clientchanges-full} shows the control 
+variable $\theta_i$ for each of the replica, while the left column shows
+the effective weights $w_i$ that have been assigned by the load-balancer
+choices. Since strategies like the Round Robin do not assign directly the
+weights, we decided to compute the effective values that can be found
+\emph{a posteriori}. The algorithms are ordered based on the percentage
+of optional content served, where the Equality Principle-Based Heuristic
+(EPBH) achieves the best percentage overall, followed by the Variational 
+Principle-Based Heuristic (VPBH) and by the Optimization Based Load-Balancer
+(OBLB). In this case, the strategies that are aware of the adaptation that
+is ongoing in the replicas achieve better results. Among the non-aware
+solutions, Shortest Queue First (SQF) is the only one that has
+comparable performance in terms of optional content delivered.
+
+\str{Comment on Figure~\ref{fig:clientchanges-boxplot}.}
 
 \subsection{Reacting to infrastructure resources}
 

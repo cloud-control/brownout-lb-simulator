@@ -21,8 +21,8 @@ ymin=-0.05,
 ymax= 1.05,
 scaled ticks=false,
 xtick={0,200,...,1000},
-xticklabel style={font=\footnotesize},
-yticklabel style={font=\footnotesize},
+%xticklabel style={font=\footnotesize},
+%yticklabel style={font=\footnotesize},
 %ytick align=outside,
 %xtick align=outside,
 ]
@@ -59,19 +59,19 @@ title={$w$},
 ylabel={EPBH}, % equal-thetas
 ]
 
-\addplot[black] table[x index=0,y index=19,col sep=comma,each nth point=1]{img/clientchanges-full/equal-thetas/sim-lb.csv};
-\addplot[blue]  table[x index=0,y index=20,col sep=comma,each nth point=1]{img/clientchanges-full/equal-thetas/sim-lb.csv};
-\addplot[green] table[x index=0,y index=21,col sep=comma,each nth point=1]{img/clientchanges-full/equal-thetas/sim-lb.csv};
-\addplot[red]   table[x index=0,y index=22,col sep=comma,each nth point=1]{img/clientchanges-full/equal-thetas/sim-lb.csv};
+\addplot[black, thick] table[x index=0,y index=19,col sep=comma,each nth point=10]{img/clientchanges-full/equal-thetas/sim-lb.csv};
+\addplot[blue, dashed, thick]  table[x index=0,y index=20,col sep=comma,each nth point=10]{img/clientchanges-full/equal-thetas/sim-lb.csv};
+\addplot[green, dashdotted, thick] table[x index=0,y index=21,col sep=comma,each nth point=10]{img/clientchanges-full/equal-thetas/sim-lb.csv};
+\addplot[red, dotted, thick]   table[x index=0,y index=22,col sep=comma,each nth point=10]{img/clientchanges-full/equal-thetas/sim-lb.csv};
 
 \nextgroupplot[
 title={$\theta$},
 ]
 
-\addplot[black] table[x index=0,y index=5,col sep=comma,each nth point=1]{img/clientchanges-full/equal-thetas/sim-lb.csv};
-\addplot[blue]  table[x index=0,y index=6,col sep=comma,each nth point=1]{img/clientchanges-full/equal-thetas/sim-lb.csv};
-\addplot[green] table[x index=0,y index=7,col sep=comma,each nth point=1]{img/clientchanges-full/equal-thetas/sim-lb.csv};
-\addplot[red]   table[x index=0,y index=8,col sep=comma,each nth point=1]{img/clientchanges-full/equal-thetas/sim-lb.csv};
+\addplot[black, thick] table[x index=0,y index=5,col sep=comma,each nth point=10]{img/clientchanges-full/equal-thetas/sim-lb.csv};
+\addplot[blue, dashed, thick]  table[x index=0,y index=6,col sep=comma,each nth point=10]{img/clientchanges-full/equal-thetas/sim-lb.csv};
+\addplot[green, dashdotted, thick] table[x index=0,y index=7,col sep=comma,each nth point=10]{img/clientchanges-full/equal-thetas/sim-lb.csv};
+\addplot[red, dotted, thick]   table[x index=0,y index=8,col sep=comma,each nth point=10]{img/clientchanges-full/equal-thetas/sim-lb.csv};
 
 
 %% 2nd row
@@ -79,170 +79,170 @@ title={$\theta$},
 ylabel={VPBH}, % theta-diff-plus
 ]
 
-\addplot[black] table[x index=0,y index=19,col sep=comma,each nth point=1]{img/clientchanges-full/theta-diff-plus/sim-lb.csv};
-\addplot[blue]  table[x index=0,y index=20,col sep=comma,each nth point=1]{img/clientchanges-full/theta-diff-plus/sim-lb.csv};
-\addplot[green] table[x index=0,y index=21,col sep=comma,each nth point=1]{img/clientchanges-full/theta-diff-plus/sim-lb.csv};
-\addplot[red]   table[x index=0,y index=22,col sep=comma,each nth point=1]{img/clientchanges-full/theta-diff-plus/sim-lb.csv};
+\addplot[black, thick] table[x index=0,y index=19,col sep=comma,each nth point=10]{img/clientchanges-full/theta-diff-plus/sim-lb.csv};
+\addplot[blue, dashed, thick]  table[x index=0,y index=20,col sep=comma,each nth point=10]{img/clientchanges-full/theta-diff-plus/sim-lb.csv};
+\addplot[green, dashdotted, thick] table[x index=0,y index=21,col sep=comma,each nth point=10]{img/clientchanges-full/theta-diff-plus/sim-lb.csv};
+\addplot[red, dotted, thick]   table[x index=0,y index=22,col sep=comma,each nth point=10]{img/clientchanges-full/theta-diff-plus/sim-lb.csv};
 
 \nextgroupplot[]
 
-\addplot[black] table[x index=0,y index=5,col sep=comma,each nth point=1]{img/clientchanges-full/theta-diff-plus/sim-lb.csv};
-\addplot[blue]  table[x index=0,y index=6,col sep=comma,each nth point=1]{img/clientchanges-full/theta-diff-plus/sim-lb.csv};
-\addplot[green] table[x index=0,y index=7,col sep=comma,each nth point=1]{img/clientchanges-full/theta-diff-plus/sim-lb.csv};
-\addplot[red]   table[x index=0,y index=8,col sep=comma,each nth point=1]{img/clientchanges-full/theta-diff-plus/sim-lb.csv};
+\addplot[black, thick] table[x index=0,y index=5,col sep=comma,each nth point=10]{img/clientchanges-full/theta-diff-plus/sim-lb.csv};
+\addplot[blue, dashed, thick]  table[x index=0,y index=6,col sep=comma,each nth point=10]{img/clientchanges-full/theta-diff-plus/sim-lb.csv};
+\addplot[green, dashdotted, thick] table[x index=0,y index=7,col sep=comma,each nth point=10]{img/clientchanges-full/theta-diff-plus/sim-lb.csv};
+\addplot[red, dotted, thick]   table[x index=0,y index=8,col sep=comma,each nth point=10]{img/clientchanges-full/theta-diff-plus/sim-lb.csv};
 
 %% 3rd row
 \nextgroupplot[
 ylabel={OBLB}, % Optimization
 ]
 
-\addplot[black] table[x index=0,y index=19,col sep=comma,each nth point=1]{img/clientchanges-full/optimization/sim-lb.csv};
-\addplot[blue]  table[x index=0,y index=20,col sep=comma,each nth point=1]{img/clientchanges-full/optimization/sim-lb.csv};
-\addplot[green] table[x index=0,y index=21,col sep=comma,each nth point=1]{img/clientchanges-full/optimization/sim-lb.csv};
-\addplot[red]   table[x index=0,y index=22,col sep=comma,each nth point=1]{img/clientchanges-full/optimization/sim-lb.csv};
+\addplot[black, thick] table[x index=0,y index=19,col sep=comma,each nth point=10]{img/clientchanges-full/optimization/sim-lb.csv};
+\addplot[blue, dashed, thick]  table[x index=0,y index=20,col sep=comma,each nth point=10]{img/clientchanges-full/optimization/sim-lb.csv};
+\addplot[green, dashdotted, thick] table[x index=0,y index=21,col sep=comma,each nth point=10]{img/clientchanges-full/optimization/sim-lb.csv};
+\addplot[red, dotted, thick]   table[x index=0,y index=22,col sep=comma,each nth point=10]{img/clientchanges-full/optimization/sim-lb.csv};
 
 \nextgroupplot[]
 
-\addplot[black] table[x index=0,y index=5,col sep=comma,each nth point=1]{img/clientchanges-full/optimization/sim-lb.csv};
-\addplot[blue]  table[x index=0,y index=6,col sep=comma,each nth point=1]{img/clientchanges-full/optimization/sim-lb.csv};
-\addplot[green] table[x index=0,y index=7,col sep=comma,each nth point=1]{img/clientchanges-full/optimization/sim-lb.csv};
-\addplot[red]   table[x index=0,y index=8,col sep=comma,each nth point=1]{img/clientchanges-full/optimization/sim-lb.csv};
+\addplot[black, thick] table[x index=0,y index=5,col sep=comma,each nth point=10]{img/clientchanges-full/optimization/sim-lb.csv};
+\addplot[blue, dashed, thick]  table[x index=0,y index=6,col sep=comma,each nth point=10]{img/clientchanges-full/optimization/sim-lb.csv};
+\addplot[green, dashdotted, thick] table[x index=0,y index=7,col sep=comma,each nth point=10]{img/clientchanges-full/optimization/sim-lb.csv};
+\addplot[red, dotted, thick]   table[x index=0,y index=8,col sep=comma,each nth point=10]{img/clientchanges-full/optimization/sim-lb.csv};
 
 %% 4th row
 \nextgroupplot[
 ylabel={SQF},
 ]
 
-\addplot[black] table[x index=0,y index=19,col sep=comma,each nth point=1]{img/clientchanges-full/SQF/sim-lb.csv};
-\addplot[blue]  table[x index=0,y index=20,col sep=comma,each nth point=1]{img/clientchanges-full/SQF/sim-lb.csv};
-\addplot[green] table[x index=0,y index=21,col sep=comma,each nth point=1]{img/clientchanges-full/SQF/sim-lb.csv};
-\addplot[red]   table[x index=0,y index=22,col sep=comma,each nth point=1]{img/clientchanges-full/SQF/sim-lb.csv};
+\addplot[black, thick] table[x index=0,y index=19,col sep=comma,each nth point=10]{img/clientchanges-full/SQF/sim-lb.csv};
+\addplot[blue, dashed, thick]  table[x index=0,y index=20,col sep=comma,each nth point=10]{img/clientchanges-full/SQF/sim-lb.csv};
+\addplot[green, dashdotted, thick] table[x index=0,y index=21,col sep=comma,each nth point=10]{img/clientchanges-full/SQF/sim-lb.csv};
+\addplot[red, dotted, thick]   table[x index=0,y index=22,col sep=comma,each nth point=10]{img/clientchanges-full/SQF/sim-lb.csv};
 
 \nextgroupplot[]
 
-\addplot[black] table[x index=0,y index=5,col sep=comma,each nth point=1]{img/clientchanges-full/SQF/sim-lb.csv};
-\addplot[blue]  table[x index=0,y index=6,col sep=comma,each nth point=1]{img/clientchanges-full/SQF/sim-lb.csv};
-\addplot[green] table[x index=0,y index=7,col sep=comma,each nth point=1]{img/clientchanges-full/SQF/sim-lb.csv};
-\addplot[red]   table[x index=0,y index=8,col sep=comma,each nth point=1]{img/clientchanges-full/SQF/sim-lb.csv};
+\addplot[black, thick] table[x index=0,y index=5,col sep=comma,each nth point=10]{img/clientchanges-full/SQF/sim-lb.csv};
+\addplot[blue, dashed, thick]  table[x index=0,y index=6,col sep=comma,each nth point=10]{img/clientchanges-full/SQF/sim-lb.csv};
+\addplot[green, dashdotted, thick] table[x index=0,y index=7,col sep=comma,each nth point=10]{img/clientchanges-full/SQF/sim-lb.csv};
+\addplot[red, dotted, thick]   table[x index=0,y index=8,col sep=comma,each nth point=10]{img/clientchanges-full/SQF/sim-lb.csv};
 
 %% 5th row
 \nextgroupplot[
 ylabel={FRF-EWMA},
 ]
 
-\addplot[black] table[x index=0,y index=19,col sep=comma,each nth point=1]{img/clientchanges-full/FRF-EWMA/sim-lb.csv};
-\addplot[blue]  table[x index=0,y index=20,col sep=comma,each nth point=1]{img/clientchanges-full/FRF-EWMA/sim-lb.csv};
-\addplot[green] table[x index=0,y index=21,col sep=comma,each nth point=1]{img/clientchanges-full/FRF-EWMA/sim-lb.csv};
-\addplot[red]   table[x index=0,y index=22,col sep=comma,each nth point=1]{img/clientchanges-full/FRF-EWMA/sim-lb.csv};
+\addplot[black, thick] table[x index=0,y index=19,col sep=comma,each nth point=10]{img/clientchanges-full/FRF-EWMA/sim-lb.csv};
+\addplot[blue, dashed, thick]  table[x index=0,y index=20,col sep=comma,each nth point=10]{img/clientchanges-full/FRF-EWMA/sim-lb.csv};
+\addplot[green, dashdotted, thick] table[x index=0,y index=21,col sep=comma,each nth point=10]{img/clientchanges-full/FRF-EWMA/sim-lb.csv};
+\addplot[red, dotted, thick]   table[x index=0,y index=22,col sep=comma,each nth point=10]{img/clientchanges-full/FRF-EWMA/sim-lb.csv};
 
 \nextgroupplot[]
 
-\addplot[black] table[x index=0,y index=5,col sep=comma,each nth point=1]{img/clientchanges-full/FRF-EWMA/sim-lb.csv};
-\addplot[blue]  table[x index=0,y index=6,col sep=comma,each nth point=1]{img/clientchanges-full/FRF-EWMA/sim-lb.csv};
-\addplot[green] table[x index=0,y index=7,col sep=comma,each nth point=1]{img/clientchanges-full/FRF-EWMA/sim-lb.csv};
-\addplot[red]   table[x index=0,y index=8,col sep=comma,each nth point=1]{img/clientchanges-full/FRF-EWMA/sim-lb.csv};
+\addplot[black, thick] table[x index=0,y index=5,col sep=comma,each nth point=10]{img/clientchanges-full/FRF-EWMA/sim-lb.csv};
+\addplot[blue, dashed, thick]  table[x index=0,y index=6,col sep=comma,each nth point=10]{img/clientchanges-full/FRF-EWMA/sim-lb.csv};
+\addplot[green, dashdotted, thick] table[x index=0,y index=7,col sep=comma,each nth point=10]{img/clientchanges-full/FRF-EWMA/sim-lb.csv};
+\addplot[red, dotted, thick]   table[x index=0,y index=8,col sep=comma,each nth point=10]{img/clientchanges-full/FRF-EWMA/sim-lb.csv};
 
 %% 6th row
 \nextgroupplot[
 ylabel={2RC},
 ]
 
-\addplot[black] table[x index=0,y index=19,col sep=comma,each nth point=1]{img/clientchanges-full/2RC/sim-lb.csv};
-\addplot[blue]  table[x index=0,y index=20,col sep=comma,each nth point=1]{img/clientchanges-full/2RC/sim-lb.csv};
-\addplot[green] table[x index=0,y index=21,col sep=comma,each nth point=1]{img/clientchanges-full/2RC/sim-lb.csv};
-\addplot[red]   table[x index=0,y index=22,col sep=comma,each nth point=1]{img/clientchanges-full/2RC/sim-lb.csv};
+\addplot[black, thick] table[x index=0,y index=19,col sep=comma,each nth point=10]{img/clientchanges-full/2RC/sim-lb.csv};
+\addplot[blue, dashed, thick]  table[x index=0,y index=20,col sep=comma,each nth point=10]{img/clientchanges-full/2RC/sim-lb.csv};
+\addplot[green, dashdotted, thick] table[x index=0,y index=21,col sep=comma,each nth point=10]{img/clientchanges-full/2RC/sim-lb.csv};
+\addplot[red, dotted, thick]   table[x index=0,y index=22,col sep=comma,each nth point=10]{img/clientchanges-full/2RC/sim-lb.csv};
 
 \nextgroupplot[]
 
-\addplot[black] table[x index=0,y index=5,col sep=comma,each nth point=1]{img/clientchanges-full/2RC/sim-lb.csv};
-\addplot[blue]  table[x index=0,y index=6,col sep=comma,each nth point=1]{img/clientchanges-full/2RC/sim-lb.csv};
-\addplot[green] table[x index=0,y index=7,col sep=comma,each nth point=1]{img/clientchanges-full/2RC/sim-lb.csv};
-\addplot[red]   table[x index=0,y index=8,col sep=comma,each nth point=1]{img/clientchanges-full/2RC/sim-lb.csv};
+\addplot[black, thick] table[x index=0,y index=5,col sep=comma,each nth point=10]{img/clientchanges-full/2RC/sim-lb.csv};
+\addplot[blue, dashed, thick]  table[x index=0,y index=6,col sep=comma,each nth point=10]{img/clientchanges-full/2RC/sim-lb.csv};
+\addplot[green, dashdotted, thick] table[x index=0,y index=7,col sep=comma,each nth point=10]{img/clientchanges-full/2RC/sim-lb.csv};
+\addplot[red, dotted, thick]   table[x index=0,y index=8,col sep=comma,each nth point=10]{img/clientchanges-full/2RC/sim-lb.csv};
 
 %% 7th row
 \nextgroupplot[
 ylabel={FRF},
 ]
 
-\addplot[black] table[x index=0,y index=19,col sep=comma,each nth point=1]{img/clientchanges-full/FRF/sim-lb.csv};
-\addplot[blue]  table[x index=0,y index=20,col sep=comma,each nth point=1]{img/clientchanges-full/FRF/sim-lb.csv};
-\addplot[green] table[x index=0,y index=21,col sep=comma,each nth point=1]{img/clientchanges-full/FRF/sim-lb.csv};
-\addplot[red]   table[x index=0,y index=22,col sep=comma,each nth point=1]{img/clientchanges-full/FRF/sim-lb.csv};
+\addplot[black, thick] table[x index=0,y index=19,col sep=comma,each nth point=10]{img/clientchanges-full/FRF/sim-lb.csv};
+\addplot[blue, dashed, thick]  table[x index=0,y index=20,col sep=comma,each nth point=10]{img/clientchanges-full/FRF/sim-lb.csv};
+\addplot[green, dashdotted, thick] table[x index=0,y index=21,col sep=comma,each nth point=10]{img/clientchanges-full/FRF/sim-lb.csv};
+\addplot[red, dotted, thick]   table[x index=0,y index=22,col sep=comma,each nth point=10]{img/clientchanges-full/FRF/sim-lb.csv};
 
 \nextgroupplot[]
 
-\addplot[black] table[x index=0,y index=5,col sep=comma,each nth point=1]{img/clientchanges-full/FRF/sim-lb.csv};
-\addplot[blue]  table[x index=0,y index=6,col sep=comma,each nth point=1]{img/clientchanges-full/FRF/sim-lb.csv};
-\addplot[green] table[x index=0,y index=7,col sep=comma,each nth point=1]{img/clientchanges-full/FRF/sim-lb.csv};
-\addplot[red]   table[x index=0,y index=8,col sep=comma,each nth point=1]{img/clientchanges-full/FRF/sim-lb.csv};
+\addplot[black, thick] table[x index=0,y index=5,col sep=comma,each nth point=10]{img/clientchanges-full/FRF/sim-lb.csv};
+\addplot[blue, dashed, thick]  table[x index=0,y index=6,col sep=comma,each nth point=10]{img/clientchanges-full/FRF/sim-lb.csv};
+\addplot[green, dashdotted, thick] table[x index=0,y index=7,col sep=comma,each nth point=10]{img/clientchanges-full/FRF/sim-lb.csv};
+\addplot[red, dotted, thick]   table[x index=0,y index=8,col sep=comma,each nth point=10]{img/clientchanges-full/FRF/sim-lb.csv};
 
 %% 8th row
 \nextgroupplot[
 ylabel={Random},
 ]
 
-\addplot[black] table[x index=0,y index=19,col sep=comma,each nth point=1]{img/clientchanges-full/random/sim-lb.csv};
-\addplot[blue]  table[x index=0,y index=20,col sep=comma,each nth point=1]{img/clientchanges-full/random/sim-lb.csv};
-\addplot[green] table[x index=0,y index=21,col sep=comma,each nth point=1]{img/clientchanges-full/random/sim-lb.csv};
-\addplot[red]   table[x index=0,y index=22,col sep=comma,each nth point=1]{img/clientchanges-full/random/sim-lb.csv};
+\addplot[black, thick] table[x index=0,y index=19,col sep=comma,each nth point=10]{img/clientchanges-full/random/sim-lb.csv};
+\addplot[blue, dashed, thick]  table[x index=0,y index=20,col sep=comma,each nth point=10]{img/clientchanges-full/random/sim-lb.csv};
+\addplot[green, dashdotted, thick] table[x index=0,y index=21,col sep=comma,each nth point=10]{img/clientchanges-full/random/sim-lb.csv};
+\addplot[red, dotted, thick]   table[x index=0,y index=22,col sep=comma,each nth point=10]{img/clientchanges-full/random/sim-lb.csv};
 
 \nextgroupplot[]
 
-\addplot[black] table[x index=0,y index=5,col sep=comma,each nth point=1]{img/clientchanges-full/random/sim-lb.csv};
-\addplot[blue]  table[x index=0,y index=6,col sep=comma,each nth point=1]{img/clientchanges-full/random/sim-lb.csv};
-\addplot[green] table[x index=0,y index=7,col sep=comma,each nth point=1]{img/clientchanges-full/random/sim-lb.csv};
-\addplot[red]   table[x index=0,y index=8,col sep=comma,each nth point=1]{img/clientchanges-full/random/sim-lb.csv};
+\addplot[black, thick] table[x index=0,y index=5,col sep=comma,each nth point=10]{img/clientchanges-full/random/sim-lb.csv};
+\addplot[blue, dashed, thick]  table[x index=0,y index=6,col sep=comma,each nth point=10]{img/clientchanges-full/random/sim-lb.csv};
+\addplot[green, dashdotted, thick] table[x index=0,y index=7,col sep=comma,each nth point=10]{img/clientchanges-full/random/sim-lb.csv};
+\addplot[red, dotted, thick]   table[x index=0,y index=8,col sep=comma,each nth point=10]{img/clientchanges-full/random/sim-lb.csv};
 
 %% 9th row
 \nextgroupplot[
 ylabel={RR},
 ]
 
-\addplot[black] table[x index=0,y index=19,col sep=comma,each nth point=1]{img/clientchanges-full/RR/sim-lb.csv};
-\addplot[blue]  table[x index=0,y index=20,col sep=comma,each nth point=1]{img/clientchanges-full/RR/sim-lb.csv};
-\addplot[green] table[x index=0,y index=21,col sep=comma,each nth point=1]{img/clientchanges-full/RR/sim-lb.csv};
-\addplot[red]   table[x index=0,y index=22,col sep=comma,each nth point=1]{img/clientchanges-full/RR/sim-lb.csv};
+\addplot[black, thick] table[x index=0,y index=19,col sep=comma,each nth point=10]{img/clientchanges-full/RR/sim-lb.csv};
+\addplot[blue, dashed, thick]  table[x index=0,y index=20,col sep=comma,each nth point=10]{img/clientchanges-full/RR/sim-lb.csv};
+\addplot[green, dashdotted, thick] table[x index=0,y index=21,col sep=comma,each nth point=10]{img/clientchanges-full/RR/sim-lb.csv};
+\addplot[red, dotted, thick]   table[x index=0,y index=22,col sep=comma,each nth point=10]{img/clientchanges-full/RR/sim-lb.csv};
 
 \nextgroupplot[]
 
-\addplot[black] table[x index=0,y index=5,col sep=comma,each nth point=1]{img/clientchanges-full/RR/sim-lb.csv};
-\addplot[blue]  table[x index=0,y index=6,col sep=comma,each nth point=1]{img/clientchanges-full/RR/sim-lb.csv};
-\addplot[green] table[x index=0,y index=7,col sep=comma,each nth point=1]{img/clientchanges-full/RR/sim-lb.csv};
-\addplot[red]   table[x index=0,y index=8,col sep=comma,each nth point=1]{img/clientchanges-full/RR/sim-lb.csv};
+\addplot[black, thick] table[x index=0,y index=5,col sep=comma,each nth point=10]{img/clientchanges-full/RR/sim-lb.csv};
+\addplot[blue, dashed, thick]  table[x index=0,y index=6,col sep=comma,each nth point=10]{img/clientchanges-full/RR/sim-lb.csv};
+\addplot[green, dashdotted, thick] table[x index=0,y index=7,col sep=comma,each nth point=10]{img/clientchanges-full/RR/sim-lb.csv};
+\addplot[red, dotted, thick]   table[x index=0,y index=8,col sep=comma,each nth point=10]{img/clientchanges-full/RR/sim-lb.csv};
 
 %% 10th row
 \nextgroupplot[
 ylabel={Predictive},
 ]
 
-\addplot[black] table[x index=0,y index=19,col sep=comma,each nth point=1]{img/clientchanges-full/predictive/sim-lb.csv};
-\addplot[blue]  table[x index=0,y index=20,col sep=comma,each nth point=1]{img/clientchanges-full/predictive/sim-lb.csv};
-\addplot[green] table[x index=0,y index=21,col sep=comma,each nth point=1]{img/clientchanges-full/predictive/sim-lb.csv};
-\addplot[red]   table[x index=0,y index=22,col sep=comma,each nth point=1]{img/clientchanges-full/predictive/sim-lb.csv};
+\addplot[black, thick] table[x index=0,y index=19,col sep=comma,each nth point=10]{img/clientchanges-full/predictive/sim-lb.csv};
+\addplot[blue, dashed, thick]  table[x index=0,y index=20,col sep=comma,each nth point=10]{img/clientchanges-full/predictive/sim-lb.csv};
+\addplot[green, dashdotted, thick] table[x index=0,y index=21,col sep=comma,each nth point=10]{img/clientchanges-full/predictive/sim-lb.csv};
+\addplot[red, dotted, thick]   table[x index=0,y index=22,col sep=comma,each nth point=10]{img/clientchanges-full/predictive/sim-lb.csv};
 
 \nextgroupplot[]
 
-\addplot[black] table[x index=0,y index=5,col sep=comma,each nth point=1]{img/clientchanges-full/predictive/sim-lb.csv};
-\addplot[blue]  table[x index=0,y index=6,col sep=comma,each nth point=1]{img/clientchanges-full/predictive/sim-lb.csv};
-\addplot[green] table[x index=0,y index=7,col sep=comma,each nth point=1]{img/clientchanges-full/predictive/sim-lb.csv};
-\addplot[red]   table[x index=0,y index=8,col sep=comma,each nth point=1]{img/clientchanges-full/predictive/sim-lb.csv};
+\addplot[black, thick] table[x index=0,y index=5,col sep=comma,each nth point=10]{img/clientchanges-full/predictive/sim-lb.csv};
+\addplot[blue, dashed, thick]  table[x index=0,y index=6,col sep=comma,each nth point=10]{img/clientchanges-full/predictive/sim-lb.csv};
+\addplot[green, dashdotted, thick] table[x index=0,y index=7,col sep=comma,each nth point=10]{img/clientchanges-full/predictive/sim-lb.csv};
+\addplot[red, dotted, thick]   table[x index=0,y index=8,col sep=comma,each nth point=10]{img/clientchanges-full/predictive/sim-lb.csv};
 
 %% 11th row
 \nextgroupplot[
 ylabel={Weighted-RR},
 ]
 
-\addplot[black] table[x index=0,y index=19,col sep=comma,each nth point=1]{img/clientchanges-full/weighted-RR/sim-lb.csv};
-\addplot[blue]  table[x index=0,y index=20,col sep=comma,each nth point=1]{img/clientchanges-full/weighted-RR/sim-lb.csv};
-\addplot[green] table[x index=0,y index=21,col sep=comma,each nth point=1]{img/clientchanges-full/weighted-RR/sim-lb.csv};
-\addplot[red]   table[x index=0,y index=22,col sep=comma,each nth point=1]{img/clientchanges-full/weighted-RR/sim-lb.csv};
+\addplot[black, thick] table[x index=0,y index=19,col sep=comma,each nth point=10]{img/clientchanges-full/weighted-RR/sim-lb.csv};
+\addplot[blue, dashed, thick]  table[x index=0,y index=20,col sep=comma,each nth point=10]{img/clientchanges-full/weighted-RR/sim-lb.csv};
+\addplot[green, dashdotted, thick] table[x index=0,y index=21,col sep=comma,each nth point=10]{img/clientchanges-full/weighted-RR/sim-lb.csv};
+\addplot[red, dotted, thick]   table[x index=0,y index=22,col sep=comma,each nth point=10]{img/clientchanges-full/weighted-RR/sim-lb.csv};
 
 \nextgroupplot[]
 
-\addplot[black] table[x index=0,y index=5,col sep=comma,each nth point=1]{img/clientchanges-full/weighted-RR/sim-lb.csv};
-\addplot[blue]  table[x index=0,y index=6,col sep=comma,each nth point=1]{img/clientchanges-full/weighted-RR/sim-lb.csv};
-\addplot[green] table[x index=0,y index=7,col sep=comma,each nth point=1]{img/clientchanges-full/weighted-RR/sim-lb.csv};
-\addplot[red]   table[x index=0,y index=8,col sep=comma,each nth point=1]{img/clientchanges-full/weighted-RR/sim-lb.csv};
+\addplot[black, thick] table[x index=0,y index=5,col sep=comma,each nth point=10]{img/clientchanges-full/weighted-RR/sim-lb.csv};
+\addplot[blue, dashed, thick]  table[x index=0,y index=6,col sep=comma,each nth point=10]{img/clientchanges-full/weighted-RR/sim-lb.csv};
+\addplot[green, dashdotted, thick] table[x index=0,y index=7,col sep=comma,each nth point=10]{img/clientchanges-full/weighted-RR/sim-lb.csv};
+\addplot[red, dotted, thick]   table[x index=0,y index=8,col sep=comma,each nth point=10]{img/clientchanges-full/weighted-RR/sim-lb.csv};
 
 \end{groupplot}
 
