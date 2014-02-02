@@ -30,11 +30,24 @@ hyperindex=true
 
 % options for pgfplots
 \pgfplotsset{compat=1.8,compat/show suggested version=false}
-\usetikzlibrary{plotmarks}
 \usetikzlibrary{calc}
+\usetikzlibrary{shapes}
+\usetikzlibrary{plotmarks}
+\usetikzlibrary{arrows}
+\usetikzlibrary{automata}
+\usetikzlibrary{positioning}
+\usetikzlibrary{backgrounds}
+\usetikzlibrary{fit}
+\usepgfplotslibrary{groupplots}
 % begin of externalization
 \usetikzlibrary{external}
-%\tikzexternalize
+\tikzexternalize
+
+\pgfkeys{
+	/pgf/number format/.cd,
+	set decimal separator={.},
+	set thousands separator = {},
+}
 
 \newcommand{\str}[1]{{\color{red} \scriptsize \sf\selectfont @#1@}}
 

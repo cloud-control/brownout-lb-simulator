@@ -89,10 +89,33 @@ strategies when subject to different execution conditions.
 
 \subsection{Reacting to clients behavior}
 
-\begin{itemize}
-\item \str{Clients entering at different times}
-\item \str{Clients leaving the system at some point}
-\end{itemize}
+The aim of this first set of tests is to evaluate the performance of
+different algorithms when new clients are arriving and some other clients
+disconnect. We present two different experiments, one showing the detailed
+time series for the involved quantities and the second showing only
+aggregate data.
+
+In the first case, the infrastructure is composed by four replicas. The
+fist replica is the fastest and requires $0.05$ seconds to serve a
+request with the optional components, while only $0.005$ are necessary to
+produce the answer without optional components. The second replica is slower
+and takes $0.25$ to produce a full request and $0.025$ seconds to produce
+the mandatory content. The third and fourth replicas are even slower, 
+taking $0.5$ seconds for the full content and $0.05$ for the mandatory 
+content only.
+
+Clients are added according to the closed-loop model. $50$ clients are
+accessing the system at the beginning of the simulation, time $0$ and $10$ of 
+them are removed after $200$ seconds. At time $400$, $25$ more clients
+access the application and $25$ more arrives again at $600$ seconds. 
+$40$ clients and the simulation is ended at time $1000$.
+
+\begin{figure}
+\centering
+\input{img/clientchanges-full}
+\caption{Results}
+\label{fig:clientchanges-full}
+\end{figure}
 
 \subsection{Reacting to infrastructure resources}
 

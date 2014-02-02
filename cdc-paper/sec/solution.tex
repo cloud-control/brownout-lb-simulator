@@ -5,7 +5,7 @@ that take into account the self-adaptivity of the replicas. The third
 alternative is based on optimization theory, with the aim of providing
 guarantees on the best possible behavior.
 
-\subsection{Variational principle-based heuristic}
+\subsection{Variational principle-based heuristic (VPBH)}
 
 Our first solution is inspired by the predictive approach. In fact,
 the core of the predictive solution is to examine the variation of the
@@ -58,7 +58,7 @@ between performance and robustness.
 
 \str{Comment on the parameters $\gamma_p, \gamma_i$}
 
-\subsection{Equality principle-based heuristic}
+\subsection{Equality principle-based heuristic (EPBH)}
 
 The second innovative policy presented here is based on the heuristic principle
 that in the best conditions, every replica should have a similar
@@ -100,7 +100,7 @@ stationarity.
 
 \str{Comment on the parameter $\gamma_e$}
 
-\subsection{Optimization based load-balancing}
+\subsection{Optimization based load-balancing (OBLB)}
 
 The third approach presented here is to update the replica weights
 based on the solution of an optimization problem, where the objective
@@ -188,7 +188,8 @@ problem~\eqref{eq:optimization-problem} guarantees that the best
 possible solution is found, but however requires a lot of knowledge
 about the single replica. In fact, while other solutions require to
 know only the incoming traffic and the control variables for each
-replica, the solution here relies on the knowledge of the service time
-of requests with and without optional content $M_i$ and $\mu_i$ that
-might not be available and could require additional computation to be
-estimated correctly.
+replica, the optimization-based solution relies on the knowledge of 
+the service time of requests with and without optional content 
+$M_i$ and $\mu_i$ that might not be available and could require 
+additional computation to be estimated correctly. Also, this solution
+is unlikely to scale when the number of replicas increases.
