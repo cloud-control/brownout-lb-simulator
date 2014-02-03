@@ -142,10 +142,10 @@ column shows the effective weights $w_i$ that have been assigned by
 the load-balancers. Since strategies like the Round Robin do not
 assign directly the weights, we decided to compute the effective
 values that can be found \emph{a posteriori}. The algorithms are
-ordered based on the percentage of optional content served, where the
-Equality Principle-Based Heuristic (EPBH) achieves the best percentage
-overall, followed by the Variational Principle-Based Heuristic (VPBH)
-and by the Optimization Based Load-Balancer (OBLB). 
+ordered based on the percentage $\%_{on}$ of optional content served,
+where the Equality Principle-Based Heuristic (EPBH) achieves the best
+percentage overall, followed by the Variational Principle-Based
+Heuristic (VPBH) and by the Optimization Based Load-Balancer (OBLB).
 
 For this scenario, the strategies that are aware of the adaptation at
 the replica level achieve better results in terms of percentage of
@@ -157,12 +157,12 @@ To analyze the effect of the load-balancing strategies on the replicas
 response times, Figure~\ref{fig:clientchanges-boxplot} shows a box
 plot of the maximum latency experienced in intervals of time by the
 replicas. The load-balancers are ordered from left to right based on
-the percentage of optional code achieved. As in every box plot, the
-bottom line for each box represents the first quartile, the top line
-the third and the red line is the median. The red crosses depicts the
-outliers. In addition to the classical box plot information, the black
-dots depict for each algorithm the average value of the maximum
-latency measured during the experiment.
+the percentage of optional code $\%_{on}$ achieved. As in every box
+plot, the bottom line for each box represents the first quartile, the
+top line the third and the red line is the median. The red crosses
+depicts the outliers. In addition to the classical box plot
+information, the black dots depict for each algorithm the average
+value of the maximum latency measured during the experiment.
 
 The box plot clearly shows that all the solution presented in this
 paper achieve distributions that have outliers, as well as almost all
@@ -192,6 +192,5 @@ times.
 \begin{itemize}
 \item \str{Change execution time for mandatory and optional, therefore
     simulating the change in resources provided to the replicas}
-\item \str{Change the number of replicas}
 \end{itemize}
 
