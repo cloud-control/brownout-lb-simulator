@@ -32,91 +32,95 @@ solutions that achieve a higher but more stable response time.
 
 \subsection{Simulator}
 
-To test our load-balancing strategies, together with existing state 
-of the art solutions, we implemented a simulator for brownout-compliant 
-applications. In the simulator, it is very easy to plug-in new 
-load-balancing algorithms. The simulator is based on the concepts of 
-\emph{Client},  \emph{Request}, \emph{LoadBalancer}, \emph{Replica} 
-and \emph{Link}.
+To test our load-balancing strategies, together with existing state of
+the art solutions, we implemented a simulator for brownout-compliant
+applications. In the simulator, it is very easy to plug-in new
+load-balancing algorithms. The simulator is based on the concepts of
+\emph{Client}, \emph{Request}, \emph{LoadBalancer}, \emph{Replica} and
+\emph{Link}.
 
-When a new client is defined, it can behave according to the open-loop 
+When a new client is defined, it can behave according to the open-loop
 client model, where it simply issues a certain number of unrelated
-requests (as it is true for clients that respect the Markovian assumption),
-or according to che closed-loop one. Closed-loop clients issue a request
-and wait for the response, whenever they receive the response they think
-for some time and subsequently continue using the application with another
-request. While this second model is more realistic, the first one is still
-useful to simulate the behavior of the mass. The simulator implements
-both of them, to allow for complete test.
+requests (as it is true for clients that respect the Markovian
+assumption), or according to che closed-loop one. Closed-loop clients
+issue a request and wait for the response, whenever they receive the
+response they think for some time and subsequently continue using the
+application with another request. While this second model is more
+realistic, the first one is still useful to simulate the behavior of
+the mass. The simulator implements both of them, to allow for complete
+test.
 
 Requests are received by the load-balancer, that directs them towards
-different replicas. The load-balancer can work on a per-request basis or
-based on weights. The first case is used to simulate policies like
-Round Robin, Random, Shortest Queue First and so on, that do not rely on
-the concept of weights. The weighted load-balancer is used to simulate the
-strategies proposed in this paper, as well as state of the art solutions
-like the Weighted Round Robin. 
+different replicas. The load-balancer can work on a per-request basis
+or based on weights. The first case is used to simulate policies like
+Round Robin, Random, Shortest Queue First and so on, that do not rely
+on the concept of weights. The weighted load-balancer is used to
+simulate the strategies proposed in this paper, as well as state of
+the art solutions like the Weighted Round Robin.
 
 Each replica simulates the computation necessary to serve the request
-and chooses if it should be executed with or without the optional components
-activated. Service times depend on that. The replicas are also executing
-an internal control loop to select their control variables, the probability
-of executing the optional components. Details on how the interal control 
-loops are realized can be found on~\cite{cloudish-tr}.
+and chooses if it should be executed with or without the optional
+components activated. Service times depend on that. The replicas are
+also executing an internal control loop to select their control
+variables, the probability of executing the optional
+components. Details on how the interal control loops are realized can
+be found on~\cite{cloudish-tr}.
 
 Finally, there are network links connecting the load-balancer and the
 replicas. These link are part of the simulator, to study the effect of
-network delays in communicating the necessary feedback information for the
-load-balancer execution.
+network delays in communicating the necessary feedback information for
+the load-balancer execution.
 
-The simulator receives as input a \emph{Scenario}, which describes what
-can happen during the simulation. The scenario definition supports the
-insertion of new clients and the removal of existing ones. It also allows
-to turn on and off replicas at specific times during the execution and to
-change the service times for every replica, both for the optional
-components and for the mandatory ones. This simulates a change in the
-amount of resources given to the machine hosting the replica and it is
-based on the assumption that these changes are unpredictable and can
-happen at the architecture level, for example due to the cloud provider
-co-locating more applications onto the same physical hardware, therefore
-reducing their computation capability.
+The simulator receives as input a \emph{Scenario}, which describes
+what can happen during the simulation. The scenario definition
+supports the insertion of new clients and the removal of existing
+ones. It also allows to turn on and off replicas at specific times
+during the execution and to change the service times for every
+replica, both for the optional components and for the mandatory
+ones. This simulates a change in the amount of resources given to the
+machine hosting the replica and it is based on the assumption that
+these changes are unpredictable and can happen at the architecture
+level, for example due to the cloud provider co-locating more
+applications onto the same physical hardware, therefore reducing their
+computation capability.
 
 With the scenarios, it is very easy to simulate different working
 conditions and to have a complete overview of the changes that might
-happen during the load-balancing and replica execution. In the following,
-we describe two sets of experiments conducted to compare the load-balancing
-strategies when subject to different execution conditions.
+happen during the load-balancing and replica execution. In the
+following, we describe two sets of experiments conducted to compare
+the load-balancing strategies when subject to different execution
+conditions.
 
 \subsection{Reacting to clients behavior}
 
-The aim of this first test is to evaluate the performance of
-different algorithms when new clients are arriving and some other clients
+The aim of this first test is to evaluate the performance of different
+algorithms when new clients are arriving and some other clients
 disconnect.
 
-We present an experiment where the infrastructure is composed by four 
-replicas. The fist replica is the fastest and requires $0.05$ seconds to 
-serve a request with the optional components, while only $0.005$ are 
-necessary to produce the answer without optional components. The second 
-replica is slower and takes $0.25$ to produce a full request and $0.025$ 
-seconds to produce the mandatory content. The third and fourth replicas 
-are even slower, taking $0.5$ seconds for the full content and $0.05$ for 
-the mandatory content only.
+We present an experiment where the infrastructure is composed by four
+replicas. The fist replica is the fastest and requires $0.05$ seconds
+to serve a request with the optional components, while only $0.005$
+are necessary to produce the answer without optional components. The
+second replica is slower and takes $0.25$ to produce a full request
+and $0.025$ seconds to produce the mandatory content. The third and
+fourth replicas are even slower, taking $0.5$ seconds for the full
+content and $0.05$ for the mandatory content only.
 
 Clients are added according to the closed-loop model. $50$ clients are
-accessing the system at the beginning of the simulation, time $0$ and $10$ of 
-them are removed after $200$ seconds. At time $400$, $25$ more clients
-access the application and $25$ more arrives again at $600$ seconds. 
-$40$ clients and the simulation is ended at time $1000$.
+accessing the system at the beginning of the simulation, time $0$ and
+$10$ of them are removed after $200$ seconds. At time $400$, $25$ more
+clients access the application and $25$ more arrives again at $600$
+seconds.  $40$ clients and the simulation is ended at time $1000$.
 
 \begin{figure}
-\centering
-\input{img/clientchanges-full}
-\caption{Results of a simulation with four replicas and clients entering
-and leaving the system at different times. The left column shows the
-effective weights computed by the load-balancing policies while the
-right column shows the control variables for each replica. The first
-replica is depicted in black solid lines, the second replica is shown
-in blue dashed lines, the third replica in red dotted lines.}
+  \centering \input{img/clientchanges-full}
+  \caption{Results of a simulation with four replicas and clients
+    entering and leaving the system at different times. The left
+    column shows the effective weights computed by the load-balancing
+    policies while the right column shows the control variables for
+    each replica. The first replica is depicted in black solid lines,
+    the second replica is shown in blue dashed lines, the third
+    replica in red dotted lines.}
 \label{fig:clientchanges-full}
 \end{figure}
 
@@ -128,21 +132,56 @@ in blue dashed lines, the third replica in red dotted lines.}
 \label{fig:clientchanges-boxplot}
 \end{figure}
 
-The right column in Figure~\ref{fig:clientchanges-full} shows the control 
-variable $\theta_i$ for each of the replica, while the left column shows
-the effective weights $w_i$ that have been assigned by the load-balancer
-choices. Since strategies like the Round Robin do not assign directly the
-weights, we decided to compute the effective values that can be found
-\emph{a posteriori}. The algorithms are ordered based on the percentage
-of optional content served, where the Equality Principle-Based Heuristic
-(EPBH) achieves the best percentage overall, followed by the Variational 
-Principle-Based Heuristic (VPBH) and by the Optimization Based Load-Balancer
-(OBLB). In this case, the strategies that are aware of the adaptation that
-is ongoing in the replicas achieve better results. Among the non-aware
-solutions, Shortest Queue First (SQF) is the only one that has
-comparable performance in terms of optional content delivered.
+The right column in Figure~\ref{fig:clientchanges-full} shows the
+control variable $\theta_i$ for each of the replica, while the left
+column shows the effective weights $w_i$ that have been assigned by
+the load-balancers. Since strategies like the Round Robin do not
+assign directly the weights, we decided to compute the effective
+values that can be found \emph{a posteriori}. The algorithms are
+ordered based on the percentage of optional content served, where the
+Equality Principle-Based Heuristic (EPBH) achieves the best percentage
+overall, followed by the Variational Principle-Based Heuristic (VPBH)
+and by the Optimization Based Load-Balancer (OBLB). 
 
-\str{Comment on Figure~\ref{fig:clientchanges-boxplot}.}
+For this scenario, the strategies that are aware of the adaptation at
+the replica level achieve better results in terms of percentage of
+optimal content served. The Shortest Queue First (SQF) algorithm is
+the only existing one capable to achieve similar performance in terms
+of optional content delivered.
+
+To analyze the effect of the load-balancing strategies on the replicas
+response times, Figure~\ref{fig:clientchanges-boxplot} shows a box
+plot of the maximum latency experienced in intervals of time by the
+replicas. The load-balancers are ordered from left to right based on
+the percentage of optional code achieved. As in every box plot, the
+bottom line for each box represents the first quartile, the top line
+the third and the red line is the median. The red crosses depicts the
+outliers. In addition to the classical box plot information, the black
+dots depict for each algorithm the average value of the maximum
+latency measured during the experiment.
+
+The box plot clearly shows that all the solution presented in this
+paper achieve distributions that have outliers, as well as almost all
+the literature ones. The only exception seems to be SQF, that achieves
+predictable maximum latency, with a median that is just slightly
+higher than the one achieved by VPBH. OBLB offers in this case a
+compromise between optional content and the presence of outliers, that
+are however limited with respect to all the other solutions. EPBH,
+although offering the highest percentage of optional content served,
+achieves that sacrificing the latency bound. From this additional
+information one can conclude that the solution presented in this paper
+should be use carefully in situations where the requirement on the
+response time is not soft, but however tend to increase the profit of
+the application developer (up to $15\%$ more optional code served with
+respect to the best solution for the case study).
+
+We have conducted more tests with similar results due to the
+simplicity of the case study definition in the simulator. Also, this
+case study is somehow small, featuring only four replicas. More
+complex scenarios were tested, although reporting similar results to
+the one shown here. In the next section we test the effect of
+infrastructural changes to load-balancing solutions and response
+times.
 
 \subsection{Reacting to infrastructure resources}
 
