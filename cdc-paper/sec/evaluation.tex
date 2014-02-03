@@ -192,48 +192,55 @@ changes to load-balancing solutions and response times.
 
 \subsection{Reacting to infrastructure resources}
 
-\begin{itemize}
-\item \str{Change execution time for mandatory and optional, therefore
-    simulating the change in resources provided to the replicas}
-\end{itemize}
+In this second case study the architecture is composed by five
+replicas, that are assigned resources. At time $0$s, the first replica
+can serve requests with the optional components consuming $0.07$s per
+request, while generating only the mandatory content takes
+$0.001$s. The second and third replicas are slower and uses $0.14$s
+and $0.002$s for full and mandatory content. The fourth replica is the
+slowest requiring $0.7$s and $0.01$s.
 
-\begin{table*}
+At time $250$s we simulate a decrease in the amount of resources
+assigned to the first replica, that can now serve optional components
+taking $0.35$s and only the mandatory part of the response consuming
+$0.005$s. At time $500$s, the fourth replica receives more resources
+serving the optional content for $0.07$s and the mandatory only for
+$0.001$s. The same happens at time $750$ to the third replica.
+
+\begin{table}
 \centering
-\caption{Performance indicators for the experiments changing infrastructure resources}
-\label{tab:resourcechanges-case2}
-\begin{tabular}{c c c c}
+\caption{Performance with variable infrastructure resources}
+\label{tab:resourcechanges-performance}
+\begin{tabular}{l c c c}
 \hline
-Algorithm & $\%_{on}$ & $\mu_u$ & $\sigma_u$ \\
+Algorithm   & $\%_{on}$ & $\mu_u$ & $\sigma_u$ \\
 \hline
-LBB & $xx.x\%$ & $xx.xx$ & $xx.xx$ \\
-LBB & $xx.x\%$ & $xx.xx$ & $xx.xx$ \\
-LBB & $xx.x\%$ & $xx.xx$ & $xx.xx$ \\
-LBB & $xx.x\%$ & $xx.xx$ & $xx.xx$ \\
-LBB & $xx.x\%$ & $xx.xx$ & $xx.xx$ \\
-LBB & $xx.x\%$ & $xx.xx$ & $xx.xx$ \\
-LBB & $xx.x\%$ & $xx.xx$ & $xx.xx$ \\
-LBB & $xx.x\%$ & $xx.xx$ & $xx.xx$ \\
-LBB & $xx.x\%$ & $xx.xx$ & $xx.xx$ \\
-LBB & $xx.x\%$ & $xx.xx$ & $xx.xx$ \\
-LBB & $xx.x\%$ & $xx.xx$ & $xx.xx$ \\
-\hline
-\end{tabular}
-\hspace{1cm}
-\begin{tabular}{c c c c}
-\hline
-Algorithm & $\%_{on}$ & $\mu_u$ & $\sigma_u$ \\
-\hline
-LBB & $xx.x\%$ & $xx.xx$ & $xx.xx$ \\
-LBB & $xx.x\%$ & $xx.xx$ & $xx.xx$ \\
-LBB & $xx.x\%$ & $xx.xx$ & $xx.xx$ \\
-LBB & $xx.x\%$ & $xx.xx$ & $xx.xx$ \\
-LBB & $xx.x\%$ & $xx.xx$ & $xx.xx$ \\
-LBB & $xx.x\%$ & $xx.xx$ & $xx.xx$ \\
-LBB & $xx.x\%$ & $xx.xx$ & $xx.xx$ \\
-LBB & $xx.x\%$ & $xx.xx$ & $xx.xx$ \\
-LBB & $xx.x\%$ & $xx.xx$ & $xx.xx$ \\
-LBB & $xx.x\%$ & $xx.xx$ & $xx.xx$ \\
-LBB & $xx.x\%$ & $xx.xx$ & $xx.xx$ \\
+OBLB        & $\mathbf{91.4\%}$ & $0.71$          & $0.89$ \\
+EPBH        & $89.5\%$          & $1.06$          & $1.95$ \\
+VPBH        & $87.7\%$          & $1.02$          & $1.90$ \\
+SQF         & $83.3\%$          & $\mathbf{0.55}$ & $\mathbf{0.40}$ \\
+RR          & $75,5\%$          & $1.11$          & $2.42$ \\
+Random      & $72.9\%$          & $0.86$          & $2.23$ \\
+2RC         & $72.2\%$          & $0.74$          & $1.64$ \\
+FRF         & $70.4\%$          & $1.27$          & $2.03$ \\
+Weighted-RR & $60.7\%$          & $0.90$          & $2.97$ \\
+FRF-EWMA    & $51.4\%$          & $1.44$          & $3.41$ \\
+Predictive  & $47.4\%$          & $1.66$          & $3.48$ \\
 \hline
 \end{tabular}
-\end{table*}
+\end{table}
+
+Table~\ref{tab:resourcechanges-performance} reports the percentage
+$\%_{on}$, the average response time and the user-perceived stability
+for the different algorithms. It should be noted again that the
+developed strategies obtain better optional content served, however
+slightly penalizing response times. However, the Optimization Based
+Load-Balancer is capable of obtaining both low latency and high
+percentage of optional content served. This is due to the amount of
+information that it uses, since we assume that the computation times
+for mandatory and optional part are known. The optimization-based
+strategy is capable of reacting fast to changes and achieves
+predictability in the application behavior. Again, if one does not
+have all the necessary information available, it is possible to
+implement strategies that would better exploit the trade-off between
+bounded latency and optional content.
