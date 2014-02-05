@@ -665,6 +665,7 @@ class LoadBalancer:
 		elif self.algorithm == 'optimization':
 			setpoint = 1
 			arrivalRate = float(self.numRequests - self.lastNumRequests) / float(self.controlPeriod)
+			#arrivalRate = 20
 			# TODO: we have to substitute these vectors (mu and M) 
 			# with estimations of their values
 			mutmp = matrix(np.zeros((len(self.weights), 1)))
@@ -710,8 +711,29 @@ class LoadBalancer:
 					cvxopt.div(2*cvxopt.mul(intB,(intC**2)), (intC+cvxopt.mul(intD,x))**3)
 					))
 				return f, Df, H
-			solution = solvers.cp(F, G, h, A=A, b=b)['x']
-			self.weights = list(solution)
+			#print(-h[2*len(self.weights):3*len(self.weights)])
+			lower_tmp = [i for i in -h[2*len(self.weights):3*len(self.weights)] if i > 0]
+			lower = sum(lower_tmp)
+			#print(lower)
+			if lower < 1.0: # if lower > 1 the servers are underloaded!
+				#print(self.sim.now, arrivalRate)
+				solution = solvers.cp(F, G, h, A=A, b=b)['x']
+				self.weights = list(solution)
+				#print(self.weights)
+			else:
+				rest = 1.0
+				weights_tmp = matrix(0.0, (len(self.weights),1),'d')
+				for i in range(0, len(self.weights)):
+					if -h[2*len(self.weights)+i] < rest:
+						weights_tmp[i,0] = -h[2*len(self.weights)+i]
+						rest = rest + h[2*len(self.weights)+i]
+						#print(rest)
+					else:
+						weights_tmp[i,0] = rest
+						break
+				#print(weights_tmp)
+				self.weights = list(weights_tmp)
+				#print(self.weights)		
 			x = matrix(self.weights)
 			self.sim.output('optimizer', ','.join(map(str, [ self.sim.now ] + \
 				list(cvxopt.div(intA-cvxopt.mul(intB,x), intC+cvxopt.mul(intD,x))))))
