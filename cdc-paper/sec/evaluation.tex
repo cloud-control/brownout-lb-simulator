@@ -115,7 +115,13 @@ $\psi_2 = 0.025$s to produce the mandatory content. The third and
 fourth replicas are the slowest ones, having $\phi_{3,4} = 0.5$s and
 $\psi_{3,4} = 0.05$s.
 
-\begin{figure}
+Clients adhere to the closed-loop model. $50$ clients are accessing
+the system at time $0$s, and $10$ of them are removed after $200$s. At
+time $400$s, $25$ more clients query the application and $25$ more
+arrives again at $600$s. $40$ clients disconnect at time $800$s and
+the simulation is ended at time $1000$s.
+
+\begin{figure}[t!]
   \centering \input{img/clientchanges-full}
   \caption{Results of a simulation with four replicas and clients
     entering and leaving the system at different time instants. The
@@ -124,34 +130,30 @@ $\psi_{3,4} = 0.05$s.
     depicted in black solid lines, the second in blue dashed lines,
     the third in green dash-dotted lines, and the fourth in red dotted
     lines.}
+    \vspace{-8mm}
 \label{fig:clientchanges-full}
 \end{figure}
 
 \begin{figure}
-\centering
-\input{img/clientchanges-boxplot}
+\centering \input{img/clientchanges-boxplot}
 \vspace{-4mm}
 \caption{Box plots of the maximum response time in all the replicas
   for every control interval. Each box depicts from the first quartile
   to the third. The red line shows the median; outliers are
   represented with red crosses while the black dots indicate the
   average value (also considering the outliers).}
+  \vspace{-4mm}
 \label{fig:clientchanges-boxplot}
 \end{figure}
-
-Clients adhere to the closed-loop model. $50$ clients are accessing
-the system at time $0$s, and $10$ of them are removed after $200$s. At
-time $400$s, $25$ more clients query the application and $25$ more
-arrives again at $600$s. $40$ clients disconnect at time $800$s and
-the simulation is ended at time $1000$s.
 
 The right column in Figure~\ref{fig:clientchanges-full} shows the
 control variable $\theta_i$ for each replica, while the left column
 shows the effective weights $w_i$ that have been assigned by the
 load-balancing strategies. Since solutions like the Round Robin do not
 assign directly the weights, we decided to compute the effective
-values that can be found after the load-balancing assignments. The
-algorithms are ordered based on the percentage $\%_{oc}$ of optional
+values that can be found after the load-balancing assignments. 
+
+The algorithms are ordered based on the percentage $\%_{oc}$ of optional
 content served, where the Equality Principle-Based Heuristic (EPBH)
 achieves the best percentage overall, followed by the Variational
 Principle-Based Heuristic (VPBH) and by the Optimization Based
@@ -233,6 +235,7 @@ FRF-EWMA    & $51.4\%$          & $1.44$          & $3.41$ \\
 Predictive  & $47.4\%$          & $1.66$          & $3.48$ \\
 \hline
 \end{tabular}
+\vspace{-4mm}
 \end{table}
 
 Table~\ref{tab:resourcechanges-performance} reports the percentage
