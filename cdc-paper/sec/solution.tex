@@ -18,8 +18,8 @@ The approach determines the variation of the control variables
 $\theta_i$ and correspondingly react. If the percentage of optional
 content served is increasing, the replica is assumed to be less
 loaded, and more traffic can be sent to it. On the contrary, when the
-optional content diminish, the replica will receive less traffic, to
-increase the control variable if possible.
+amount of optional content served decreases, the replica will receive
+less traffic, to increase the control variable if possible.
 
 The replica weights $w_i$ are initialized to $\frac{1}{n}$ where $n$
 is the number of replicas. The load-balancer periodically updates the
@@ -184,8 +184,10 @@ problem~\eqref{eq:optimization-problem} guarantees that the best
 possible solution is found, but however requires a lot of knowledge
 about the single replica. In fact, while other solutions require to
 know only the incoming traffic and the control variables for each
-replica, the optimization-based solution relies on the knowledge of 
-the service time of requests with and without optional content 
-$M_i$ and $\mu_i$ that might not be available and could require 
-additional computation to be estimated correctly. Also, this solution
-is unlikely to scale when the number of replicas increases.
+replica, the optimization-based solution relies on the knowledge of
+the service time of requests with and without optional content $M_i$
+and $\mu_i$ that might not be available and could require additional
+computation to be estimated correctly. 
+
+\str{Add or remove? Also, this solution is unlikely to scale when the
+  number of replicas increases.}

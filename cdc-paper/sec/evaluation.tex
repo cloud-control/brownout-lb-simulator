@@ -42,13 +42,13 @@ load-balancing algorithms. The simulator is based on the concepts of
 When a new client is defined, it can behave according to the open-loop
 client model, where it simply issues a certain number of unrelated
 requests (as it is true for clients that respect the Markovian
-assumption), or according to che closed-loop one. Closed-loop clients
-issue a request and wait for the response, whenever they receive the
-response they think for some time and subsequently continue using the
-application with another request. While this second model is more
-realistic, the first one is still useful to simulate the behavior of
-the mass. The simulator implements both of them, to allow for complete
-test.
+assumption), or according to che closed-loop
+one~\cite{openvsclosed}. Closed-loop clients issue a request and wait
+for the response, whenever they receive the response they think for
+some time and subsequently continue using the application with another
+request. While this second model is more realistic, the first one is
+still useful to simulate the behavior of the mass. The simulator
+implements both of them, to allow for complete test.
 
 Requests are received by the load-balancer, that directs them towards
 different replicas. The load-balancer can work on a per-request basis
@@ -64,7 +64,10 @@ components activated. Service times depend on that. The replicas are
 also executing an internal control loop to select their control
 variables, the probability of executing the optional
 components. Details on how the interal control loops are realized can
-be found on~\cite{cloudish-tr}.
+be found on~\cite{cloudish-tr}. The replicas use Processor Sharing to
+process the requests in the queue, meaning that each of the $n$ active
+request will get $\frac{1}{n}$-th of the processing capability of the
+replica.
 
 Finally, there are network links connecting the load-balancer and the
 replicas. These link are part of the simulator, to study the effect of
@@ -109,8 +112,8 @@ $0.05$s for the mandatory content only.
 Clients adhere to the closed-loop model. $50$ clients are accessing
 the system at the beginning of the simulation, time $0$s, and $10$ of
 them are removed after $200$s. At time $400$s, $25$ more clients query
-the application and $25$ more arrives again at $600$s.  $40$ clients
-and the simulation is ended at time $1000$s.
+the application and $25$ more arrives again at $600$s. $40$ clients
+disconnect at time $800$s and the simulation is ended at time $1000$s.
 
 \begin{figure}
   \centering \input{img/clientchanges-full}

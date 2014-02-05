@@ -97,15 +97,15 @@ not an indicator of how well a brownout replica is performing.
 In an attempt to overcome the mentioned limitations a merge of the
 fastest replica and the connection count approach was implemented
 where the replicas are ranked based on a linear combination of
-response times and number of routed requests. Also, the approach was
-extended with a \textbf{Predictive} estimator. A Predictive load
-balancer would rank the replicas based on the difference between the
-past metrics and the current ones. This is the solution implemented in
-the BIG-IP Local Traffic Manager~\cite{BIGIP}. One of the solutions
-proposed in this paper borrows the idea of looking at the difference
-between the past behavior and the current one, although our solution
-observes the changes in the amount of optional code served and tries
-to maximize the requests served enabling the full computation.
+response times and number of routed requests. A \textbf{Predictive}
+load balancer would rank the replicas based on the difference between
+the past metrics and the current ones. This is the solution
+implemented in the BIG-IP Local Traffic Manager~\cite{BIGIP}. One of
+the solutions proposed in this paper borrows the idea of looking at
+the difference between the past behavior and the current one, although
+our solution observes the changes in the amount of optional code
+served and tries to maximize the requests served enabling the full
+computation.
 
 Dynamic solutions can be
 control-theoretical~\cite{multipathctlb,comparisonstaticdynamic} and
