@@ -1,25 +1,26 @@
-This section describe three different solutions for balancing the load
-directed to self-adaptive brownout-compliant applications composed by
-multiple replicas. The first two strategies are heuristic solution
-that take into account the self-adaptivity of the replicas. The third
-alternative is based on optimization theory, with the aim of providing
-guarantees on the best possible behavior.
+This section describes three different solutions for balancing the
+load directed to self-adaptive brownout-compliant applications
+composed of multiple replicas. The first two strategies are heuristic
+solutions that take into account the self-adaptivity of the
+replicas. The third alternative is based on optimization theory, with
+the aim of providing guarantees on the best possible behavior. In all
+the solutions, the load-balancer is executed with a period of $1$s.
 
 \subsection{Variational principle-based heuristic (VPBH)}
 
-Our first solution is inspired by the predictive approach. In fact,
-the core of the predictive solution is to examine the variation of the
-involved quantities. While in its classical form, this solution relies
-on variations of response times or connections per replica, our
-solution is based on the how the control variables $\theta_i$ are
-changing within each replica.
+Our first solution is inspired by the predictive approach described in
+Section~\ref{sec:related}. The core of the predictive solution is to
+examine the variation of the involved quantities. While in its
+classical form, this solution relies on variations of response times
+or connections per replica, our solution is based on the how the
+control variables $\theta_i$ are changing.
 
 The approach determines the variation of the control variables
-$\theta_i$ and correspondingly react. If the percentage of optional
+$\theta_i$ and react correspondingly. If the percentage of optional
 content served is increasing, the replica is assumed to be less
 loaded, and more traffic can be sent to it. On the contrary, when the
-amount of optional content served decreases, the replica will receive
-less traffic, to increase the control variable if possible.
+optional content decreases, the replica will receive less traffic, to
+increase the control variable.
 
 The replica weights $w_i$ are initialized to $\frac{1}{n}$ where $n$
 is the number of replicas. The load-balancer periodically updates the
@@ -46,43 +47,52 @@ re-scaled according to
 \label{eq:theta-diff-rescale}
 \end{equation}
 
+\str{Talk about how to select $\gamma_p$.}
+
 Once $\gamma_p$ is fixed to a selected value, increasing the integral
 gain $\gamma_i$ calls for a stronger action on the load-balancing
 side, which means that the load-balancer would take decisions very
 much influenced by the current values of $\theta_i$, therefore greatly
 improving performance at the cost of a more nervous control action. On
 the contrary, decreasing $\gamma_i$ would stabilize the control
-signals, possibly losing performance due to a slower reaction
-time. The choice of the integral gain allows to exploit the trade-off
-between performance and robustness.
+signal, possibly resulting in performance loss due to a slower
+reaction time. The choice of the integral gain allows to exploit the
+trade-off between performance and robustness. For the experiments we
+chose $\gamma_p = 0.5$ and $\gamma_i = 5.0$.
 
 \subsection{Equality principle-based heuristic (EPBH)}
 
-The second innovative policy presented here is based on the heuristic
-principle that in the best conditions, every replica should have a
-similar behavior, therefore the control variables $\theta_i$ should be
-as close as possible to one another. This approach selects weights
-that would encourage the control variables to converge to a single
+The second policy is based on the heuristic principle that in the best
+conditions, every replica should have a similar behavior, therefore
+the control variables $\theta_i$ should be as close as possible to one
+another. In fact, if the values of $\theta_i$ converge to a single
+value, this means that the traffic is routed so that each replica can
+serve the same percentage of optional content, therefore the most
+powerful replica is receiving more traffic with respect to the least
+one. The distribution should ideally allow to converge to a value that
+is maximum with the entire pool of requests received by the
+application. This approach therefore selects weights that would
+encourage the control variables $\theta_i$ to converge to a single
 value.
 
-The heuristic computes a potential weight $\tilde{w}_i(k+1)$ according
-to
+The policy computes a potential weight $\tilde{w}_i(k+1)$
 \begin{equation}
   \tilde{w}_i(k+1) = w_i(k) + \gamma_e e_i(k)
 \label{eq:equal-thetas}
 \end{equation}
 where
 $$e_i(k)=\left[ \theta_i (k) - \cfrac{\sum_j \theta_j (k) }{n} \right]$$
-and $\gamma_e$ is a non-zero positive paramter of the algorithm which accounts
-for how fast the algorithm should converge. The weights are simply modified
-proportionally to the difference between the current control value and
-the average control value set by the replicas. Clearly, the same
-saturation and normalization described in Equation
-\eqref{eq:theta-diff-rescale} has to be applied to the proposed
+and $\gamma_e$ is a non-zero positive parameter of the algorithm which
+accounts for how fast the algorithm should converge. For the
+experiments we chose $\gamma_e = 0.025$. The weights are simply
+modified proportionally to the difference between the current control
+value and the average control value set by the replicas. Clearly, the
+same saturation and normalization described in Equation
+\eqref{eq:theta-diff-rescale} have to be applied to the proposed
 solution, to ensure that the sum of the weights is equal to one and
-they have positive values --- i.e., that all the incoming traffic is
-directed to the replicas and that each replica receives at least some
-request.
+that they have positive values --- i.e., that all the incoming traffic
+is directed to the replicas and that each replica receives at least
+some request.
 
 By inserting the expression for $\tilde w_i$ from \eqref{eq:equal-thetas}
 in the normalization equation \eqref{eq:theta-diff-rescale} we get the system
@@ -99,9 +109,9 @@ stationarity.
 
 \subsection{Optimization based load-balancing (OBLB)}
 
-The third approach presented here is to update the replica weights
-based on the solution of an optimization problem, where the objective
-is to maximize the quantity denoted by Equation~\eqref{eq:objective}.
+The third approach is to update the replica weights based on the
+solution of an optimization problem, where the objective is to
+maximize the quantity denoted by Equation~\eqref{eq:objective}.
 
 In this solution, each replica is modeled as an $M/G/1$ queue with a
 Processor Sharing (PS) discipline. The arrival clients are Markovian
@@ -109,6 +119,12 @@ Processor Sharing (PS) discipline. The arrival clients are Markovian
 each replica consists of a single server. According to the processor
 sharing discipline, all clients are served immediately after their
 arrival and share a fraction of the available computation power.
+
+\str{Explain why M/G/1 and not M/G/n where n would be the number of
+  cores available for the replica. Kind of due to the PS discipline,
+  but need better explaination. Also, Karl-Erik commented that we
+  cannot assume that control people know what an M/G/1 queue
+  is. Background should be better explained.}
 
 We use a general distribution for service times to account for the
 brownout adaptation. For each replica $i$ we define $f_{S_i}$, the
@@ -125,11 +141,11 @@ rates for requests where the optional part is computed. Therefore, the
 expression~\eqref{eq:pdf-servicetimes} is a mixture of two
 exponentially distributed service times corresponding to serving all
 clients with or without optional content. Although the replicas are
-modeled as $M/G/1$ queues, the processor sharing discipline is
-adopted. Therefore, the mean replicas response times can be computed
-based on theoretical results on the $M/M/1$ queues, selecting
-appropriate service rates. Each replica $i$ has an effective service
-rate
+modeled as $M/G/1$ queues, the processor sharing discipline is adopted
+\str{Citation needed}. Therefore, the mean replicas response times can
+be computed based on theoretical results on the $M/M/1$ queues,
+selecting appropriate service rates. Each replica $i$ has an effective
+service rate
 \begin{equation}
   \mu_i^* = \left[ E[S_i] \right]^{-1} = \left[ \frac{1-\theta_i}{\mu_i}
     + \frac{\theta_i}{M_i} \right]^{-1} .
@@ -140,22 +156,30 @@ It is possible to compute the value of the service rate that respects
 the replica objective that the mean response times $t_i$ is equal to
 the desired value $t_i^*$, that is given to the brownout-compliant
 replica.
-\begin{align}
-  t_i & = \frac{1}{\mu_i^*-\lambda w_i} = t_i^* \\
-  \Longrightarrow \mu_i^* & = \frac{1+t_i^*\lambda w_i}{t_i^*} 
+\begin{equation}
+  t_i = \frac{1}{\mu_i^*-\lambda w_i} = t_i^*
+  \Longrightarrow \mu_i^* = \frac{1+t_i^*\lambda w_i}{t_i^*} 
   \label{eq:desired-service-rate}
-\end{align}
+\end{equation}
 Combining Equation~\eqref{eq:effective-service-rate} and
-\eqref{eq:desired-service-rate}, it is possible compute the optimal
-values of $\theta_i$ that would respect the response time
-constraints. These values, $\theta_i^*$, are
+\eqref{eq:desired-service-rate}, one can calculate the optimal values
+$\theta_i^*$ of $\theta_i$ that would respect the response time
+constraints.  Notice that these values are not used in the replicas
+and are simply computed by the optimization based load-balancer as the
+optimal stationary conditions for the control variables
+$\theta_i$. Clearly, one could also think of using these values within
+the replicas but in this investigation we want to completely separate
+the load-balancing policy and the replicas internal control loops and
+treat the internal loop as a fast system, converging to its stationary
+conditions before the next load-balancing intervention.
+
+The values $\theta_i^*$ are
 \begin{equation}
   \theta_i^* = \frac{M_i \cdot \left( \mu_i t_i^* - 1 -\lambda w_i
       t_i^* \right)}{{\left( 1+\lambda w_i t_i^* \right) \cdot
       \left(\mu_i-M_i \right)}} = \frac{A_i - B_i w_i}{C_i + D_i w_i}.
   \label{eq:optimal-thetas}
 \end{equation}
-
 Recalling that $\theta_i$ is the probability of executing the optional
 components when producing the response, the values $\theta_i^*$ should
 be constrained to belong to the interval $[0, 1]$. Imposing this
@@ -175,19 +199,21 @@ state the optimization problem as
   \label{eq:optimization-problem}
 \end{equation}
 
-The objective function $J$ can be shown concave in $w_i$ and the
+The objective function $J$ can be shown to be concave in $w_i$ and the
 constraints are linear. Therefore the optimization problem is itself
-concave and can be solved with standard methods.
+concave and can be solved with standard methods \str{Citation
+  needed}. We use CVXOPT, a Python solver for convex optimization, to
+obtain the values of the weights.
 
 Notice that solving the optimization
 problem~\eqref{eq:optimization-problem} guarantees that the best
-possible solution is found, but however requires a lot of knowledge
-about the single replica. In fact, while other solutions require to
-know only the incoming traffic and the control variables for each
-replica, the optimization-based solution relies on the knowledge of
-the service time of requests with and without optional content $M_i$
-and $\mu_i$ that might not be available and could require additional
-computation to be estimated correctly. 
+possible solution is found, but requires a lot of knowledge about the
+single replicas. In fact, while other solutions require knowledge only
+about the incoming traffic and the control variables for each replica,
+the optimization-based solution relies on knowledge of the service
+time of requests with and without optional content $M_i$ and $\mu_i$
+that might not be available and could require additional computations
+to be estimated correctly.
 
-\str{Add or remove? Also, this solution is unlikely to scale when the
-  number of replicas increases.}
+\str{Find out how the optimizer scales when the number of replicas
+  increases and comment on that.}

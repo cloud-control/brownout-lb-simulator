@@ -7,7 +7,7 @@ up-front cost~\citep{Buyya09:FGCS}. On the other hand, the flexibility
 offered by cloud technologies themselves favors the adoption of
 private clouds~\citep{Gulati11:HotCloud}, therefore, self-hosting
 service providers themselves are converting their computing
-infrastructures into small, internally-managed clouds.
+infrastructures into small clouds.
 
 One of the main advantages offered by cloud infrastructures is {\bf
   elasticity}. A service provider that wants to deploy a new service
@@ -23,8 +23,8 @@ machine or removing an existing one.
 Horizontal elasticity calls for the introduction of a specialized
 component, called {\bf load-balancer}, that takes care of routing the
 end-user requests to one of the \acp{vm} composing the
-service. Load-balancing techniques have been widely studied and
-adopted~\citep{Barroso09,Lu11:PerfEval,Lin12:IGCC,BeesBased:ADAPTIVE}.
+service. Load-balancing techniques have been widely 
+studied~\citep{Barroso09,Lu11:PerfEval,Lin12:IGCC,BeesBased:ADAPTIVE}.
 
 One of the main issues with cloud computing infrastructures, however,
 is {\bf robustness} to unexpected events. For example, flash-crowds
@@ -52,8 +52,9 @@ capacity available to it, to which it adapts by monitoring response
 times. Note that executing optional code directly translates into a
 better service for the end-user and more revenues for the service
 provider. This approach proved to be successful for dealing with
-unexpected events~\citep{cloudish-tr}. However, brownout services were
-composed of a single replica, running inside a single \ac{vm}.
+unexpected events~\citep{cloudish-tr}. However, in that case, brownout 
+services were composed of a single replica, running inside a single 
+\ac{vm}.
 
 In this paper, we extend the brownout paradigm to services featuring
 multiple replicas, hosted inside individual \acp{vm}. We develop a

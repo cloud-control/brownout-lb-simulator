@@ -6,19 +6,18 @@ proposed, aiming at different optimizations, spanning from equalizing
 processor load~\cite{Stankovic:TC} to managing memory
 pools~\cite{PattersonMemoryLB,MemoryLBACC}, to specific optimizations
 for iterative algorithms~\cite{BahiIterative}. Often load-balancing
-policies considered web server systems~\cite{CLB,Cardellini2003} as a
+policies consider web server systems~\cite{CLB,Cardellini2003} as a
 target, where one of the most important result is to bound the maximum
 latencies that the clients are exposed
 to~\cite{TC-Abdelzaher}. Load-balancing strategies can be guided by
 many different purposes, for example
 geografical~\cite{GeograficalSASO,geographicalwanbalancing} or driven
-by the electricity price was proposed to reduce the datacenter
-operation cost~\cite{LoadBalancingForElectricity:TCC}. Cloud
-applications gave further boost to the
-research~\citep{Barroso09,Lu11:PerfEval,Lin12:IGCC}.
+by the electricity price to reduce the datacenter operation 
+cost~\cite{LoadBalancingForElectricity:TCC}. Cloud applications gave 
+further boost to the research~\citep{Barroso09,Lu11:PerfEval,Lin12:IGCC}.
 
 In general, load-balancing strategies can be either centralized or
-distributed. A centralized solution is composed by a single
+distributed. A centralized solution is composed of a single
 load-balancer that distributes the incoming load to a set of
 replicas. On the contrary, in distributed solutions there are many
 load-balancers connected to many replicas. In this paper we are
@@ -111,9 +110,11 @@ Dynamic solutions can be
 control-theoretical~\cite{multipathctlb,comparisonstaticdynamic} and
 also account for the cost of applying the control
 action~\cite{costofcontrol} or for the load trend~\cite{CasolariSA}.
-This is especially necessary where the load balancer acts also as a
-resource allocator, like in~\cite{Ardagnaalltogether}. In these cases,
-the induced sudden lack of the resource can result in poor
-performances. However, we investigate only load-balancing solutions
-and we assume that the application is taking care of the potential
-lack of resources using the brownout paradigm.
+This is especially necessary when the load balancer acts also as a
+resource allocator deciding not only where to route the current
+request but also how much resources it would have to execute, 
+like in~\cite{Ardagnaalltogether}. In these cases, the induced 
+sudden lack of resources can result in poor performance. However, we 
+investigate only load-balancing solutions and we assume that the 
+application is taking care of the potential lack of resources using 
+the brownout paradigm~\cite{cloudish-tr}.

@@ -15,31 +15,41 @@ and clearly formulate the problem under analysis.
 
 Figure~\ref{fig:architecture} illustrates the software architecture
 that is deployed to execute a brownout-compliant application composed
-by multiple replicas. Despite the modifications needed to make it
+of multiple replicas. Despite the modifications needed to make it
 brownout-compliant, the architecture is widely accepted as the
 reference one for cloud applications~\citep{Barroso09}.
 
 In a generic load-balancing infrastructure, clients generate traffic
 to the cloud application at an unknown but measurable rate
 $\lambda$. The traffic is directed to a load-balancer that sorts it,
-sending requests to the different $n$ replicas. Each replica $i$
-receives a fraction $\lambda_i$ of the incoming traffic and implements
-the application logic. More specifically, each replica receives
-requests at a rate $\lambda_i = w_i \cdot \lambda$, such that
-$\sum_{i} w_i = 1$. In this case, the load balancer simply computes
-the \textbf{replica weights} $w_i$ according to its load-balancing
-policy.
+sending requests to the $n$ different replicas. Each client request
+directed to the application is received by the load-balancer, that
+sends it to a replica. The replica produces the response and send it
+back to the load-balancer, which forwards it to the original
+client. We measure the \textbf{response time} of the request as the
+time spent within the replica, assuming negligible time is taken for
+the load-balancer execution and for the routing itself. Also, since
+the responses are routed back to the load-balancer, it is possible to
+piggy-back information that can guide load-balancing decisions.
+
+Each replica $i$ receives a fraction $\lambda_i$ of the incoming
+traffic and implements the application logic. More specifically, each
+replica receives requests at a rate $\lambda_i = w_i \cdot \lambda$,
+such that $\sum_{i} w_i = 1$. In this case, the load balancer simply
+computes the \textbf{replica weights} $w_i$ according to its
+load-balancing policy.
 
 Special to our case is the presence of a controller within each
 replica~\cite{cloudish-tr}. This controller takes care of adjusting
 the percentage of requests served with the optional components enabled
 based on the measured response time of the requests served by the
-replica. The controller for replica $i$ receives a vector of response
-times $t_i$ (the average value can be used, as well as the maximum one
-or the $95$-th percentile, depending on what the requirements on the
-control systems are) and produces the percentage $\theta_i$ of
-requests that should be served with optional components in the next
-time interval.
+replica. The controller for replica $i$ receives a statistic on the
+replica response times. The average value can be used, as well as the 
+maximum or the $95$-th percentile, depending on what the requirements 
+on the control systems are. Here we use the $95$-th percentile of
+response times. Based on that, the controller computes the percentage 
+$\theta_i$ of requests that should be served with optional components 
+in the next time interval.
 
 In fact, a replica $i$ responds to requests either partially, where
 only mandatory content is included in the reply, or fully, where both
@@ -49,45 +59,41 @@ rate $M_i$. Obviously, partial replies are faster to compute than full
 ones, since the optional content does not need to be prepared, hence,
 $\mu_i \geq M_i$. Assuming the replica is not saturated, it serves
 requests fully at a rate $\lambda_i \cdot \theta_i$ and partially at a
-rate $\lambda_i \cdot (1-\theta_i)$. An existing load-balancer based
-on response times analysis would hardly work with brownout-compliant
-applications, due to their self-adaptivity and the selection of the
-value $\theta_i$.
+rate $\lambda_i \cdot (1-\theta_i)$.
 
 Many alternatives can be envisioned on how to extend existing load
-balancers to deal with brownout-compliant applications.
-
-In the first case, the load-balancer does not know anything about the
-current state of the system but can inspect the requests and the
-responses and see how many of them have been executed with the
-optional components turned on. This would give it an estimation of the
-probability of executing optional code $\theta_i$ per replica but not
-the certainty of its current value, due to the probabilistic setup.
+balancers to deal with brownout-compliant applications.  In the first
+case, the load-balancer does not know anything about the current state
+of the system but can inspect the requests and the responses and
+receives information about how many of them have been executed with
+the optional components turned on. This would give it an estimation of
+the probability of executing optional code $\theta_i$ per replica but
+not the certainty of its current value, due to the probabilistic
+setup.
 
 In the second case, the load-balancer does not know anything about the
 state of the system and cannot inspect the requests because this would
-be too heavy on the architecture, therefore it can try to estimate the
-probability of executing optional code based on the time needed to
+load the architecture unacceptably, therefore it can try to estimate
+the probability of executing optional code based on the time needed to
 compute the response --- clearly, a request with optional code enabled
 would take longer than one without it. The estimate of $\theta_i$ in
 this case would be less accurate than in the previous scenario.
 
 In the third scenario, the load-balancer receives information about
-$\theta_i$ from the replicas. This solution is lighter than the others
-on the load balancer side but requires additional communication. The
-overhead, however, is very limited, since only one value should be
-reported per replica. For the purposes of this paper, we assume that
-to aid load-balancing decisions, each replica piggy-backs the current
-value of $\theta_i$ through the reply, so that this value can be
-observed by the load-balancer, limiting the overhead. The parameters
-$\theta_i$ are computed by the replica controllers based on a target
-$\bar{\tau}$ for some statistic computed on the vector of observed
-response-times $t_i$ (in this paper we use the $95$-th percentile of
-the response times). In exchange, the controller adjusts $\theta_i$ to
-maintain the desired response-time close to its target value. The
+$\theta_i$ from the replicas. This solution results in less
+computationally intensive load-balancers but requires additional
+communication. The overhead, however, is very limited, since only one
+value would be reported per replica. For the purpose of this paper, we
+assume that to aid load-balancing decisions, each replica piggy-backs
+the current value of $\theta_i$ through the reply, so that this value
+can be observed by the load-balancer, limiting the overhead. The
 load-balancer does not have any knowledge on \emph{how} each replica
-controller adjusts the percentage $\theta$, it can only know its
+controller adjusts the percentage $\theta_i$, it only knows the
 reported value.
+
+\str{Comment on ``separation'' and ``fast/slow dynamics''. 0.2 seconds
+  is the period of the replica controller while 1 second is the
+  load-balancer one.}
 
 Within this architecture, we want to solve the problem of designing a
 {\bf load-balancer policy}. Knowing the values of $\theta_i$ for each
