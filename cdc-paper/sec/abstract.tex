@@ -1,26 +1,21 @@
 % Motivation
-Cloud applications have to face unexpected events like flash crowds
-and hardware failures. Despite these common events, applications
-should behave predictably, providing bounded latencies to the
-clients. This problem has been partially solved by enabling
-self-adaptive features inside cloud applications and by introducing
-replicas for redundancy. Adaptive applications are now able to tune
-their behavior to provide responses in a finite and predictable amount
-of time.
+Cloud applications are often subject to unexpected events like flash crowds
+and hardware failures. Without a predictable behaviour, users may abandon
+an unresponsive application.
+This problem has been partially solved on two separate fronts:
+first, by adding a self-adaptive feature called \emph{brownout} inside cloud applications to bound response times, and, second,
+by introducing replicas for redundancy. For the latter, a load-balancer is used to direct load at replicas.
 
 % Problem statement
-However, self-adaptivity interferes with load-balancing strategies,
-that should balance the load to the different application
-replicas. These strategies are often based on the response times, that
-are controlled by the self-adaptive features of the application, not
-being anymore informative of the replica's behavior.
+However, existing load-balancing strategies interfere with brownout self-adaptivity.
+These strategies are often based on response times, that
+are already controlled by the self-adaptive features of the application, hence they are
+not an indicator of how well a replica is performing.
 
 % Contribution
-We therefore propose different load-balancing strategies, that take
-into account the application's self adaptive features and
-correspondingly distribute the load to maximize the applications
-performance. We implement our strategies in a self-adaptive
-applications simulator, together with some state of the art
-solutions. This paper compares the obtained results in multiple
-scenarios, showing that significant improvements with respect to state
-of the art solutions can be obtained.
+In this paper, we propose new load-balancing strategies, specifically
+designed to support brownout applications. We implement our strategies in a self-adaptive
+application simulator, together with some state of the art
+solutions. Results obtained in multiple
+scenarios show that our strategies bring significant improvements when
+compated to the state of the art.
