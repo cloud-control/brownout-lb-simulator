@@ -1,15 +1,18 @@
 In this paper we have revisited the problem of load-balancing
-different replicas to include adaptivity on the application side. In
-fact, cloud applications are designed to withstand unexpected events
-like flash crowds, resource variations or hardware changes but
-existing load-balancing solutions do not directly incorporate this
-adaptivity. In the paper, three solutions are described, based on
-brownout-compliant cloud applications and their behavior.
+different replicas in the presence of self-adaptivity inside the application.
+This is motivated by the need of cloud applications to withstand unexpected events
+like flash crowds, resource variations or hardware changes.
+To fully address these issues, load-balancing solutions need to be combined
+with self-adaptive applications, such as brownout, however simply combining
+them without special support leads to poor performance.
 
-The experimental results obtained in this paper clearly show that
+In the paper, three load-balancing strategies are described, specifically
+designed to support brownout-compliant cloud applications.
+The experimental results clearly show that
 incorporating the application adaptation in the design of load
 balancing strategies pay off in terms of predictable behavior and
 maximized performance. They also demonstrated that the Shortest Queue
-First is the best non-aware existing solution, therefore it should be
-used whenever it is not possible to implement an ad-hoc solution
-capable of boosting the performance of self-adaptive applications.
+First is the best non-brownout-aware solution, therefore it should be
+used whenever it is not possible to adopt one of our proposed solution.
+
+\str{Should we add perspectives}

@@ -186,11 +186,13 @@ compromise between optional content and the presence of outliers, that
 are limited with respect to all the other solutions. EPBH offers the
 highest percentage of optional content served, by sacrificing the
 response time bound. From this additional information one can conclude that
-the solutions presented in this paper should be used carefully in
-situations where the requirement on the response time is not soft, but
-increase the profit of the application developer (up to $15\%$ more
-optional code served with respect to the best state of the art
-solution for the case study). Notice that the proposed heuristics
+the solutions presented in this paper should be tuned carefully if
+response time requirements are hard. For example, for certain tasks,
+users prefer a very response applications instead of many features,
+hence the revenue of the application owner may be increased through
+lower response times. \str{Previous sentence was unclear, please check
+new text.}
+Notice that the proposed heuristics
 (EPBH and VPBH) have tunable parameters that can be used to exploit
 the trade-off between response time bounds and optional content.
 
@@ -242,8 +244,8 @@ Predictive  & $47.4\%$          & $1.66$          & $3.48$ \\
 Table~\ref{tab:resourcechanges-performance} reports the percentage
 $\%_{oc}$, the average response time and the user-perceived stability
 for the different algorithms. It should be noted again that the
-developed strategies obtain better optional content served, however
-slightly penalizing response times. However, the Optimization Based
+our strategies obtain better optional content served at the expense of
+slightly higher response times. However, the Optimization Based
 Load-Balancer is capable of obtaining both low response times and high
 percentage of optional content served. This is due to the amount of
 information that it uses, since we assume that the computation times
