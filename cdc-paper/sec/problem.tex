@@ -22,7 +22,7 @@ reference one for cloud applications~\citep{Barroso09}.
 
 In a generic load-balancing infrastructure, clients generate traffic
 to the cloud application at an unknown but measurable rate
-$\lambda$. The traffic is directed to a load-balancer that sorts it,
+$\lambda$. The traffic is directed to a load-balancer that demultiplexes it,
 sending requests to the $n$ different replicas. Each client request
 directed to the application is received by the load-balancer, that
 sends it to a replica. The replica produces the response and send it
@@ -45,42 +45,44 @@ replica~\cite{cloudish-tr}. This controller takes care of adjusting
 the percentage of requests served with the optional components enabled
 based on the measured response time of the requests served by the
 replica. The controller for replica $i$ receives a statistic on the
-replica response times. The average value can be used, as well as the 
-maximum or the $95$-th percentile, depending on what the requirements 
-on the control systems are. Here we use the $95$-th percentile of
+replica response times. The average, $95$-th percentile or maximum value can be used, 
+depending the requirements of the application.
+Here we use the $95$-th percentile of
 response times. Based on that, the controller computes the percentage 
 $\theta_i$ of requests that should be served with optional components 
-in the next time interval.
+during the next control interval.
 
-In fact, a replica $i$ responds to requests either partially, where
+As given by the brownout paradigm, a replica $i$ responds to requests either partially, where
 only mandatory content is included in the reply, or fully, where both
-mandatory and optional content is included. The service rate for a
+mandatory and optional content is included. This decision is taken independently for
+each request, based on a Bernoulli trial, with probability $\theta_i$ for success.
+The service rate for a
 partial response is $\mu_i$ while a full response is generated with a
 rate $M_i$. Obviously, partial replies are faster to compute than full
 ones, since the optional content does not need to be prepared, hence,
-$\mu_i \geq M_i$. Assuming the replica is not saturated, it serves
+$\mu_i > M_i$. Assuming the replica is not saturated, it serves
 requests fully at a rate $\lambda_i \cdot \theta_i$ and partially at a
 rate $\lambda_i \cdot (1-\theta_i)$.
 
 Many alternatives can be envisioned on how to extend existing load
-balancers to deal with brownout-compliant applications.  In the first
-case, the load-balancer does not know anything about the current state
-of the system but can inspect the requests and the responses and
+balancers to deal with brownout-compliant applications. As a first architecture,
+the load-balancer does not know anything about the current state
+of the system but can inspect the requests and the responses, and
 receives information about how many of them have been executed with
 the optional components turned on. This would give it an estimation of
 the probability of executing optional code $\theta_i$ per replica but
 not the certainty of its current value, due to the probabilistic
 setup.
 
-In the second case, the load-balancer does not know anything about the
+As a second architecture, the load-balancer does not know anything about the
 state of the system and cannot inspect the requests because this would
 load the architecture unacceptably, therefore it can try to estimate
 the probability of executing optional code based on the time needed to
 compute the response --- clearly, a request with optional code enabled
 would take longer than one without it. The estimate of $\theta_i$ in
-this case would be less accurate than in the previous scenario.
+this case would be less accurate than in the previous architecture.
 
-In the third scenario, the load-balancer receives information about
+In the third architecture, the load-balancer receives information about
 $\theta_i$ from the replicas. This solution results in less
 computationally intensive load-balancers but requires additional
 communication. The overhead, however, is very limited, since only one
@@ -96,7 +98,7 @@ reported value.
   is the period of the replica controller while 1 second is the
   load-balancer one.}
 
-Within this architecture, we want to solve the problem of designing a
+Given this last architecture, we want to solve the problem of designing a
 {\bf load-balancer policy}. Knowing the values of $\theta_i$ for each
 replica $i \in [1, n]$ and the current (assumed constant) arrival rate
 $\lambda$, a load-balancer should compute the values of the weights

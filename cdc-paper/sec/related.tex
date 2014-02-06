@@ -8,7 +8,7 @@ pools~\cite{PattersonMemoryLB,MemoryLBACC}, to specific optimizations
 for iterative algorithms~\cite{BahiIterative}. Often load-balancing
 policies consider web server systems~\cite{CLB,Cardellini2003} as a
 target, where one of the most important result is to bound the maximum
-latencies that the clients are exposed
+response time that the clients are exposed
 to~\cite{TC-Abdelzaher}. Load-balancing strategies can be guided by
 many different purposes, for example
 geografical~\cite{GeograficalSASO,geographicalwanbalancing} or driven
@@ -44,7 +44,7 @@ environment, which leads to changing capabilities of replicas.
 
 On the contrary, dynamic load-balancing is an adaptive technique, in
 which the choice of the replica is based on measurements of the
-current system.  One popular option is to chose the replica which had
+current system.  One popular option is to choose the replica which had
 the lowest response time in the past.  We refer to this algorithm as
 \textbf{Fastest Replica First (FRF)} if the choice is based on the
 last measured response time of each replica, and \textbf{FRF-EWMA} is
@@ -65,17 +65,17 @@ between a replica that is avoiding overload by not executing the
 optional code and a replica that is not threatened with overload
 executing all optional code, both achieving low response times.
 
-Another adopted strategy is based on the connection count and
+Another adopted strategy is based on the pending request count and
 generally called \textbf{Shortest Queue First (SQF)}, where the
-load-balancer tracks the connections and select the replicas with the
-least amount of connections. This strategy pays off in architectures
+load-balancer tracks the pending requests and select the replicas with the
+least amount of requests waiting for completion. This strategy pays off in architectures
 where the replicas have similar capacities and the requests are
 homogeneous. To account for non-homongeneity, Pao and Chen proposed a
 load balancing solution using the remaining capacity of the replicas
 to determine how the next request should be
 managed~\cite{feedbackintensive}. The capacity is determined through a
 combination of factors like the remaining available CPU and memory,
-the network transmission and the current connection count.  Other
+the network transmission and the current pending request count.  Other
 approaches have been proposed that base their decision on remaining
 capacity. However, due to the fact that brownout applications keep CPU
 utilization around $60-70\%$ to prepare for possible request bursts,
@@ -94,7 +94,7 @@ not an indicator of how well a brownout replica is performing.
 % resources than the ones that are fully served.
 
 In an attempt to overcome the mentioned limitations a merge of the
-fastest replica and the connection count approach was implemented
+fastest replica and the pending request count approach was implemented
 where the replicas are ranked based on a linear combination of
 response times and number of routed requests. A \textbf{Predictive}
 load balancer would rank the replicas based on the difference between
@@ -110,11 +110,10 @@ Dynamic solutions can be
 control-theoretical~\cite{multipathctlb,comparisonstaticdynamic} and
 also account for the cost of applying the control
 action~\cite{costofcontrol} or for the load trend~\cite{CasolariSA}.
-This is especially necessary when the load balancer acts also as a
+This is especially necessary when the load balancer also acts as a
 resource allocator deciding not only where to route the current
 request but also how much resources it would have to execute, 
 like in~\cite{Ardagnaalltogether}. In these cases, the induced 
 sudden lack of resources can result in poor performance. However, we 
-investigate only load-balancing solutions and we assume that the 
-application is taking care of the potential lack of resources using 
-the brownout paradigm~\cite{cloudish-tr}.
+are interested only in load-balancing solutions, since brownout applications
+are already taking care of the potential lack of resources~\cite{cloudish-tr}.

@@ -22,7 +22,7 @@ requests. The entire brownout framework aims at stabilizing the
 response times, therefore it should achieve better user-perceived
 stability, regardless of the presence of the load-balancer. However,
 the load-balancing algorithm clearly influences the perceived
-latencies, therefore it is logical to check whether the newly
+response times, therefore it is logical to check whether the newly
 developed algorithms achieve a better perceived stability with respect
 to the classical ones. Together with the value of the user-perceived
 stability, we also report the \textbf{average response time $\mu_u$}
@@ -93,7 +93,7 @@ machine hosting the replica and it is based on the assumption that
 these changes are unpredictable and can happen at the architecture
 level, for example due to the cloud provider co-locating more
 applications onto the same physical hardware, therefore reducing their
-computation capability.
+computation capability~\cite{Tomas13:CAC}.
 
 With the scenarios, it is easy to simulate different working
 conditions and to have a complete overview of the changes that might
@@ -109,9 +109,9 @@ algorithms when new clients arrive and existing clients disconnect.
 
 In the experiment the infrastructure is composed by four replicas. The
 first replica is the fastest one and has $\phi_1 = 0.05$s and $\psi_1
-= 0.005$s are necessary to produce the answer without optional
-components. The second replica is slower, with $\phi_2 = 0.25$s and
-$\psi_2 = 0.025$s to produce the mandatory content. The third and
+= 0.005$s.
+The second replica is slower, with $\phi_2 = 0.25$s and
+$\psi_2 = 0.025$s. The third and
 fourth replicas are the slowest ones, having $\phi_{3,4} = 0.5$s and
 $\psi_{3,4} = 0.05$s.
 
@@ -167,32 +167,32 @@ performance in terms of optional content delivered.
 
 To analyze the effect of the load-balancing strategies on the replicas
 response times, Figure~\ref{fig:clientchanges-boxplot} shows a box
-plot of the maximum latency experienced in intervals of time by the
+plot of the maximum response time experienced in intervals of time by the
 replicas. The load-balancing strategies are ordered from left to right
 based on the percentage of optional code $\%_{oc}$ achieved. As in
 every box plot, the bottom line for each box represents the first
 quartile, the top line the third and the red line is the median. The
 red crosses depict the outliers. In addition to the classical box plot
 information, the black dots depict for each algorithm the average
-value of the maximum latency measured during the experiment, also
+value of the maximum response time measured during the experiment, also
 considering the outliers.
 
 The box plots clearly show that all the solutions presented in this
 paper achieve distributions that have outliers, as well as almost all
 the literature ones. The only exception seems to be SQF, that achieves
-predictable maximum latency, with a median that is just slightly
+predictable maximum response time, with a median that is just slightly
 higher than the one achieved by VPBH. OBLB offers in this case a
 compromise between optional content and the presence of outliers, that
 are limited with respect to all the other solutions. EPBH offers the
 highest percentage of optional content served, by sacrificing the
-latency bound. From this additional information one can conclude that
+response time bound. From this additional information one can conclude that
 the solutions presented in this paper should be used carefully in
 situations where the requirement on the response time is not soft, but
 increase the profit of the application developer (up to $15\%$ more
 optional code served with respect to the best state of the art
 solution for the case study). Notice also that the proposed heuristics
 (EPBH and VPBH) have tunable parameters that can be used to exploit
-the trade-off between latency bounds and optional content served.
+the trade-off between response time bounds and optional content served.
 
 Notice that this case study features only a limited number of
 replicas. However, we have conducted additional tests, also in more
@@ -243,7 +243,7 @@ $\%_{oc}$, the average response time and the user-perceived stability
 for the different algorithms. It should be noted again that the
 developed strategies obtain better optional content served, however
 slightly penalizing response times. However, the Optimization Based
-Load-Balancer is capable of obtaining both low latency and high
+Load-Balancer is capable of obtaining both low response times and high
 percentage of optional content served. This is due to the amount of
 information that it uses, since we assume that the computation times
 for mandatory and optional part are known. The optimization-based
@@ -251,4 +251,4 @@ strategy is capable of reacting fast to changes and achieves
 predictability in the application behavior. Again, if one does not
 have all the necessary information available, it is possible to
 implement strategies that would better exploit the trade-off between
-bounded latency and optional content.
+bounded response time and optional content.
