@@ -37,7 +37,7 @@ deterministically, by storing the last selected replica, or
 probabilistically, by picking a replica at random.  This technique can
 further be improved by weighting the replica selection based on a
 priori knowledge of their relative capacity, refered to as
-\textbf{Weighted RR}.  However, due to their non-adaptive nature, such
+\textbf{Weighted-RR}.  However, due to their non-adaptive nature, such
 techniques cannot be applied to brownout-compliant load-balancing as
 they do not take into account the inherent fluctuations of a cloud
 environment, which leads to changing capabilities of replicas.
@@ -93,18 +93,17 @@ not an indicator of how well a brownout replica is performing.
 % with optional components would possibly require very different
 % resources than the ones that are fully served.
 
-In an attempt to overcome the mentioned limitations a merge of the
-fastest replica and the pending request count approach was implemented
-where the replicas are ranked based on a linear combination of
-response times and number of routed requests. A \textbf{Predictive}
-load balancer would rank the replicas based on the difference between
-the past metrics and the current ones. This is the solution
-implemented in the BIG-IP Local Traffic Manager~\cite{BIGIP}. One of
-the solutions proposed in this paper borrows the idea of looking at
-the difference between the past behavior and the current one, although
-our solution observes the changes in the amount of optional code
-served and tries to maximize the requests served enabling the full
-computation.
+A merge of the fastest replica and the pending request count approach was
+implemented where the replicas are ranked based on a linear
+combination of response times and number of routed requests. A
+\textbf{Predictive} load balancer would rank the replicas based on the
+difference between the past metrics and the current ones. A similar
+solution is implemented in the BIG-IP Local Traffic
+Manager~\cite{BIGIP}. One of the solutions proposed in this paper
+borrows the idea of looking at the difference between the past
+behavior and the current one, although our solution observes the
+changes in the amount of optional code served and tries to maximize
+the requests served enabling the full computation.
 
 Dynamic solutions can be
 control-theoretical~\cite{multipathctlb,comparisonstaticdynamic} and

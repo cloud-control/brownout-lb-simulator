@@ -8,19 +8,18 @@ solutions, the load-balancer is configured with a control period of $1$s.
 
 \subsection{Variational principle-based heuristic (VPBH)}
 
-Our first solution is inspired by the predictive approach described in
+Our first solution is inspired by the predictive approach described, in
 Section~\ref{sec:related}. The core of the predictive solution is to
 examine the variation of the involved quantities. While in its
 classical form, this solution relies on variations of response times
 or pending request count per replica, our solution is based on the how the
 control variables $\theta_i$ are changing.
 
-The approach determines the variation of the control variables
-$\theta_i$ and reacts correspondingly. If the percentage of optional
-content served is increasing, the replica is assumed to be less
-loaded, and more traffic can be sent to it. On the contrary, when the
-optional content decreases, the replica will receive less traffic, to
-decrease its load and allow $\theta_i$ to increase.
+If the percentage $\theta_i$ of optional content served is increasing,
+the replica is assumed to be less loaded, and more traffic can be sent
+to it. On the contrary, when the optional content decreases, the
+replica will receive less traffic, to decrease its load and allow it to increase
+$\theta_i$.
 
 The replica weights $w_i$ are initialized to $\frac{1}{n}$ where $n$
 is the number of replicas. The load-balancer periodically updates the
@@ -47,18 +46,17 @@ re-scaled according to
 \label{eq:theta-diff-rescale}
 \end{equation}
 
-\str{Talk about how to select $\gamma_p$.}
-
-Once $\gamma_p$ is fixed to a selected value, increasing the integral
-gain $\gamma_i$ calls for a stronger action on the load-balancing
-side, which means that the load-balancer would take decisions very
-much influenced by the current values of $\theta_i$, therefore greatly
+We selected $\gamma_p = 0.5$ based on experimental results. Once
+$\gamma_p$ is fixed to a selected value, increasing the integral gain
+$\gamma_i$ calls for a stronger action on the load-balancing side,
+which means that the load-balancer would take decisions very much
+influenced by the current values of $\theta_i$, therefore greatly
 improving performance at the cost of a more nervous control action. On
 the contrary, decreasing $\gamma_i$ would stabilize the control
 signal, possibly resulting in performance loss due to a slower
 reaction time. The choice of the integral gain allows to exploit the
 trade-off between performance and robustness. For the experiments we
-chose $\gamma_p = 0.5$ and $\gamma_i = 5.0$.
+chose $\gamma_i = 5.0$.
 
 \subsection{Equality principle-based heuristic (EPBH)}
 
@@ -67,10 +65,10 @@ conditions, every replica should have a similar behavior, therefore
 the control variables $\theta_i$ should be as close as possible to one
 another. In fact, if the values of $\theta_i$ converge to a single
 value, this means that the traffic is routed so that each replica can
-serve the same percentage of optional content, therefore the most
-powerful replica is receiving more traffic with respect to the least powerful
-one. The distribution should ideally allow to converge to a value that
-is maximum with the entire pool of requests received by the
+serve the same percentage of optional content, i.e., the most powerful
+replica is receiving more traffic with respect to the least powerful one. The
+distribution should ideally allow to converge to a value that is
+maximum with the entire pool of requests received by the
 application. This approach therefore selects weights that would
 encourage the control variables $\theta_i$ to converge to a single
 value.
@@ -94,18 +92,21 @@ that they have positive values --- i.e., that all the incoming traffic
 is directed to the replicas and that each replica receives at least
 some requests.
 
-By inserting the expression for $\tilde w_i$ from \eqref{eq:equal-thetas}
-in the normalization equation \eqref{eq:theta-diff-rescale} we get the system
+By inserting the expression for $\tilde w_i$ from
+\eqref{eq:equal-thetas} in the normalization equation
+\eqref{eq:theta-diff-rescale} we get
 \begin{equation}
   w_i(k+1)=\cfrac{w_i(k)+\gamma_ee_i(k)}{\sum_jw_j(k)+\gamma_e\sum_je_j(k)} .
 \label{eq:weights}
 \end{equation}
-% Since we normalized all weights $w_i(k)$ to sum to one ($\sum_jw_j(k)=1$), and
+
+% Since we normalized all weights $w_i(k)$ to sum to one
+% ($\sum_jw_j(k)=1$), and
 % $$\sum_je_j(k)=\sum_j\left[\theta_j(k)-\frac{\sum_l\theta_l(k)}{n}\right]=0$$
 % we get that \eqref{eq:weights} in stationarity is
 % $$w_i(k)=w_i(k)+\gamma_ee_i(k)$$
-% and the only solution for this is that $e_i(k)=0$, all dimmers are equal in
-% stationarity.
+% and the only solution for this is that $e_i(k)=0$, all dimmers are
+% equal in stationarity.
 
 \subsection{Optimization based load-balancing (OBLB)}
 
