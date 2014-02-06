@@ -45,11 +45,11 @@ requests (as it is true for clients that respect the Markovian
 assumption), or according to the closed-loop
 one~\cite{openvsclosed}. Closed-loop clients issue a request and wait
 for the response, when they receive the response they think for some
-time and subsequently continue sending another request to the
-application. While this second model is more realistic, the first one
-is still useful to simulate the behavior of a large number of
-clients. The simulator implements both models, to allow for complete
-tests.
+time (in our simulations $1$s) and subsequently continue sending
+another request to the application. While this second model is more
+realistic, the first one is still useful to simulate the behavior of a
+large number of clients. The simulator implements both models, to
+allow for complete tests.
 
 Requests are received by the load-balancer, that directs them towards
 different replicas. The load-balancer can work on a per-request basis
@@ -107,13 +107,13 @@ conditions.
 The aim of the first test is to evaluate the performance of different
 algorithms when new clients arrive and existing clients disconnect.
 
-In the experiment the infrastructure is composed by four replicas. The
-first replica is the fastest one and has $\phi_1 = 0.05$s and $\psi_1
-= 0.005$s are necessary to produce the answer without optional
-components. The second replica is slower, with $\phi_2 = 0.25$s and
-$\psi_2 = 0.025$s to produce the mandatory content. The third and
-fourth replicas are the slowest ones, having $\phi_{3,4} = 0.5$s and
-$\psi_{3,4} = 0.05$s.
+In the experiment the infrastructure is composed of four replicas. The
+first replica is the fastest one and has $\phi_1 = 0.05$s (average
+time to execute both the mandatory and the optional components) and
+$\psi_1 = 0.005$s (average time to compute only the mandatory part of
+the response). The second replica is slower, with $\phi_2 = 0.25$s and
+$\psi_2 = 0.025$s. The third and fourth replicas are the slowest ones,
+having $\phi_{3,4} = 0.5$s and $\psi_{3,4} = 0.05$s.
 
 Clients adhere to the closed-loop model. $50$ clients are accessing
 the system at time $0$s, and $10$ of them are removed after $200$s. At
@@ -166,8 +166,8 @@ the only existing one capable of achieving similar (yet lower)
 performance in terms of optional content delivered.
 
 To analyze the effect of the load-balancing strategies on the replicas
-response times, Figure~\ref{fig:clientchanges-boxplot} shows a box
-plot of the maximum latency experienced in intervals of time by the
+response times, Figure~\ref{fig:clientchanges-boxplot} shows box plots
+of the maximum latency experienced in intervals of time by the
 replicas. The load-balancing strategies are ordered from left to right
 based on the percentage of optional code $\%_{oc}$ achieved. As in
 every box plot, the bottom line for each box represents the first
@@ -190,23 +190,24 @@ the solutions presented in this paper should be used carefully in
 situations where the requirement on the response time is not soft, but
 increase the profit of the application developer (up to $15\%$ more
 optional code served with respect to the best state of the art
-solution for the case study). Notice also that the proposed heuristics
+solution for the case study). Notice that the proposed heuristics
 (EPBH and VPBH) have tunable parameters that can be used to exploit
-the trade-off between latency bounds and optional content served.
+the trade-off between latency bounds and optional content.
 
-Notice that this case study features only a limited number of
-replicas. However, we have conducted additional tests, also in more
-complex scenarios, reporting results similar to the ones presented
-herein. In the next section we test the effect of infrastructural
-changes to load-balancing solutions and response times.
+This case study features only a limited number of replicas. However,
+we have conducted additional tests, also in more complex scenarios,
+reporting results similar to the ones presented herein. In the next
+section we test the effect of infrastructural changes to
+load-balancing solutions and response times.
 
 \subsection{Reacting to infrastructure resources}
 
 In the second case study the architecture is composed of five
-replicas. At time $0$s, $\phi_1 = 0.07$s, $\psi_1 = 0.001$s. The
-second and third replicas are slower and have $\phi_{2,3} = 0.14$s and
-$\psi_{2,3} = 0.002$s. The fourth and fifth replicas are the slowest
-with $\phi_{4,5} = 0.7$s and $\psi_{4,5} = 0.01$s.
+replicas. At time $0$s, the first replica has $\phi_1 = 0.07$s,
+$\psi_1 = 0.001$s. The second and third replicas are medium and
+$\phi_{2,3} = 0.14$s and $\psi_{2,3} = 0.002$s. The fourth and fifth
+replicas are the slowest with $\phi_{4,5} = 0.7$s and $\psi_{4,5} =
+0.01$s.
 
 At time $250$s the amount of resources assigned to the first replica
 is decreased, therefore $\phi_1 = 0.35$s and $\psi_1 = 0.005$s. At
