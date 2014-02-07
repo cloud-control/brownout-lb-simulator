@@ -1,1 +1,19 @@
-Introduction~\cite{icse}.
+
+\begin{itemize}
+\item Need for self-adaptation in cloud applications: back it up with
+  examples and with solutions from the state of the art.
+\item One of these self-adaptive solutions is brownout: briefly
+  describe the brownout paradigm and point out that it provides
+  advantages in terms of predictability~\cite{icse}.
+\item However, there is a risk that it screws up load-balancing
+  strategies, since these load balancing strategies are often based on
+  quantities that are kept under control by the brownout control
+  strategy. Cite Abdelzaher paper and say that it is somehow like they
+  prove in AdaptGuard, the load-balancer is an external loop that
+  might screw up the internal loop of the replicas or be screwed up
+  (which is more common in our case).
+\item Therefore we would like to design load-balancing strategies that
+  work with brownout-compliant applications possibly boosting the
+  performance of the replicas or of the brownout application as a
+  whole.
+\end{itemize}
