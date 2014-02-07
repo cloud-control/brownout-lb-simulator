@@ -12,20 +12,23 @@ response time that the clients are exposed
 to~\cite{TC-Abdelzaher}. Load-balancing strategies can be guided by
 many different purposes, for example
 geografical~\cite{GeograficalSASO,geographicalwanbalancing} or driven
-by the electricity price to reduce the datacenter operation 
-cost~\cite{LoadBalancingForElectricity:TCC}. Cloud applications gave 
-further boost to the research~\citep{Barroso09,Lu11:PerfEval,Lin12:IGCC}.
+by the electricity price to reduce the datacenter operation
+cost~\cite{LoadBalancingForElectricity:TCC}. Furthermore, cloud applications
+required new solutions~\citep{Barroso09,Lu11:PerfEval,Lin12:IGCC}.
 
-In general, load-balancing strategies can be either centralized or
-distributed. A centralized solution is composed of a single
-load-balancer that distributes the incoming load to a set of
-replicas. On the contrary, in distributed solutions there are many
-load-balancers connected to many replicas. In this paper we are
-interested in how centralized solutions interact with self-adaptive
-cloud applications. The novelty is given by the presence of two
-different points of adaptation in the system, the behavior of the
-infrastructure is modified both by the action of the load-balancer and
-by the effect of the self-adaptivity introduced in cloud applications.
+% CK: this paragraph starts with centralized vs. distributed, then
+% describes our approach. I feel it does not bring too much into
+% the discussion.
+%In general, load-balancing strategies can be either centralized or
+%distributed. A centralized solution is composed of a single
+%load-balancer that distributes the incoming load to a set of
+%replicas. On the contrary, in distributed solutions there are many
+%load-balancers connected to many replicas. In this paper we are
+%interested in how centralized solutions interact with self-adaptive
+%cloud applications. The novelty is given by the presence of two
+%different points of adaptation in the system, the behavior of the
+%infrastructure is modified both by the action of the load-balancer and
+%by the effect of the self-adaptivity introduced in cloud applications.
 
 Load-balancing solutions can be divided into two different types:
 static and dynamic. Static load-balancing refers to a fixed,
@@ -63,7 +66,7 @@ expense of reducing the amount of optional content served. Hence, by
 measuring response-time alone, it is not possible to discriminate
 between a replica that is avoiding overload by not executing the
 optional code and a replica that is not threatened with overload
-executing all optional code, both achieving low response times.
+executing all optional code, both achieving the desired response times.
 
 Another adopted strategy is based on the pending request count and
 generally called \textbf{Shortest Queue First (SQF)}, where the
@@ -93,6 +96,8 @@ not an indicator of how well a brownout replica is performing.
 % with optional components would possibly require very different
 % resources than the ones that are fully served.
 
+% CK: Erik proposed "proactive" instead of "predictive" as it sounds stronger.
+% I have no preference. :)
 A merge of the fastest replica and the pending request count approach was
 implemented where the replicas are ranked based on a linear
 combination of response times and number of routed requests. A
@@ -100,7 +105,7 @@ combination of response times and number of routed requests. A
 difference between the past metrics and the current ones. A similar
 solution is implemented in the BIG-IP Local Traffic
 Manager~\cite{BIGIP}. One of the solutions proposed in this paper
-borrows the idea of looking at the difference between the past
+extends on the idea of looking at the difference between the past
 behavior and the current one, although our solution observes the
 changes in the amount of optional code served and tries to maximize
 the requests served enabling the full computation.

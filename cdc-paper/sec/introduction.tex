@@ -1,4 +1,8 @@
-Cloud computing is expected to be one of the driving force of the
+% CK: Erik suggests that there might be too much information here.
+% Do we really need to explain that clouds are here to stay?
+% Do we really need to explain elasticity? We could go directly
+% and argue that we need a load-balancer for redundancy and scale.
+Cloud computing is expected to be one of the driving forces of the
 future economy~\citep{WPonMckinsey13}. Already, it has dramatically
 changed the management of computing infrastructures. On one hand,
 public infrastructure providers, such as Amazon EC2, allow service
@@ -76,15 +80,15 @@ to maintain the maximum response time below a configured target.
 
 Our contribution is summarized as follows.
 \begin{itemize}
-\item We discuss load-balancing architectures and the required
-  enhancements to the replicas that allow to deal with brownout
+\item We present extensions to load-balancing architectures and the required
+  enhancements to the replicas that convey information about served optional
+  content and allow to deal with brownout
   services efficiently (Section~\ref{sec:problem}).
-\item We propose load-balancing policies that aim at maximizing the
+\item We propose novel load-balancing algorithms that, by
+  taking this information into account, maximize the
   performance of brownout services, in terms of frequency of execution
-  of the optional code, therefore maximizing the total revenue for the
-  service provider (Section~\ref{sec:solution}).
-\item We evaluate existing load-balancing strategies and compare them
-  with the proposed approaches, demonstrating the need for a
-  brownout-aware load-balancer and showing that the proposed policies
-  outperform existing techniques (Section~\ref{sec:evaluation}).
+  of the optional code (Section~\ref{sec:solution}).
+\item We show through simulations that our algorithms outperform
+  state-of-the-art load-balancing techniques, thus highlighting
+  the need of a brownout-aware load-balancer (Section~\ref{sec:evaluation}).
 \end{itemize}
