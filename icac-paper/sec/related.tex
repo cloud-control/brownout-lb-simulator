@@ -12,9 +12,10 @@ response time that the clients are exposed
 to~\cite{TC-Abdelzaher}. Load-balancing strategies can be guided by
 many different purposes, for example
 geografical~\cite{GeograficalSASO,geographicalwanbalancing} or driven
-by the electricity price to reduce the datacenter operation 
-cost~\cite{LoadBalancingForElectricity:TCC}. Cloud applications gave 
-further boost to the research~\citep{Barroso09,Lu11:PerfEval,Lin12:IGCC}.
+by the electricity price to reduce the datacenter operation
+cost~\cite{LoadBalancingForElectricity:TCC}. Cloud applications gave
+further boost to the
+research~\citep{Barroso09,Lu11:PerfEval,Lin12:IGCC}.
 
 In general, load-balancing strategies can be either centralized or
 distributed. A centralized solution is composed of a single
@@ -67,12 +68,12 @@ executing all optional code, both achieving low response times.
 
 Another adopted strategy is based on the pending request count and
 generally called \textbf{Shortest Queue First (SQF)}, where the
-load-balancer tracks the pending requests and select the replicas with the
-least amount of requests waiting for completion. This strategy pays off in architectures
-where the replicas have similar capacities and the requests are
-homogeneous. To account for non-homongeneity, Pao and Chen proposed a
-load balancing solution using the remaining capacity of the replicas
-to determine how the next request should be
+load-balancer tracks the pending requests and select the replicas with
+the least amount of requests waiting for completion. This strategy
+pays off in architectures where the replicas have similar capacities
+and the requests are homogeneous. To account for non-homongeneity, Pao
+and Chen proposed a load balancing solution using the remaining
+capacity of the replicas to determine how the next request should be
 managed~\cite{feedbackintensive}. The capacity is determined through a
 combination of factors like the remaining available CPU and memory,
 the network transmission and the current pending request count.  Other
@@ -82,8 +83,8 @@ utilization around $60-70\%$ to prepare for possible request bursts,
 deciding on remaining capacity alone is, just as with response time,
 not an indicator of how well a brownout replica is performing.
 
-A merge of the fastest replica and the pending request count approach was
-implemented where the replicas are ranked based on a linear
+A merge of the fastest replica and the pending request count approach
+was implemented where the replicas are ranked based on a linear
 combination of response times and number of routed requests. A
 \textbf{Predictive} load balancer would rank the replicas based on the
 difference between the past metrics and the current ones. A similar
@@ -100,8 +101,9 @@ also account for the cost of applying the control
 action~\cite{costofcontrol} or for the load trend~\cite{CasolariSA}.
 This is especially necessary when the load balancer also acts as a
 resource allocator deciding not only where to route the current
-request but also how much resources it would have to execute, 
-like in~\cite{Ardagnaalltogether}. In these cases, the induced 
-sudden lack of resources can result in poor performance. However, we 
-are interested only in load-balancing solutions, since brownout applications
-are already taking care of the potential lack of resources~\cite{cloudish-tr}.
+request but also how much resources it would have to execute, like
+in~\cite{Ardagnaalltogether}. In these cases, the induced sudden lack
+of resources can result in poor performance. However, we are
+interested only in load-balancing solutions, since brownout
+applications are already taking care of the potential lack of
+resources~\cite{icse}.

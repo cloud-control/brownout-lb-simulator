@@ -1,21 +1,20 @@
 This section describes two different solutions for balancing the
 load directed to self-adaptive brownout-compliant applications
-composed of multiple replicas. In both the
-solutions, the load-balancer is executed every $1$s.
+composed of multiple replicas and their implementation
 
-\subsection{Variational principle-based heuristic (VPBH)}
+\subsection{Heuristics design}
 
-Our first solution is inspired by the predictive approach described, in
-Section~\ref{sec:related}. The core of the predictive solution is to
-examine the variation of the involved quantities. While in its
+Our first solution is referred in this paper as \textbf{Variational
+  Principle Based} and inspired by the predictive approach described,
+in Section~\ref{sec:Related}. The core of the predictive solution is
+to examine the variation of the involved quantities. While in its
 classical form, this solution relies on variations of response times
-or pending request count per replica, our solution is based on the how the
-control variables $\theta_i$ are changing.
-
-If the percentage $\theta_i$ of optional content served is increasing,
-the replica is assumed to be less loaded, and more traffic can be sent
-to it. On the contrary, when the optional content decreases, the
-replica will receive less traffic, to decrease its load and allow it to increase
+or pending request count per replica, our solution is based on the how
+the control variables $\theta_i$ are changing. If the percentage
+$\theta_i$ of optional content served is increasing, the replica is
+assumed to be less loaded, and more traffic can be sent to it. On the
+contrary, when the optional content decreases, the replica will
+receive less traffic, to decrease its load and allow it to increase
 $\theta_i$.
 
 The replica weights $w_i$ are initialized to $\frac{1}{n}$ where $n$
@@ -26,7 +25,8 @@ variation $\theta_i (k) - \theta_i (k-1)$, the solution computes a
 potential weight $\tilde{w}_i(k+1)$ according to
 \begin{equation}
   \tilde{w}_i(k+1) = w_i(k) \cdot 
-\left[ 1 + \gamma_p \, \Delta \theta_i (k) + \gamma_i \, \theta_i (k) \right] ,
+  \left[ 1 + \gamma_p \, \Delta \theta_i (k) 
+    + \gamma_i \, \theta_i (k) \right] ,
 \label{eq:theta-diff}
 \end{equation}
 where $\gamma_p$ and $\gamma_i$ are constant gains, respectively
@@ -43,32 +43,23 @@ re-scaled according to
 \label{eq:theta-diff-rescale}
 \end{equation}
 
-We selected $\gamma_p = 0.5$ based on experimental results. Once
-$\gamma_p$ is fixed to a selected value, increasing the integral gain
-$\gamma_i$ calls for a stronger action on the load-balancing side,
-which means that the load-balancer would take decisions very much
-influenced by the current values of $\theta_i$, therefore greatly
-improving performance at the cost of a more nervous control action. On
-the contrary, decreasing $\gamma_i$ would stabilize the control
-signal, possibly resulting in performance loss due to a slower
-reaction time. The choice of the integral gain allows to exploit the
-trade-off between performance and robustness. For the experiments we
-chose $\gamma_i = 5.0$.
+\begin{itemize}
+\item Selection of parameters.
+\end{itemize}
 
-\subsection{Equality principle-based heuristic (EPBH)}
-
-The second policy is based on the heuristic principle that in the best
-conditions, every replica should have a similar behavior, therefore
-the control variables $\theta_i$ should be as close as possible to one
-another. In fact, if the values of $\theta_i$ converge to a single
-value, this means that the traffic is routed so that each replica can
-serve the same percentage of optional content, i.e., the most powerful
-replica is receiving more traffic with respect to the least powerful one. The
-distribution should ideally allow to converge to a value that is
-maximum with the entire pool of requests received by the
-application. This approach therefore selects weights that would
-encourage the control variables $\theta_i$ to converge to a single
-value.
+The second self-aware policy that we present is called
+\textbf{Equality Principle Based} and relies on the heuristic
+principle that in the best conditions, every replica should have a
+similar behavior, therefore the control variables $\theta_i$ should be
+as close as possible to one another. In fact, if the values of
+$\theta_i$ converge to a single value, this means that the traffic is
+routed so that each replica can serve the same percentage of optional
+content, i.e., the most powerful replica is receiving more traffic
+with respect to the least powerful one. The distribution should
+ideally allow to converge to a value that is maximum with the entire
+pool of requests received by the application. This approach therefore
+selects weights that would encourage the control variables $\theta_i$
+to converge to a single value.
 
 The policy computes a potential weight $\tilde{w}_i(k+1)$
 \begin{equation}
@@ -78,21 +69,22 @@ The policy computes a potential weight $\tilde{w}_i(k+1)$
 where
 $$e_i(k)=\left[ \theta_i (k) - \cfrac{\sum_j \theta_j (k) }{n} \right]$$
 and $\gamma_e$ is a non-zero positive parameter of the algorithm which
-accounts for how fast the algorithm should converge. For the
-experiments we chose $\gamma_e = 0.025$. The weights are simply
-modified proportionally to the difference between the current control
-value and the average control value set by the replicas. Clearly, the
-same saturation and normalization described in Equation
-\eqref{eq:theta-diff-rescale} have to be applied to the proposed
-solution, to ensure that the sum of the weights is equal to one and
-that they have positive values --- i.e., that all the incoming traffic
-is directed to the replicas and that each replica receives at least
-some requests.
+accounts for how fast the algorithm should converge. The weights are
+simply modified proportionally to the difference between the current
+control value and the average control value set by the
+replicas. Clearly, the same saturation and normalization described in
+Equation \eqref{eq:theta-diff-rescale} have to be applied to the
+proposed solution, to ensure that the sum of the weights is equal to
+one and that they have positive values --- i.e., that all the incoming
+traffic is directed to the replicas and that each replica receives at
+least some requests.
 
-By inserting the expression for $\tilde w_i$ from
-\eqref{eq:equal-thetas} in the normalization equation
-\eqref{eq:theta-diff-rescale} we get
-\begin{equation}
-  w_i(k+1)=\cfrac{w_i(k)+\gamma_ee_i(k)}{\sum_jw_j(k)+\gamma_e\sum_je_j(k)} .
-\label{eq:weights}
-\end{equation}
+\begin{itemize}
+\item Selection of paramter.
+\end{itemize}
+
+\subsection{Implementation}
+
+\begin{itemize}
+\item Describe the implementation.
+\end{itemize}
