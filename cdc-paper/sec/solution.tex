@@ -4,22 +4,23 @@ composed of multiple replicas. The first two strategies are heuristic
 solutions that take into account the self-adaptivity of the
 replicas. The third alternative is based on optimization theory, with
 the aim of providing guarantees on the best possible behavior. In all
-solutions, the load-balancer is configured with a control period of $1$s.
+solutions, the load-balancer is configured with a control period of
+$1$s.
 
 \subsection{Variational principle-based heuristic (VPBH)}
 
-Our first solution is inspired by the predictive approach described, in
-Section~\ref{sec:Related}. The core of the predictive solution is to
-examine the variation of the involved quantities. While in its
+Our first solution is inspired by the predictive approach described,
+in Section~\ref{sec:related}. The core of the predictive solution is
+to examine the variation of the involved quantities. While in its
 classical form, this solution relies on variations of response times
-or pending request count per replica, our solution is based on the how the
-control variables $\theta_i$ are changing.
+or pending request count per replica, our solution is based on the how
+the control variables $\theta_i$ are changing.
 
 If the percentage $\theta_i$ of optional content served is increasing,
 the replica is assumed to be less loaded, and more traffic can be sent
 to it. On the contrary, when the optional content decreases, the
-replica will receive less traffic, to decrease its load and allow it to increase
-$\theta_i$.
+replica will receive less traffic, to decrease its load and allow it
+to increase $\theta_i$.
 
 The replica weights $w_i$ are initialized to $\frac{1}{n}$ where $n$
 is the number of replicas. The load-balancer periodically updates the
@@ -62,14 +63,14 @@ chose $\gamma_i = 5.0$.
 
 The second policy is based on the following heuristic: In the best
 conditions, every replica should have a similar behavior. Based on his
-heuristic, the control variables $\theta_i$ should be as close as possible to one
-another. In fact, if the values of $\theta_i$ converge to a single
-value, this means that the traffic is routed so that each replica can
-serve the same percentage of optional content, i.e., the most powerful
-replica is receiving more traffic with respect to the least powerful one. The
-distribution should ideally allow to converge to a value that is
-maximum with the entire pool of requests received by the
-application. This approach therefore selects weights that would
+heuristic, the control variables $\theta_i$ should be as close as
+possible to one another. In fact, if the values of $\theta_i$ converge
+to a single value, this means that the traffic is routed so that each
+replica can serve the same percentage of optional content, i.e., the
+most powerful replica is receiving more traffic with respect to the
+least powerful one. The distribution should ideally allow to converge
+to a value that is maximum with the entire pool of requests received
+by the application. This approach therefore selects weights that would
 encourage the control variables $\theta_i$ to converge to a single
 value.
 

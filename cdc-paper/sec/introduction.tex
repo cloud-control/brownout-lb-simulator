@@ -2,6 +2,7 @@
 % Do we really need to explain that clouds are here to stay?
 % Do we really need to explain elasticity? We could go directly
 % and argue that we need a load-balancer for redundancy and scale.
+
 Cloud computing is expected to be one of the driving forces of the
 future economy~\citep{WPonMckinsey13}. Already, it has dramatically
 changed the management of computing infrastructures. On one hand,
@@ -27,7 +28,7 @@ machine or removing an existing one.
 Horizontal elasticity calls for the introduction of a specialized
 component, called {\bf load-balancer}, that takes care of routing the
 end-user requests to one of the \acp{vm} composing the
-service. Load-balancing techniques have been widely 
+service. Load-balancing techniques have been widely
 studied~\citep{Barroso09,Lu11:PerfEval,Lin12:IGCC,BeesBased:ADAPTIVE}.
 
 One of the main issues with cloud computing infrastructures, however,
@@ -56,8 +57,8 @@ capacity available to it, to which it adapts by monitoring response
 times. Note that executing optional code directly translates into a
 better service for the end-user and more revenues for the service
 provider. This approach proved to be successful for dealing with
-unexpected events~\citep{cloudish-tr}. However, in that case, brownout 
-services were composed of a single replica, running inside a single 
+unexpected events~\citep{cloudish-tr}. However, in that case, brownout
+services were composed of a single replica, running inside a single
 \ac{vm}.
 
 In this paper, we extend the brownout paradigm to services featuring
@@ -80,15 +81,15 @@ to maintain the maximum response time below a configured target.
 
 Our contribution is summarized as follows.
 \begin{itemize}
-\item We present extensions to load-balancing architectures and the required
-  enhancements to the replicas that convey information about served optional
-  content and allow to deal with brownout
-  services efficiently (Section~\ref{sec:problem}).
-\item We propose novel load-balancing algorithms that, by
-  taking this information into account, maximize the
-  performance of brownout services, in terms of frequency of execution
-  of the optional code (Section~\ref{sec:solution}).
-\item We show through simulations that our algorithms outperform
-  state-of-the-art load-balancing techniques, thus highlighting
-  the need of a brownout-aware load-balancer (Section~\ref{sec:evaluation}).
+\item We present extensions to load-balancing architectures and the
+  required enhancements to the replicas that convey information about
+  served optional content and allow to deal with brownout services
+  efficiently (Section~\ref{sec:problem}).
+\item We propose novel load-balancing algorithms that, by taking this
+  information into account, maximize the performance of brownout
+  services, in terms of frequency of execution of the optional code
+  (Section~\ref{sec:solution}).
+\item We show through simulations that our brownout-aware
+  load-balancing algorithms outperform state-of-the-art techniques
+  (Section~\ref{sec:evaluation}).
 \end{itemize}

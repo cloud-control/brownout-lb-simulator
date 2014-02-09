@@ -13,22 +13,23 @@ to~\cite{TC-Abdelzaher}. Load-balancing strategies can be guided by
 many different purposes, for example
 geografical~\cite{GeograficalSASO,geographicalwanbalancing} or driven
 by the electricity price to reduce the datacenter operation
-cost~\cite{LoadBalancingForElectricity:TCC}. Furthermore, cloud applications
-required new solutions~\citep{Barroso09,Lu11:PerfEval,Lin12:IGCC}.
+cost~\cite{LoadBalancingForElectricity:TCC}. Furthermore, cloud
+applications required new
+solutions~\citep{Barroso09,Lu11:PerfEval,Lin12:IGCC}.
 
 % CK: this paragraph starts with centralized vs. distributed, then
-% describes our approach. I feel it does not bring too much into
-% the discussion.
-%In general, load-balancing strategies can be either centralized or
-%distributed. A centralized solution is composed of a single
-%load-balancer that distributes the incoming load to a set of
-%replicas. On the contrary, in distributed solutions there are many
-%load-balancers connected to many replicas. In this paper we are
-%interested in how centralized solutions interact with self-adaptive
-%cloud applications. The novelty is given by the presence of two
-%different points of adaptation in the system, the behavior of the
-%infrastructure is modified both by the action of the load-balancer and
-%by the effect of the self-adaptivity introduced in cloud applications.
+% describes our approach. I feel it does not bring too much into the
+% discussion.  In general, load-balancing strategies can be either
+% centralized or distributed. A centralized solution is composed of a
+% single load-balancer that distributes the incoming load to a set of
+% replicas. On the contrary, in distributed solutions there are many
+% load-balancers connected to many replicas. In this paper we are
+% interested in how centralized solutions interact with self-adaptive
+% cloud applications. The novelty is given by the presence of two
+% different points of adaptation in the system, the behavior of the
+% infrastructure is modified both by the action of the load-balancer
+% and by the effect of the self-adaptivity introduced in cloud
+% applications.
 
 Load-balancing solutions can be divided into two different types:
 static and dynamic. Static load-balancing refers to a fixed,
@@ -66,24 +67,25 @@ expense of reducing the amount of optional content served. Hence, by
 measuring response-time alone, it is not possible to discriminate
 between a replica that is avoiding overload by not executing the
 optional code and a replica that is not threatened with overload
-executing all optional code, both achieving the desired response times.
+executing all optional code, both achieving the desired response
+times.
 
 Another adopted strategy is based on the pending request count and
 generally called \textbf{Shortest Queue First (SQF)}, where the
-load-balancer tracks the pending requests and select the replicas with the
-least amount of requests waiting for completion. This strategy pays off in architectures
-where the replicas have similar capacities and the requests are
-homogeneous. To account for non-homongeneity, Pao and Chen proposed a
-load balancing solution using the remaining capacity of the replicas
-to determine how the next request should be
+load-balancer tracks the pending requests and select the replicas with
+the least amount of requests waiting for completion. This strategy
+pays off in architectures where the replicas have similar capacities
+and the requests are homogeneous. To account for non-homongeneity, Pao
+and Chen proposed a load balancing solution using the remaining
+capacity of the replicas to determine how the next request should be
 managed~\cite{feedbackintensive}. The capacity is determined through a
 combination of factors like the remaining available CPU and memory,
 the network transmission and the current pending request count.  Other
 approaches have been proposed that base their decision on remaining
 capacity. However, due to the fact that brownout applications keep CPU
-utilization around $60-70\%$ to prepare for possible request bursts,
-deciding on remaining capacity alone is, just as with response time,
-not an indicator of how well a brownout replica is performing.
+utilization around $60$-$70\%$ to prepare for possible request bursts,
+deciding on remaining capacity alone is not an indicator of how a
+brownout replica is performing.
 
 % These approaches are hardly applicable to brownout-compliant cloud
 % applications because they do not take into account the replica
@@ -96,10 +98,14 @@ not an indicator of how well a brownout replica is performing.
 % with optional components would possibly require very different
 % resources than the ones that are fully served.
 
-% CK: Erik proposed "proactive" instead of "predictive" as it sounds stronger.
-% I have no preference. :)
-A merge of the fastest replica and the pending request count approach was
-implemented where the replicas are ranked based on a linear
+% CK: Erik proposed "proactive" instead of "predictive" as it sounds
+% stronger.  I have no preference. :) 
+% MM: Predictive is how they describe it here:
+% https://devcentral.f5.com/articles/
+% intro-to-load-balancing-for-developers-ndash-the-algorithms 
+% so I feel we should not change it.
+A merge of the fastest replica and the pending request count approach
+was implemented where the replicas are ranked based on a linear
 combination of response times and number of routed requests. A
 \textbf{Predictive} load balancer would rank the replicas based on the
 difference between the past metrics and the current ones. A similar
@@ -116,8 +122,9 @@ also account for the cost of applying the control
 action~\cite{costofcontrol} or for the load trend~\cite{CasolariSA}.
 This is especially necessary when the load balancer also acts as a
 resource allocator deciding not only where to route the current
-request but also how much resources it would have to execute, 
-like in~\cite{Ardagnaalltogether}. In these cases, the induced 
-sudden lack of resources can result in poor performance. However, we 
-are interested only in load-balancing solutions, since brownout applications
-are already taking care of the potential lack of resources~\cite{cloudish-tr}.
+request but also how much resources it would have to execute, like
+in~\cite{Ardagnaalltogether}. In these cases, the induced sudden lack
+of resources can result in poor performance. However, we are
+interested only in load-balancing solutions, since brownout
+applications are already taking care of the potential lack of
+resources~\cite{cloudish-tr}.
