@@ -432,6 +432,7 @@ class Server:
 		# Report
 		valuesToOutput = [ \
 			self.sim.now, \
+			request.arrival, \
 			request.completion - request.arrival, \
 		]
 		self.sim.output(str(self)+'-rt', ','.join(["{0:.5f}".format(value) \
