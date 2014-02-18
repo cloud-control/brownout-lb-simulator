@@ -142,7 +142,11 @@ that do not have optional components enabled and $M_i$ is the service
 rates for requests where the optional part is computed. Therefore, the
 expression~\eqref{eq:pdf-servicetimes} is a mixture of two
 exponentially distributed service times corresponding to serving all
-clients with or without optional content. It is well known that for $M/G/1$ queues adopting the processor sharing discipline, the mean response times will only depend on the mean of the service time distribution~\cite{kleinrock67,sakata71}, with an effective service rate for each replica $i$ given by
+clients with or without optional content. It is well known that for
+$M/G/1$ queues adopting the processor sharing discipline, the mean
+response times will only depend on the mean of the service time
+distribution~\cite{kleinrock67,sakata71}, with an effective service
+rate for each replica $i$ given by
 \begin{equation}
   \mu_i^* = \left[ E[S_i] \right]^{-1} = \left[ \frac{1-\theta_i}{\mu_i}
     + \frac{\theta_i}{M_i} \right]^{-1} .
