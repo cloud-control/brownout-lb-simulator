@@ -571,6 +571,15 @@ class LoadBalancer:
 			request.chosenBackendIndex = \
 				min(range(0, len(self.queueLengths)), \
 				key = lambda i: self.queueLengths[i])
+		elif self.algorithm == 'SQF-plus':
+			# choose replica with shortest queue
+			minIndices = [i for i, x in enumerate(self.queueLengths) if x == min(self.queueLengths)]
+			if len(minIndices) == 1:
+				request.chosenBackendIndex = minIndices[0]
+			else:
+				dimmers = [self.lastThetas[i] for i in minIndices]
+				maxDimmerIndex = dimmers.index(max(dimmers))
+				request.chosenBackendIndex = minIndices[maxDimmerIndex]
 		elif self.algorithm == '2RC':
 			maxlat = [max(x) if x else 0 for x in self.lastLatencies]
 			if len(self.backends) == 1:
@@ -761,6 +770,9 @@ class LoadBalancer:
 			# random is not dynamic
 			pass
 		elif self.algorithm == 'SQF':
+			# shortest queue first is not dynamic
+			pass
+		elif self.algorithm == 'SQF-plus':
 			# shortest queue first is not dynamic
 			pass
 		elif self.algorithm == 'RR':
@@ -965,7 +977,7 @@ class MarkovianArrivalProcess:
 ## Entry-point for simulator.
 # Setups up all entities, then runs simulation.
 def main():
-	algorithms = ("weighted-RR theta-diff optimization SQF FRF equal-thetas " + \
+	algorithms = ("weighted-RR theta-diff optimization SQF SQF-plus FRF equal-thetas " + \
 		"FRF-EWMA predictive 2RC RR random theta-diff-plus ctl-simplify").split()
 
 	# Parsing command line options to find out the algorithm
