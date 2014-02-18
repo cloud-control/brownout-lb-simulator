@@ -43,13 +43,13 @@ When a new client is defined, it can behave according to the open-loop
 client model, where it simply issues a certain number of unrelated
 requests (as it is true for clients that respect the Markovian
 assumption), or according to the closed-loop
-one~\cite{openvsclosed}. Closed-loop clients issue a request and wait
-for the response, when they receive the response they think for some
-time (in our simulations $1$s) and subsequently continue sending
-another request to the application. While this second model is more
-realistic, the first one is still useful to simulate the behavior of a
-large number of clients. The simulator implements both models, to
-allow for complete tests.
+one~\cite{openvsclosed,openandclosed2}. Closed-loop clients issue a
+request and wait for the response, when they receive the response they
+think for some time (in our simulations $1$s) and subsequently
+continue sending another request to the application. While this second
+model is more realistic, the first one is still useful to simulate the
+behavior of a large number of clients. The simulator implements both
+models, to allow for complete tests.
 
 Requests are received by the load-balancer, that directs them towards
 different replicas. The load-balancer can work on a per-request basis
