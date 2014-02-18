@@ -7,13 +7,14 @@ for i = 1:length(d)
 end
 d = d(dirs(3:end));
 
-m = length(d)
-
-n = 5; % Number of replicas. Hard coded, should be fixed
+m = length(d);
 
 for i = 1:m
     p = strcat('results/',d(i).name,'/sim-lb.csv')
     load(p)
+    
+    l = size(sim_lb,2);
+    n = (l-3)/5;
     
     t = sim_lb(:,1);
     weights = sim_lb(:,2:n+1);
@@ -22,7 +23,7 @@ for i = 1:m
     max_latencies = sim_lb(:,3*n+2:4*n+1);
     total_requests = [0;diff(sim_lb(:,4*n+2))];
     optional_requests = [0;diff(sim_lb(:,4*n+3))];
-    effective_weights = sim_lb(:,4*n+4:end);
+    effective_weights = sim_lb(:,4*n+4:5*n+3);
     
     figure(i)
     subplot(321), plot(t,weights), title(d(i).name)
