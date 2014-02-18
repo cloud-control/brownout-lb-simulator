@@ -1,0 +1,26 @@
+% Motivation
+Cloud applications are often subject to unexpected events like flash
+crowds and hardware failures. Without a predictable behaviour, users
+may abandon an unresponsive application.  This problem has been
+partially solved on two separate fronts: by adding self-adaptive
+features to the applications to bound response times by modifying the
+applications behavior, and, second, by introducing replicas for
+redundancy and adding a load-balancer to direct load at replicas.
+
+% Problem statement
+However, existing load-balancing strategies interfere with
+self-adaptivity. Load-balancers are often based on response times,
+that are controlled by the self-adaptive features of the application,
+hence not being very reliable indicators of how well replicas are
+performing.
+
+% Contribution
+In this paper, we propose two new load-balancing strategies,
+specifically designed to support self-adaptive cloud applications
+designed with the brownout paradigm. The load-balancing heuristics
+base their decision not on response time, but on user experience
+degradation.  We implement our strategies in lighttpd, together with
+some state of the art algorithms. Results obtained in multiple
+scenarios show that our strategies allow to exploit the trade-off
+between two different aspects of user experience: response time and
+content degradation, improving the state of the art solutions.
