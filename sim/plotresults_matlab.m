@@ -10,7 +10,7 @@ d = d(dirs(3:end));
 m = length(d);
 
 for i = 1:m
-    p = strcat('results/',d(i).name,'/sim-lb.csv')
+    p = strcat('results/',d(i).name,'/sim-lb.csv');
     load(p)
     
     l = size(sim_lb,2);
@@ -26,11 +26,12 @@ for i = 1:m
     effective_weights = sim_lb(:,4*n+4:5*n+3);
     
     figure(i)
-    subplot(321), plot(t,weights), title(d(i).name)
-    subplot(322), plot(t,dimmers)
-    subplot(323), plot(t,avg_latencies)
-    subplot(324), plot(t,total_requests,t,optional_requests)
-    subplot(325), plot(t,effective_weights)
+    subplot(321), plot(t,weights), title(d(i).name), ylabel('weights'), grid on
+    subplot(322), plot(t,dimmers,t,mean(dimmers,2),'--'), ylabel('dimmer'), grid on
+    subplot(323), plot(t,avg_latencies), ylabel('avg latency'), grid on
+    subplot(324), plot(t,total_requests,t,optional_requests), ylabel('requests'), legend('Total', 'w. Optional'), grid on
+    subplot(325), plot(t,effective_weights), ylabel('eff. weights'), grid on
+    disp(sprintf('%s: %d total, %d optional', d(i).name, sum(total_requests), sum(optional_requests)));
     
     if (strcmp(d(i).name,'optimization') && exist('dimmer'))
         figure(100)

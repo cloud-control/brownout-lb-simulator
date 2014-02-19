@@ -512,6 +512,8 @@ class LoadBalancer:
 		## queue length of each replica (control input for SQF algorithm)
 		self.queueLengths = []
 		self.lastQueueLengths = []
+		## queue length offset for equal-thetas-SQF
+		self.queueOffsets = []
 		## number of requests, with or without optional content, served since
 		# the load-balancer came online (metric)
 		self.numRequests = 0
@@ -550,6 +552,7 @@ class LoadBalancer:
 		self.lastLastLatencies.append([])
 		self.queueLengths.append(0) # to be updated in request and onComplete
 		self.lastQueueLengths.append(0)
+		self.queueOffsets.append(0)
 		self.numRequestsPerReplica.append(0) # to be updated in request
 		self.numLastRequestsPerReplica.append(0) # to be updated in runControlLoop
 		self.ewmaResponseTime.append(0) # to be updated in onComplete
@@ -567,6 +570,12 @@ class LoadBalancer:
 		if self.algorithm in [ 'weighted-RR', 'theta-diff', 'theta-diff-plus', 'equal-thetas', 'optimization', 'ctl-simplify' ]:
 			request.chosenBackendIndex = \
 				weightedChoice(zip(range(0, len(self.backends)), self.weights))
+		elif self.algorithm == 'equal-thetas-SQF':
+			# choose replica with shortest (queue + queueOffset)
+			request.chosenBackendIndex = \
+				min(range(0, len(self.queueLengths)), \
+				key = lambda i: self.queueLengths[i]-self.queueOffsets[i])
+			pass
 		elif self.algorithm == 'random':
 			# round robin
 			request.chosenBackendIndex = \
@@ -801,6 +810,19 @@ class LoadBalancer:
 		elif self.algorithm == 'predictive':
 			# preditctive is not dynamic
 			pass
+		elif self.algorithm == 'equal-thetas-SQF':
+			for i in range(0,len(self.backends)):
+				# Gain
+				gamma = .1
+				gammaTr = .01
+				
+				# Calculate the negative deviation from the average
+				e = self.lastThetas[i] - avg(self.lastThetas)
+				# Integrate the negative deviation from the average
+				self.queueOffsets[i] += gamma * e # + Kp * (e - self.lastThetaErrors[i])
+				# Anti-windup
+				self.queueOffsets[i] -= gammaTr * (self.queueOffsets[i] - self.queueLengths[i])
+				self.lastThetaErrors[i] = e
 		elif self.algorithm == 'equal-thetas':
 			for i in range(0,len(self.backends)):
 				# This code was meant to adjust the gain so that the weights of weak servers
@@ -870,6 +892,10 @@ class LoadBalancer:
 			for i in range(0,len(self.backends)) ]
 		effectiveWeights = normalize(effectiveWeights)
 
+		# Output the offsets as weights to enable plotting and stuff
+		if self.algorithm == 'equal-thetas-SQF':
+			self.weights = self.queueOffsets
+			
 		valuesToOutput = [ self.sim.now ] + self.weights + self.lastThetas + \
 			[ avg(latencies) for latencies in self.lastLatencies ] + \
 			[ max(latencies + [0]) for latencies in self.lastLatencies ] + \
@@ -982,11 +1008,14 @@ class MarkovianArrivalProcess:
 	# @param _request the request that has been completed (ignored for now)
 	def onCompleted(self, request):
 		self.responseTimes.append(self.sim.now - request.arrival)
+		
+	def setRate(self, rate):
+		self.rate = rate
 
 ## Entry-point for simulator.
 # Setups up all entities, then runs simulation.
 def main():
-	algorithms = ("weighted-RR theta-diff optimization SQF SQF-plus FRF equal-thetas " + \
+	algorithms = ("weighted-RR theta-diff optimization SQF SQF-plus FRF equal-thetas equal-thetas-SQF " + \
 		"FRF-EWMA predictive 2RC RR random theta-diff-plus ctl-simplify").split()
 
 	# Parsing command line options to find out the algorithm
@@ -1049,6 +1078,11 @@ def main():
 			server.serviceTimeY = y
 			server.serviceTimeN = n
 		sim.add(at, changeServiceTimeHandler)
+		
+	def setRate(at, rate):
+		def setRateHandler():
+			sim.markovClients.setRate(rate)
+		sim.add(at, setRateHandler)
 
 	def addServer(y, n):
 		server = Server(sim, controlPeriod = serverControlPeriod,
