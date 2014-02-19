@@ -118,15 +118,15 @@ maximize the quantity denoted by Equation~\eqref{eq:objective}.
 In this solution, each replica is modeled as an $M/G/1$ queue with a
 Processor Sharing (PS) discipline. The arrival clients are Markovian
 (M) processes, the service times have a general (G) distribution and
-each replica consists of a single server. According to the processor
-sharing discipline, all clients are served immediately after their
-arrival and share a fraction of the available computation power.
+each replica consists of a single access point. According to the 
+processor sharing discipline, all clients are served immediately after 
+their arrival and share a fraction of the available computation power. 
+This model has been proved useful to simulate the behavior of web 
+servers~\cite{kihlws}.
 
-\str{Explain why M/G/1 and not M/G/n where n would be the number of
-  cores available for the replica. Kind of due to the PS discipline,
-  but need better explaination. Also, Karl-Erik commented that we
-  cannot assume that control people know what an M/G/1 queue
-  is. Background should be better explained.}
+\str{Karl-Erik commented that we cannot assume that control people 
+  know what an M/G/1 queue is. Background should be better 
+  explained.}
 
 We use a general distribution for service times to account for the
 brownout adaptation. For each replica $i$ we define $f_{S_i}$, the
