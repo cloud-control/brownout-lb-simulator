@@ -429,6 +429,15 @@ class Server:
 		self.latestLatencies.append(request.completion - request.arrival)
 		request.onCompleted()
 
+		# Report
+		valuesToOutput = [ \
+			self.sim.now, \
+			request.arrival, \
+			request.completion - request.arrival, \
+		]
+		self.sim.output(str(self)+'-rt', ','.join(["{0:.5f}".format(value) \
+			for value in valuesToOutput]))
+
 		# Continue with scheduler
 		if len(self.activeRequests) > 0:
 			self.sim.add(0, self.onScheduleRequests)
