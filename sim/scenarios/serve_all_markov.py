@@ -11,9 +11,9 @@ lam = 22.8571428571
 
 sim.markovClients = MarkovianArrivalProcess(sim,loadBalancer,rate=lam)
 
-setRate(10000, lam/2)
-setRate(20000, lam)
-setRate(40000, lam/2)
-setRate(70000, lam)
+setRate(1000, lam/2)
+setRate(2000, lam)
+setRate(4000, lam/2)
+setRate(7000, lam)
 
 endOfSimulation(at = 10000)
