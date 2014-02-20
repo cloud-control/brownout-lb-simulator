@@ -287,7 +287,7 @@ class Server:
 	def runControlLoop(self):
 		if self.latestLatencies:
 			# Possible choices: max or avg latency control
-			# serviceTime = avg(self.latestLatencies) # avg latency
+			#serviceTime = avg(self.latestLatencies) # avg latency
 			# serviceTime = max(self.latestLatencies) # max latency
 			serviceTime = np.percentile(self.latestLatencies, 95) # 95 percentile
 			serviceLevel = self.theta
@@ -576,6 +576,10 @@ class LoadBalancer:
 				min(range(0, len(self.queueLengths)), \
 				key = lambda i: self.queueLengths[i]-self.queueOffsets[i])
 			pass
+		elif self.algorithm == 'optim-SQF':
+			request.chosenBackendIndex = \
+				min(range(0, len(self.queueLengths)), \
+				key = lambda i: self.queueLengths[i]-self.queueOffsets[i])
 		elif self.algorithm == 'random':
 			# round robin
 			request.chosenBackendIndex = \
@@ -689,9 +693,10 @@ class LoadBalancer:
 		if self.algorithm == 'weighted-RR':
 			# Nothing to do here
 			pass
-		elif self.algorithm == 'optimization':
+		elif (self.algorithm == 'optimization' or self.algorithm == 'optim-SQF'):
 			setpoint = 1
 			arrivalRate = float(self.numRequests - self.lastNumRequests) / float(self.controlPeriod)
+			#arrivalRate = 50
 			#arrivalRate = 20
 			# TODO: we have to substitute these vectors (mu and M) 
 			# with estimations of their values
@@ -760,7 +765,12 @@ class LoadBalancer:
 						break
 				#print(weights_tmp)
 				self.weights = list(weights_tmp)
-				#print(self.weights)		
+				#print(self.weights)
+			for i in range(0,len(self.backends)):
+				dim = min(1,(intA[i,0]-intB[i,0]*self.weights[i])/(intC[i,0]+intD[i,0]*self.weights[i]))
+				mueff = 1/(dim/M[i]+(1-dim)/mu[i])
+				self.queueOffsets[i] = arrivalRate*self.weights[i]/(mueff-arrivalRate*self.weights[i])
+				#print(self.queueOffsets[i])
 			x = matrix(self.weights)
 			self.sim.output('optimizer', ','.join(map(str, [ self.sim.now ] + \
 				list(cvxopt.div(intA-cvxopt.mul(intB,x), intC+cvxopt.mul(intD,x))))))
@@ -1016,7 +1026,7 @@ class MarkovianArrivalProcess:
 # Setups up all entities, then runs simulation.
 def main():
 	algorithms = ("weighted-RR theta-diff optimization SQF SQF-plus FRF equal-thetas equal-thetas-SQF " + \
-		"FRF-EWMA predictive 2RC RR random theta-diff-plus ctl-simplify").split()
+		"optim-SQF FRF-EWMA predictive 2RC RR random theta-diff-plus ctl-simplify").split()
 
 	# Parsing command line options to find out the algorithm
 	parser = argparse.ArgumentParser( \
