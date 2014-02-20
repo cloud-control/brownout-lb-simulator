@@ -1,3 +1,5 @@
+fast = 0;   % if fast = 1, the aggregated measurements from sim_lb are used, otherwise use actual server measurements
+
 d = dir('results');
 dirs = [];
 for i = 1:length(d)
@@ -16,25 +18,45 @@ for i = 1:m
     l = size(sim_lb,2);
     n = (l-3)/5;
     
-    t = sim_lb(:,1);
+    t_lb = sim_lb(:,1);
     weights = sim_lb(:,2:n+1);
-    dimmers = sim_lb(:,n+2:2*n+1);
-    avg_latencies = sim_lb(:,2*n+2:3*n+1);
-    max_latencies = sim_lb(:,3*n+2:4*n+1);
     total_requests = [0;diff(sim_lb(:,4*n+2))];
     optional_requests = [0;diff(sim_lb(:,4*n+3))];
     effective_weights = sim_lb(:,4*n+4:5*n+3);
     
+    if fast == 1
+        t = t_lb;
+        dimmers = sim_lb(:,n+2:2*n+1);
+        avg_latencies = sim_lb(:,2*n+2:3*n+1);
+        max_latencies = sim_lb(:,3*n+2:4*n+1);
+    else
+        load(strcat('results/',d(i).name,'/sim-server1.csv'));
+        t = sim_server1(:,1);
+        dimmers = zeros(length(sim_server1),n);
+        avg_latencies = zeros(length(sim_server1),n);
+        max_latencies = zeros(length(sim_server1),n);
+        
+        for j = 1:n
+            pp = strcat('results/',d(i).name,'/sim-server',num2str(j),'.csv');
+            curr_server = load(pp);
+            dimmers(:,j) = curr_server(:,4);
+            avg_latencies(:,j) = curr_server(:,2);
+            max_latencies(:,j) = curr_server(:,3);
+        end
+    end
+
+   
+    
     figure(i)
-    subplot(321), plot(t,weights), title(d(i).name), ylabel('weights'), grid on
+    subplot(321), plot(t_lb,weights), title(d(i).name), ylabel('weights'), grid on
     subplot(322), plot(t,dimmers,t,mean(dimmers,2),'--'), ylabel('dimmer'), grid on
     subplot(323), plot(t,avg_latencies), ylabel('avg latency'), grid on
-    subplot(324), plot(t,total_requests,t,optional_requests), ylabel('requests'), legend('Total', 'w. Optional'), grid on
-    subplot(325), plot(t,effective_weights), ylabel('eff. weights'), grid on
-    disp(sprintf('%s: %d total, %d optional', d(i).name, sum(total_requests), sum(optional_requests)));
+    subplot(324), plot(t_lb,total_requests,t_lb,optional_requests), ylabel('requests'), legend('Total', 'w. Optional'), grid on
+    subplot(325), plot(t_lb,effective_weights), ylabel('eff. weights'), grid on
+    disp(sprintf('%s: %d total, %d optional', d(i).name, sim_lb(end,4*n+2), sim_lb(end,4*n+3)));
     
-    if (strcmp(d(i).name,'optimization') && exist('dimmer'))
-        figure(100)
-        plot(t,dimmers), hold on, plot([t(1) t(end)],[dimmer;dimmer]), hold off
-    end
+    %if (strcmp(d(i).name,'optimization') && exist('dimmer'))
+    %    figure(100)
+    %    plot(t,dimmers), hold on, plot([t(1) t(end)],[dimmer;dimmer]), hold off
+    %end
 end
