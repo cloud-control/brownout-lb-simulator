@@ -6,15 +6,12 @@ addServer(y = 0.07 *  3, n = 0.001 *  3)
 addServer(y = 0.07 * 10, n = 0.001 * 50)
 addServer(y = 0.07 * 10, n = 0.001 * 50)
 
-sim.markovClients = MarkovianArrivalProcess(sim,loadBalancer,rate=30)
+global markovClients
 
-setRate(1000, 60)
-setRate(2000, 40)
-setRate(4000, 80)
+markovClients = MarkovianArrivalProcess(sim,loadBalancer,rate=30)
 
-#addClients(at =    0, n = 50)
-#addClients(at = 1000, n = 50)
-#delClients(at = 2000, n = 25)
-#addClients(at = 4000, n = 50)
+sim.add(1000, lambda: markovClients.setRate(60))
+sim.add(2000, lambda: markovClients.setRate(40))
+sim.add(4000, lambda: markovClients.setRate(80))
 
 endOfSimulation(at = 5000)

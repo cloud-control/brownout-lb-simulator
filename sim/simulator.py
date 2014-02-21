@@ -1089,11 +1089,6 @@ def main():
 			server.serviceTimeN = n
 		sim.add(at, changeServiceTimeHandler)
 		
-	def setRate(at, rate):
-		def setRateHandler():
-			sim.markovClients.setRate(rate)
-		sim.add(at, setRateHandler)
-
 	def addServer(y, n):
 		server = Server(sim, controlPeriod = serverControlPeriod,
 			serviceTimeY = y, serviceTimeN = n, \
