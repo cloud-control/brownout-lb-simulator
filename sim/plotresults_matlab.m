@@ -1,4 +1,4 @@
-fast = 0;   % if fast = 1, the aggregated measurements from sim_lb are used, otherwise use actual server measurements
+fast = 1;   % if fast = 1, the aggregated measurements from sim_lb are used, otherwise use actual server measurements
 
 d = dir('results');
 dirs = [];
@@ -11,6 +11,9 @@ d = d(dirs(3:end));
 
 m = length(d);
 
+r_names = {};
+r_total = [];
+r_opt = [];
 for i = 1:m
     p = strcat('results/',d(i).name,'/sim-lb.csv');
     load(p)
@@ -53,10 +56,18 @@ for i = 1:m
     subplot(323), plot(t,avg_latencies), ylabel('avg latency'), grid on
     subplot(324), plot(t_lb,total_requests,t_lb,optional_requests), ylabel('requests'), legend('Total', 'w. Optional'), grid on
     subplot(325), plot(t_lb,effective_weights), ylabel('eff. weights'), grid on
-    disp(sprintf('%s: %d total, %d optional', d(i).name, sim_lb(end,4*n+2), sim_lb(end,4*n+3)));
+    r_names{end+1} = d(i).name;
+    r_total(end+1) = sim_lb(end,4*n+2);
+    r_opt(end+1) = sim_lb(end,4*n+3);
     
     %if (strcmp(d(i).name,'optimization') && exist('dimmer'))
     %    figure(100)
     %    plot(t,dimmers), hold on, plot([t(1) t(end)],[dimmer;dimmer]), hold off
     %end
 end
+
+[ans, si] = sort(-r_opt./max(r_total));
+for i=si
+    disp(sprintf('%s: %d total, %d optional, %.2f%% of max total', r_names{i}, r_total(i), r_opt(i), r_opt(i)*100/max(r_total)));
+end
+
