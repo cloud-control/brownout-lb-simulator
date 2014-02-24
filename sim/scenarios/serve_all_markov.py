@@ -10,9 +10,15 @@ addServer(y = 0.07 * 10, n = 0.001 * 50)
 
 global clients, lam
 
-lam = 22.8571428571
+# Calculate the sum of 1 / (theta / mu + (1 - theta) / M) - 1 / Tref for
+# all servers.
+lam = 0
+theta = 1
+Tref = 1
+for server in servers:
+	lam += 1 / (theta*server.serviceTimeY + (theta-1)*server.serviceTimeN) - 1/Tref
 
-clients = MarkovianArrivalProcess(sim,loadBalancer,rate=lam)
+clients = MarkovianArrivalProcess(sim, loadBalancer, rate=lam)
 
 sim.add(1000, lambda: clients.setRate(lam/2))
 sim.add(2000, lambda: clients.setRate(lam))
