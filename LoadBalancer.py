@@ -215,6 +215,9 @@ class LoadBalancer:
 		# Call original onCompleted
 		request.onCompleted()
 
+		# suppress output of cvxopt solver
+		solvers.options['show_progress'] = False
+
 	## Run control loop.
 	# Takes as input the dimmers and computes new weights. Also outputs
 	# CVS-formatted statistics through the Simulator's output routine.
