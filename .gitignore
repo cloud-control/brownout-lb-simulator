@@ -1,16 +1,10 @@
-# Intermediate files from LaTeX
-out.o
-
 # Python-compiled byte-code
 *.py[co]
 
 # Doxygen-generated code documentation
-sim/html
-sim/latex
+html
+latex
 
 # Results (maybe later we'll have them in the repo)
-sim/results
+results
 
-# PDF of the paper
-cdc-paper/cdc.pdf
-icac-paper/icac.pdf
