@@ -556,7 +556,6 @@ def main():
 		sumServiceTimes = sum(servicetimes)
 		loadBalancer.weights = list(np.array(servicetimes / sumServiceTimes))
 
-
 	if 'simulateUntil' not in otherParams:
 		raise Exception("Scenario does not define end-of-simulation")
 	sim.run(until = otherParams['simulateUntil'])
@@ -566,28 +565,5 @@ def main():
 	    recommendationPercentage, sim.stdServiceTime, sim.avgServiceTime)
 	sim.output('final-results', "{algo:15}, {res:.5f}".format(algo = loadBalancer.algorithm, res = recommendationPercentage))
 
-def responseTimeTest():
-	results = []
-	for i in range(0, 11):
-		arrivalRate = 12
-		theta = i / 10
-
-		random.seed(1)
-		sim = SimulatorKernel()
-		server = Server(sim, controlPeriod = 0, initialTheta = theta)
-		clients = MarkovianArrivalProcess(sim, server, rate = arrivalRate)
-
-		sim.run()
-
-		results.append((theta, avg(clients.responseTimes)))
-
-	print("theta measured modelled")
-	for theta, avgResponseTime in results:
-		expectedServiceRate = 1 / ((theta * server.serviceTimeY) + (1-theta) * server.serviceTimeN)
-		modelledAvgResponseTime = 1 / (expectedServiceRate - arrivalRate)
-
-		print(theta, avgResponseTime, modelledAvgResponseTime)
-
 if __name__ == "__main__":
 	main()
-	#responseTimeTest()
