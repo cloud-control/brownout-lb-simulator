@@ -69,6 +69,9 @@ class LoadBalancer:
 		self.ctlRlsP = []
 		self.ctlAlpha = []
 		
+		# suppress output of cvxopt solver
+		solvers.options['show_progress'] = False
+
 		# Launch control loop
 		self.sim.add(0, self.runControlLoop)
 
@@ -216,9 +219,6 @@ class LoadBalancer:
 	
 		# Call original onCompleted
 		request.onCompleted()
-
-		# suppress output of cvxopt solver
-		solvers.options['show_progress'] = False
 
 	## Run control loop.
 	# Takes as input the dimmers and computes new weights. Also outputs
