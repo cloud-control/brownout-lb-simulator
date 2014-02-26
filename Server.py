@@ -156,6 +156,14 @@ class Server:
 		# Add request to list of active requests
 		self.activeRequests.append(request)
 
+		# Report queue length
+		valuesToOutput = [ \
+			self.sim.now, \
+			len(self.activeRequests), \
+		]
+		self.sim.output(self, ','.join(["{0:.5f}".format(value) \
+			for value in valuesToOutput]))
+
 	## Event handler for scheduling active requests.
 	# This function is the core of the processor-sharing with time-slice model.
 	# This function is called when "context-switching" occurs. There must be at
@@ -242,6 +250,14 @@ class Server:
 			request.completion - request.arrival, \
 		]
 		self.sim.output(str(self)+'-rt', ','.join(["{0:.5f}".format(value) \
+			for value in valuesToOutput]))
+
+		# Report queue length
+		valuesToOutput = [ \
+			self.sim.now, \
+			len(self.activeRequests), \
+		]
+		self.sim.output(self, ','.join(["{0:.5f}".format(value) \
 			for value in valuesToOutput]))
 
 		# Continue with scheduler
