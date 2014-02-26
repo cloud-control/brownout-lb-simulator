@@ -161,7 +161,7 @@ class Server:
 			self.sim.now, \
 			len(self.activeRequests), \
 		]
-		self.sim.output(self, ','.join(["{0:.5f}".format(value) \
+		self.sim.output(str(self) + '-arl', ','.join(["{0:.5f}".format(value) \
 			for value in valuesToOutput]))
 
 	## Event handler for scheduling active requests.
@@ -257,7 +257,7 @@ class Server:
 			self.sim.now, \
 			len(self.activeRequests), \
 		]
-		self.sim.output(self, ','.join(["{0:.5f}".format(value) \
+		self.sim.output(str(self) + '-arl', ','.join(["{0:.5f}".format(value) \
 			for value in valuesToOutput]))
 
 		# Continue with scheduler
