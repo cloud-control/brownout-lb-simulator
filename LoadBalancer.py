@@ -1,3 +1,5 @@
+from __future__ import division
+
 from cvxopt import solvers, matrix, spdiag, log
 import cvxopt
 import math
