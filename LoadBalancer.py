@@ -169,6 +169,14 @@ class LoadBalancer:
 			request.chosenBackendIndex = \
 				min(range(0, len(points)), \
 				key = lambda i: points[i])
+		elif self.algorithm == "SRTF":
+			# choose replica with shortest "time" queue
+			#request.chosenBackendIndex = \
+			#	min(range(0, len(self.backends)), \
+			#	key = lambda i: sum([r.remainingTime if hasattr(r, 'remainingTime') else 0 for r in self.backends[i].activeRequests]))
+			request.chosenBackendIndex = \
+				min(range(0, len(self.queueLengths)), \
+				key = lambda i: self.queueLengths[i] * (self.backends[i].serviceTimeY * self.lastThetas[i] + self.backends[i].serviceTimeN * (1 - self.lastThetas[i])))
 		else:
 			raise Exception("Unknown load-balancing algorithm " + self.algorithm)
 			
@@ -328,24 +336,6 @@ class LoadBalancer:
                             zip(self.weights, self.lastThetas, self.lastLastThetas) ]
 			preNormalizedSumOfWeights = sum(self.weights)
 			self.weights = [ x / preNormalizedSumOfWeights for x in self.weights ]
-		elif self.algorithm == 'random':
-			# random is not dynamic
-			pass
-		elif self.algorithm == 'SQF':
-			# shortest queue first is not dynamic
-			pass
-		elif self.algorithm == 'SQF-plus':
-			# shortest queue first is not dynamic
-			pass
-		elif self.algorithm == 'RR':
-			# round robin is not dynamic
-			pass
-		elif self.algorithm == '2RC':
-			# two random choices is not dynamic
-			pass
-		elif self.algorithm == 'FRF':
-			# fastest replica first is not dynamic
-			pass
 		elif self.algorithm == 'FRF-EWMA':
 			# slowly forget response times
 			ewmaAlpha = 2 / (self.ewmaNumSamples + 1)
@@ -424,8 +414,7 @@ class LoadBalancer:
 			# Normalize
 			for i in range(0,len(self.backends)):
 				self.weights[i] = self.weights[i] / sum(self.weights)
-		else:
-			raise Exception("Unknown load-balancing algorithm " + self.algorithm)
+		# Other algorithms are not dynamic
 
 		self.lastNumRequests = self.numRequests
 		self.iteration += 1
