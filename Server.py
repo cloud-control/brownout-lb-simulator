@@ -155,6 +155,13 @@ class Server:
 			self.sim.add(0, self.onScheduleRequests)
 		# Add request to list of active requests
 		self.activeRequests.append(request)
+		# Report number of active requests
+		valuesToOutput = [ \
+			self.sim.now, \
+			len(self.activeRequest), \
+		]
+		self.sim.output(str(self)+'-ar', ','.join(["{0:.5f}".format(value) \
+			for value in valuesToOutput]))
 
 	## Event handler for scheduling active requests.
 	# This function is the core of the processor-sharing with time-slice model.
@@ -242,6 +249,13 @@ class Server:
 			request.completion - request.arrival, \
 		]
 		self.sim.output(str(self)+'-rt', ','.join(["{0:.5f}".format(value) \
+			for value in valuesToOutput]))
+		# Report number of active requests
+		valuesToOutput = [ \
+			self.sim.now, \
+			len(self.activeRequest), \
+		]
+		self.sim.output(str(self)+'-ar', ','.join(["{0:.5f}".format(value) \
 			for value in valuesToOutput]))
 
 		# Continue with scheduler
