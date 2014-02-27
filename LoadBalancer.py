@@ -206,6 +206,30 @@ class LoadBalancer:
 			request.chosenBackendIndex = \
 				min(range(0, len(self.queueLengths)), \
 				key = lambda i: self.queueLengths[i]-self.queueOffsets[i])
+		elif self.algorithm == 'theta-diff-plus-fast':
+			dt = self.sim.now - self.lastDecision
+			if dt > 1: dt = 1
+
+			for i in range(0,len(self.backends)):
+				# Gain
+				Kp = 0.25
+				Ti = 5.0
+				gammaTr = .01
+
+				# PI control law
+				e = self.lastThetas[i] - self.lastLastThetas[i]
+				self.queueOffsets[i] += (Kp * e + (Kp/Ti) * self.lastThetas[i]) * dt
+
+				# Anti-windup
+				self.queueOffsets[i] -= gammaTr * (self.queueOffsets[i] - self.queueLengths[i]) * dt
+				self.lastThetaErrors[i] = e
+
+			self.lastDecision = self.sim.now
+			
+			# choose replica with shortest (queue + queueOffset)
+			request.chosenBackendIndex = \
+				min(range(0, len(self.queueLengths)), \
+				key = lambda i: self.queueLengths[i]-self.queueOffsets[i])
 		else:
 			raise Exception("Unknown load-balancing algorithm " + self.algorithm)
 			
