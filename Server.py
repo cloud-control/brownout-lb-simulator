@@ -155,6 +155,13 @@ class Server:
 			self.sim.add(0, self.onScheduleRequests)
 		# Add request to list of active requests
 		self.activeRequests.append(request)
+		# Report number of active requests
+		valuesToOutput = [ \
+			self.sim.now, \
+			len(self.activeRequest), \
+		]
+		self.sim.output(str(self)+'-ar', ','.join(["{0:.5f}".format(value) \
+			for value in valuesToOutput]))
 
 		# Report queue length
 		valuesToOutput = [ \
@@ -250,6 +257,13 @@ class Server:
 			request.completion - request.arrival, \
 		]
 		self.sim.output(str(self)+'-rt', ','.join(["{0:.5f}".format(value) \
+			for value in valuesToOutput]))
+		# Report number of active requests
+		valuesToOutput = [ \
+			self.sim.now, \
+			len(self.activeRequest), \
+		]
+		self.sim.output(str(self)+'-ar', ','.join(["{0:.5f}".format(value) \
 			for value in valuesToOutput]))
 
 		# Report queue length
