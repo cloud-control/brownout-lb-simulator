@@ -1,5 +1,6 @@
 import random
-from numpy.random import choice
+# for numpy >= 1.7
+#from numpy.random import choice
 
 ## Randomly picks an item from several choices, as given by the attached
 # weights. Sum of weight must equal 1.
@@ -8,18 +9,19 @@ from numpy.random import choice
 # @param choiceWeightPairs list of pairs to choose from; first item in pair is
 # choice, second is weight
 def weightedChoice(choiceWeightPairs):
-	weights  = [w for c,w in choiceWeightPairs]
-	elements = [c for c,w in choiceWeightPairs]
-	weights  = [w/sum(weights) for w in weights]
-	return choice(elements, p=weights)
-	# totalWeight = sum(weight for choice, weight in choiceWeightPairs)
-	# rnd = random.uniform(0, totalWeight)
-	# upto = 0
-	# for choice, weight in choiceWeightPairs:
-	# 	if upto + weight > rnd:
-	# 		return choice
-	# 	upto += weight
-	# assert False, "Shouldn't get here"
+	# for numpy >= 1.7
+	#weights  = [w for c,w in choiceWeightPairs]
+	#elements = [c for c,w in choiceWeightPairs]
+	#weights  = [w/sum(weights) for w in weights]
+	#return choice(elements, p=weights)
+	totalWeight = sum(weight for choice, weight in choiceWeightPairs)
+	rnd = random.uniform(0, totalWeight)
+	upto = 0
+	for choice, weight in choiceWeightPairs:
+		if upto + weight > rnd:
+			return choice
+		upto += weight
+	assert False, "Shouldn't get here"
 
 ## Computes average
 # @param numbers list of number to compute average for

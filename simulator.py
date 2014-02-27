@@ -20,7 +20,8 @@ from SimulatorKernel import *
 # Setups up all entities, then runs simulation.
 def main():
 	algorithms = ("weighted-RR theta-diff optimization SQF SQF-plus FRF equal-thetas equal-thetas-SQF " + \
-		"optim-SQF FRF-EWMA predictive 2RC RR random theta-diff-plus ctl-simplify equal-thetas-fast theta-diff-plus-SQF").split()
+		"optim-SQF FRF-EWMA predictive 2RC RR random theta-diff-plus ctl-simplify equal-thetas-fast theta-diff-plus-SQF " + \
+		"theta-diff-plus-fast SRTF").split()
 
 	# Parsing command line options to find out the algorithm
 	parser = argparse.ArgumentParser( \
