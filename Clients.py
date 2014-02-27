@@ -2,14 +2,14 @@ import random
 
 from Request import *
 
-## Simulates open-loop clients.
+## Simulates an open-loop client.
 # The clients have an exponential arrival time.
-class OpenLoopClients:
+class OpenLoopClient:
 	## Constructor.
 	# @param sim Simulator to attach client to
 	# @param server server-like entity to which requests are sent
 	# @param rate average arrival rate
-	def __init__(self, sim, server, rate = 1):
+	def __init__(self, sim, server, rate = 0):
 		## average arrival rate (model parameter)
 		self.rate = rate
 
@@ -22,17 +22,19 @@ class OpenLoopClients:
 		## Vector of response-times, useful to compute average or distribution (metric)
 		self.responseTimes = []
 
-		# Launch arrival process
-		self.sim.add(0, lambda: self.issueRequest())
-
 	## Issues a new request to the server.
 	def issueRequest(self):
 		request = Request()
 		request.onCompleted = lambda: self.onCompleted(request)
 		self.server.request(request)
 
+		# Schedule the next one
+		self.scheduleRequest()
+
+	## Schedules the next request.
+	def scheduleRequest(self):
 		interval = random.expovariate(self.rate)
-		self.sim.add(interval, lambda: self.issueRequest())
+		self.sim.update(interval, self.issueRequest)
 
 	## Called when a request completes
 	# @param _request the request that has been completed (ignored for now)
@@ -41,6 +43,7 @@ class OpenLoopClients:
 		
 	def setRate(self, rate):
 		self.rate = rate
+		self.scheduleRequest()
 
 ## Simulates a closed-loop client.
 # The client waits for a request to complete before issuing a new one.

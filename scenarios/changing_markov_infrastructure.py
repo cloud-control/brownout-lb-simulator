@@ -6,13 +6,10 @@ addServer(y = 0.07 *  3, n = 0.001 *  3)
 addServer(y = 0.07 * 10, n = 0.001 * 50)
 addServer(y = 0.07 * 10, n = 0.001 * 50)
 
-global markovClients
-
-markovClients = MarkovianArrivalProcess(sim,loadBalancer,rate=30)
-
-sim.add(1000, lambda: markovClients.setRate(60))
-sim.add(2000, lambda: markovClients.setRate(40))
-sim.add(4000, lambda: markovClients.setRate(80))
+setRate(at =    0, rate = 30)
+setRate(at = 1000, rate = 60)
+setRate(at = 2000, rate = 40)
+setRate(at = 4000, rate = 80)
 
 changeServiceTime(at = 250, serverId = 0, y = 0.07 * 5,  n = 0.001 * 5)
 changeServiceTime(at = 500, serverId = 4, y = 0.07 * 1,  n = 0.001 * 1)

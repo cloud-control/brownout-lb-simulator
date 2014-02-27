@@ -57,6 +57,7 @@ def main():
 	servers = []
 	clients = []
 	loadBalancer = LoadBalancer(sim, controlPeriod = 1.0)
+	openLoopClient = OpenLoopClient(sim, loadBalancer)
 
 	loadBalancer.algorithm = algorithm
 	loadBalancer.equal_theta_gain = args.equal_theta_gain
@@ -94,6 +95,9 @@ def main():
 			timeSlice = args.timeSlice)
 		servers.append(server)
 		loadBalancer.addBackend(server)
+	
+	def setRate(at, rate):
+		sim.add(at, lambda: openLoopClient.setRate(rate))
 
 	def endOfSimulation(at):
 		otherParams['simulateUntil'] = at
