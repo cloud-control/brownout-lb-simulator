@@ -68,6 +68,8 @@ class LoadBalancer:
 		## for the ctl-simplify algorithm
 		self.ctlRlsP = []
 		self.ctlAlpha = []
+		## time when last event-driven control decision was taken
+		self.lastDecision = 0
 		
 		# suppress output of cvxopt solver
 		solvers.options['show_progress'] = False
@@ -177,6 +179,27 @@ class LoadBalancer:
 			request.chosenBackendIndex = \
 				min(range(0, len(self.queueLengths)), \
 				key = lambda i: self.queueLengths[i] * (self.backends[i].serviceTimeY * self.lastThetas[i] + self.backends[i].serviceTimeN * (1 - self.lastThetas[i])))
+		elif self.algorithm == 'equal-thetas-fast':
+			dt = self.sim.now - self.lastDecision
+			if dt > 1: dt = 1
+			for i in range(0,len(self.backends)):
+				# Gain
+				gamma = .1 * dt
+				gammaTr = .01 * dt
+				
+				# Calculate the negative deviation from the average
+				e = self.lastThetas[i] - avg(self.lastThetas)
+				# Integrate the negative deviation from the average
+				self.queueOffsets[i] += gamma * e # + Kp * (e - self.lastThetaErrors[i])
+				# Anti-windup
+				self.queueOffsets[i] -= gammaTr * (self.queueOffsets[i] - self.queueLengths[i])
+				self.lastThetaErrors[i] = e
+			self.lastDecision = self.sim.now
+			
+			# choose replica with shortest (queue + queueOffset)
+			request.chosenBackendIndex = \
+				min(range(0, len(self.queueLengths)), \
+				key = lambda i: self.queueLengths[i]-self.queueOffsets[i])
 		else:
 			raise Exception("Unknown load-balancing algorithm " + self.algorithm)
 			
