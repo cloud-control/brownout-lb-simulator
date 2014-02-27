@@ -1,3 +1,5 @@
+from __future__ import division
+
 from cvxopt import solvers, matrix, spdiag, log
 import cvxopt
 import math
@@ -67,6 +69,9 @@ class LoadBalancer:
 		self.ctlRlsP = []
 		self.ctlAlpha = []
 		
+		# suppress output of cvxopt solver
+		solvers.options['show_progress'] = False
+
 		# Launch control loop
 		self.sim.add(0, self.runControlLoop)
 
@@ -100,6 +105,12 @@ class LoadBalancer:
 			request.chosenBackendIndex = \
 				weightedChoice(zip(range(0, len(self.backends)), self.weights))
 		elif self.algorithm == 'equal-thetas-SQF':
+			# choose replica with shortest (queue + queueOffset)
+			request.chosenBackendIndex = \
+				min(range(0, len(self.queueLengths)), \
+				key = lambda i: self.queueLengths[i]-self.queueOffsets[i])
+			pass
+		elif self.algorithm == 'theta-diff-plus-SQF':
 			# choose replica with shortest (queue + queueOffset)
 			request.chosenBackendIndex = \
 				min(range(0, len(self.queueLengths)), \
@@ -214,9 +225,6 @@ class LoadBalancer:
 	
 		# Call original onCompleted
 		request.onCompleted()
-
-		# suppress output of cvxopt solver
-		solvers.options['show_progress'] = False
 
 	## Run control loop.
 	# Takes as input the dimmers and computes new weights. Also outputs
@@ -352,6 +360,20 @@ class LoadBalancer:
 		elif self.algorithm == 'predictive':
 			# preditctive is not dynamic
 			pass
+		elif self.algorithm == 'theta-diff-plus-SQF':
+			for i in range(0,len(self.backends)):
+				# Gain
+				Kp = 0.25
+				Ti = 5.0
+				gammaTr = .01
+
+				# PI control law
+				e = self.lastThetas[i] - self.lastLastThetas[i]
+				self.queueOffsets[i] += Kp * e + (Kp/Ti) * self.lastThetas[i]
+
+				# Anti-windup
+				self.queueOffsets[i] -= gammaTr * (self.queueOffsets[i] - self.queueLengths[i])
+				self.lastThetaErrors[i] = e
 		elif self.algorithm == 'equal-thetas-SQF':
 			for i in range(0,len(self.backends)):
 				# Gain
@@ -414,7 +436,7 @@ class LoadBalancer:
 			xo = -10.0 # desired queue length
 			if l == 0:
 				for i in range(0,len(self.backends)):
-					self.weights[i] = 1/len(self.backends)
+					self.weights[i] = 1.0/len(self.backends)
 			else:
 				self.weights = [ max(x[0] + ((1-p)/l)* x[2] * (xo -x[1]) \
 						- (1-p)/l* (xo - x[3]), 0.01) for x in \
@@ -436,6 +458,10 @@ class LoadBalancer:
 
 		# Output the offsets as weights to enable plotting and stuff
 		if self.algorithm == 'equal-thetas-SQF':
+			self.weights = self.queueOffsets
+
+		# Output the offsets as weights to enable plotting and stuff
+		if self.algorithm == 'theta-diff-plus-SQF':
 			self.weights = self.queueOffsets
 			
 		valuesToOutput = [ self.sim.now ] + self.weights + self.lastThetas + \
