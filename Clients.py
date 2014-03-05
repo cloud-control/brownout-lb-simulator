@@ -22,8 +22,13 @@ class OpenLoopClient:
 		## Vector of response-times, useful to compute average or distribution (metric)
 		self.responseTimes = []
 
+		self.scheduleRequest()
+
 	## Issues a new request to the server.
 	def issueRequest(self):
+		if self.rate <= 0:
+			return
+
 		request = Request()
 		request.onCompleted = lambda: self.onCompleted(request)
 		self.server.request(request)
@@ -33,8 +38,10 @@ class OpenLoopClient:
 
 	## Schedules the next request.
 	def scheduleRequest(self):
-		interval = random.expovariate(self.rate)
-		self.sim.update(interval, self.issueRequest)
+		# If rate is changed from nonzero to zero, event will still be in simulator
+		if self.rate > 0:
+			interval = random.expovariate(self.rate)
+			self.sim.update(interval, self.issueRequest)
 
 	## Called when a request completes
 	# @param _request the request that has been completed (ignored for now)

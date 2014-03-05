@@ -8,9 +8,4 @@ addServer(y = 0.07 * 10, n = 0.001 * 50)
 
 clients = MarkovianArrivalProcess(sim,loadBalancer,rate=50)
 
-#addClients(at =    0, n = 50)
-#addClients(at = 1000, n = 50)
-#delClients(at = 2000, n = 75)
-#addClients(at = 4000, n = 25)
-
 endOfSimulation(at = 5000)

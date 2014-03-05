@@ -18,7 +18,7 @@ Tref = 1
 for server in servers:
 	lam += 1 / (theta*server.serviceTimeY + (theta-1)*server.serviceTimeN) - 1/Tref
 
-clients = MarkovianArrivalProcess(sim, loadBalancer, rate=lam)
+clients = OpenLoopClient(sim, loadBalancer, rate=lam)
 
 sim.add(1000, lambda: clients.setRate(lam/2))
 sim.add(2000, lambda: clients.setRate(lam))
