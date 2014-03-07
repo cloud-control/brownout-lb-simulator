@@ -1,4 +1,5 @@
 clear; clc;
+preprocessData;
 load('data.mat');
 
 %%
