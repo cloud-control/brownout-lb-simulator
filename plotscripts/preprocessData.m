@@ -1,7 +1,9 @@
 clear; clc;
 
 %% Loading data
-d = dir('results');
+dirstring = '../results/';
+
+d = dir(dirstring);
 dirs = [];
 for i = 1:length(d)
     if d(i).isdir == 1
@@ -13,7 +15,7 @@ d = d(dirs(3:end));
 m = length(d);
 
 for i = 1:m
-    path = strcat('results/',d(i).name,'/sim-server*.csv');
+    path = strcat(dirstring, d(i).name, '/sim-server*-rt.csv');
     dd   = dir(path);
     n = length(dd);
     
@@ -22,7 +24,7 @@ for i = 1:m
     dimmers       = [];
     utilization   = [];
     for j=1:n
-        p = strcat('results/',d(i).name,'/sim-server',num2str(j),'.csv');
+        p = strcat(dirstring, d(i).name, '/sim-server', num2str(j),'.csv');
         A=load(p);
         
         t             = A(:,1);
@@ -39,7 +41,7 @@ for i = 1:m
     data(i).dimmers       = dimmers;
     data(i).utilization   = utilization;
     
-    path2 = ['results/',d(i).name,'/sim-final-results.csv'];
+    path2 = [dirstring, d(i).name, '/sim-final-results.csv'];
     performance = csvread(path2,0,1);
     data(i).performance = performance;
 end
