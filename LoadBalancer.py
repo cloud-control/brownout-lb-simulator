@@ -106,12 +106,35 @@ class LoadBalancer:
 		if self.algorithm in [ 'weighted-RR', 'theta-diff', 'theta-diff-plus', 'equal-thetas', 'optimization', 'ctl-simplify' ]:
 			request.chosenBackendIndex = \
 				weightedChoice(zip(range(0, len(self.backends)), self.weights))
-		elif self.algorithm == 'equal-thetas-SQF':
-			# choose replica with shortest (queue + queueOffset)
-			request.chosenBackendIndex = \
-				min(range(0, len(self.queueLengths)), \
-				key = lambda i: self.queueLengths[i]-self.queueOffsets[i])
-			pass
+		elif self.algorithm == 'equal-thetas-SQF' or self.algorithm == 'equal-thetas-fast':
+			# Update controller in the -fast version
+			if self.algorithm == 'equal-thetas-fast':
+				dt = self.sim.now - self.lastDecision
+				if dt > 1: dt = 1
+				for i in range(0,len(self.backends)):
+					# Gain
+					gamma = .1 * dt
+					gammaTr = .01 * dt
+					
+					# Calculate the negative deviation from the average
+					e = self.lastThetas[i] - avg(self.lastThetas)
+					# Integrate the negative deviation from the average
+					self.queueOffsets[i] += gamma * e # + Kp * (e - self.lastThetaErrors[i])
+					self.lastThetaErrors[i] = e
+				self.lastDecision = self.sim.now
+					
+			# To prevent starvation, choose a random empty server..
+			empty_servers = [i for i in range(0, len(self.queueLengths)) \
+				if self.queueLengths[i] == 0]
+			
+			if len(empty_servers) > 0:
+				request.chosenBackendIndex = random.choice(empty_servers)
+			else:
+				# ...or choose replica with shortest (queue + queueOffset)
+				request.chosenBackendIndex = \
+					min(range(0, len(self.queueLengths)), \
+					key = lambda i: self.queueLengths[i]-self.queueOffsets[i])
+
 		elif self.algorithm == 'theta-diff-plus-SQF':
 			# choose replica with shortest (queue + queueOffset)
 			request.chosenBackendIndex = \
@@ -185,27 +208,6 @@ class LoadBalancer:
 			request.chosenBackendIndex = \
 				min(range(0, len(self.queueLengths)), \
 				key = lambda i: self.queueLengths[i] * (self.backends[i].serviceTimeY * self.lastThetas[i] + self.backends[i].serviceTimeN * (1 - self.lastThetas[i])))
-		elif self.algorithm == 'equal-thetas-fast':
-			dt = self.sim.now - self.lastDecision
-			if dt > 1: dt = 1
-			for i in range(0,len(self.backends)):
-				# Gain
-				gamma = .1 * dt
-				gammaTr = .01 * dt
-				
-				# Calculate the negative deviation from the average
-				e = self.lastThetas[i] - avg(self.lastThetas)
-				# Integrate the negative deviation from the average
-				self.queueOffsets[i] += gamma * e # + Kp * (e - self.lastThetaErrors[i])
-				# Anti-windup
-				self.queueOffsets[i] -= gammaTr * (self.queueOffsets[i] - self.queueLengths[i])
-				self.lastThetaErrors[i] = e
-			self.lastDecision = self.sim.now
-			
-			# choose replica with shortest (queue + queueOffset)
-			request.chosenBackendIndex = \
-				min(range(0, len(self.queueLengths)), \
-				key = lambda i: self.queueLengths[i]-self.queueOffsets[i])
 		elif self.algorithm == 'theta-diff-plus-fast':
 			dt = self.sim.now - self.lastDecision
 			if dt > 1: dt = 1
@@ -421,8 +423,6 @@ class LoadBalancer:
 				e = self.lastThetas[i] - avg(self.lastThetas)
 				# Integrate the negative deviation from the average
 				self.queueOffsets[i] += gamma * e # + Kp * (e - self.lastThetaErrors[i])
-				# Anti-windup
-				self.queueOffsets[i] -= gammaTr * (self.queueOffsets[i] - self.queueLengths[i])
 				self.lastThetaErrors[i] = e
 		elif self.algorithm == 'equal-thetas':
 			for i in range(0,len(self.backends)):
@@ -493,7 +493,7 @@ class LoadBalancer:
 		effectiveWeights = normalize(effectiveWeights)
 
 		# Output the offsets as weights to enable plotting and stuff
-		if self.algorithm == 'equal-thetas-SQF':
+		if self.algorithm == 'equal-thetas-SQF' or self.algorithm == 'equal-thetas-fast':
 			self.weights = self.queueOffsets
 
 		# Output the offsets as weights to enable plotting and stuff
