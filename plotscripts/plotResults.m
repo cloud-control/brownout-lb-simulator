@@ -18,7 +18,7 @@ for i = 1:m
     p = strcat('../results/',d(i).name,'/sim-lb.csv');
     load(p)
     
-    l = size(sim_lb,2);
+    l = size(sim_lb, 2);
     n = (l-3)/5;
     
     t_lb = sim_lb(:,1);

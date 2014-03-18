@@ -1,3 +1,4 @@
+from __future__ import division, print_function
 import random
 # for numpy >= 1.7
 #from numpy.random import choice
