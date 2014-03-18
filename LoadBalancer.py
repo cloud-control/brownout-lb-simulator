@@ -325,7 +325,7 @@ class LoadBalancer:
 					h[2*len(self.weights) + i, 0] = 1
 				else:
 					h[len(self.weights) + i, 0] = intA[i] / intB[i] # for dimmers greater than 0
-					h[2*len(self.weights) + i, 0] = (intC[i] - intA[i]) / (intD[i] + intB[i]) # for dimmers lower than 1
+					h[2*len(self.weights) + i, 0] = (intA[i] - intC[i]) / (intD[i] + intB[i]) # for dimmers lower than 1
 			def F(x=None, z=None):
 				if x is None: return 0, matrix(1.0, (n, 1))
 				if min(x) <= 0.0: return None
