@@ -103,9 +103,9 @@ def main():
 
 	# For weighted-RR algorithm set the weights
 	if algorithm == 'weighted-RR':
-		servicetimes = np.array([ x.serviceTimeY for x in servers ])
-		sumServiceTimes = sum(servicetimes)
-		loadBalancer.weights = list(np.array(servicetimes / sumServiceTimes))
+		serviceRates = np.array([ 1.0/x.serviceTimeY for x in servers ])
+		sumServiceRates = sum(serviceRates)
+		loadBalancer.weights = list(np.array(serviceRates / sumServiceRates))
 		print(loadBalancer.weights)
 	
 	if 'simulateUntil' not in otherParams:
