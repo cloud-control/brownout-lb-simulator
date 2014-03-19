@@ -106,6 +106,7 @@ def main():
 		servicetimes = np.array([ x.serviceTimeY for x in servers ])
 		sumServiceTimes = sum(servicetimes)
 		loadBalancer.weights = list(np.array(servicetimes / sumServiceTimes))
+		print(loadBalancer.weights)
 	
 	if 'simulateUntil' not in otherParams:
 		raise Exception("Scenario does not define end-of-simulation")
