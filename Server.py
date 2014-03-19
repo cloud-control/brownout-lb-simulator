@@ -53,7 +53,7 @@ class Server:
 		## Current alpha (controller variable)
 		self.alpha = 1
 		## Pole (controller parameter)
-		self.pole = 0.9
+		self.pole = 0.99
 		## latencies measured during last control period (controller input)
 		self.latestLatencies = []
 		## dimmer value (controller output)

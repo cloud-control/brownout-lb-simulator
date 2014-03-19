@@ -63,12 +63,6 @@ def main():
 	loadBalancer.algorithm = algorithm
 	loadBalancer.equal_theta_gain = args.equal_theta_gain
 
-	# For weighted-RR algorithm set the weights
-	if algorithm == 'weighted-RR':
-		servicetimes = np.array([ x.serviceTimeY for x in servers ])
-		sumServiceTimes = sum(servicetimes)
-		loadBalancer.weights = list(np.array(servicetimes / sumServiceTimes))
-
 	# Define verbs for scenarios
 	def addClients(at, n):
 		def addClientsHandler():
@@ -106,6 +100,12 @@ def main():
 	# Load scenario
 	otherParams = {}
 	execfile(args.scenario)
+
+	# For weighted-RR algorithm set the weights
+	if algorithm == 'weighted-RR':
+		servicetimes = np.array([ x.serviceTimeY for x in servers ])
+		sumServiceTimes = sum(servicetimes)
+		loadBalancer.weights = list(np.array(servicetimes / sumServiceTimes))
 	
 	if 'simulateUntil' not in otherParams:
 		raise Exception("Scenario does not define end-of-simulation")

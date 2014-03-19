@@ -1,6 +1,7 @@
 fast = 1;   % if fast = 1, the aggregated measurements from sim_lb are used, otherwise use actual server measurements
 
-d = dir('../results');
+resdir = '../results/';
+d = dir(resdir);
 dirs = [];
 for i = 1:length(d)
     if d(i).isdir == 1
@@ -15,7 +16,7 @@ r_names = {};
 r_total = [];
 r_opt = [];
 for i = 1:m
-    p = strcat('../results/',d(i).name,'/sim-lb.csv');
+    p = strcat(resdir,d(i).name,'/sim-lb.csv');
     load(p)
     
     l = size(sim_lb, 2);
@@ -33,14 +34,14 @@ for i = 1:m
         avg_latencies = sim_lb(:,2*n+2:3*n+1);
         max_latencies = sim_lb(:,3*n+2:4*n+1);
     else
-        load(strcat('../results/',d(i).name,'/sim-server1.csv'));
+        load(strcat(resdir,d(i).name,'/sim-server1.csv'));
         t = sim_server1(:,1);
         dimmers = zeros(length(sim_server1),n);
         avg_latencies = zeros(length(sim_server1),n);
         max_latencies = zeros(length(sim_server1),n);
         
         for j = 1:n
-            pp = strcat('../results/',d(i).name,'/sim-server',num2str(j),'.csv');
+            pp = strcat(resdir,d(i).name,'/sim-server',num2str(j),'.csv');
             curr_server = load(pp);
             dimmers(:,j) = curr_server(:,4);
             avg_latencies(:,j) = curr_server(:,2);
