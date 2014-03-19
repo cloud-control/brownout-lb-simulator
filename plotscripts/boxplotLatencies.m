@@ -15,5 +15,5 @@ for i=1:length(data)
 end
 boxplot(Tau(:,order),{names{order}});
 hold on;
-plot(means(order),'r.');
+plot(means(order),'k.');
 % plot(trmeans,'rx');
