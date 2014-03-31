@@ -44,7 +44,7 @@ def main():
 	parser.add_argument('--equal-thetas-fast-gain',
 		type = float,
 		help = 'Gain in the equal-thetas-fast algorithm',
-		default = 1.1) #0.117)
+		default = 2.0) #0.117)
 	parser.add_argument('--scenario',
 		help = 'Specify a scenario in which to test the system',
 		default = os.path.join(os.path.dirname(sys.argv[0]), 'scenarios', 'A.py'))
