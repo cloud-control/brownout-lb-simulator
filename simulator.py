@@ -41,6 +41,10 @@ def main():
 		type = float,
 		help = 'Gain in the equal-theta algorithm',
 		default = 0.025) #0.117)
+	parser.add_argument('--equal-thetas-fast-gain',
+		type = float,
+		help = 'Gain in the equal-thetas-fast algorithm',
+		default = 1.1) #0.117)
 	parser.add_argument('--scenario',
 		help = 'Specify a scenario in which to test the system',
 		default = os.path.join(os.path.dirname(sys.argv[0]), 'scenarios', 'A.py'))
@@ -62,6 +66,7 @@ def main():
 
 	loadBalancer.algorithm = algorithm
 	loadBalancer.equal_theta_gain = args.equal_theta_gain
+	loadBalancer.equal_thetas_fast_gain = args.equal_thetas_fast_gain
 
 	# Define verbs for scenarios
 	def addClients(at, n):

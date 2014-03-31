@@ -113,8 +113,7 @@ class LoadBalancer:
 				if dt > 1: dt = 1
 				for i in range(0,len(self.backends)):
 					# Gain
-					gamma = .1 * dt
-					gammaTr = .01 * dt
+					gamma = self.equal_thetas_fast_gain * dt
 					
 					# Calculate the negative deviation from the average
 					e = self.lastThetas[i] - avg(self.lastThetas)
@@ -127,7 +126,7 @@ class LoadBalancer:
 			empty_servers = [i for i in range(0, len(self.queueLengths)) \
 				if self.queueLengths[i] == 0]
 			
-			if len(empty_servers) > 0:
+			if empty_servers:
 				request.chosenBackendIndex = random.choice(empty_servers)
 			else:
 				# ...or choose replica with shortest (queue + queueOffset)
