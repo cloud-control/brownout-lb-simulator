@@ -21,7 +21,7 @@ from SimulatorKernel import *
 def main():
 	algorithms = ("weighted-RR theta-diff optimization SQF SQF-plus FRF equal-thetas equal-thetas-SQF " + \
 		"optim-SQF FRF-EWMA predictive 2RC RR random theta-diff-plus ctl-simplify equal-thetas-fast theta-diff-plus-SQF " + \
-		"theta-diff-plus-fast SRTF").split()
+		"theta-diff-plus-fast SRTF oracle").split()
 
 	# Parsing command line options to find out the algorithm
 	parser = argparse.ArgumentParser( \
@@ -98,6 +98,9 @@ def main():
 	
 	def setRate(at, rate):
 		sim.add(at, lambda: openLoopClient.setRate(rate))
+	
+	def setQueueOffset(server, queueOffset):
+		loadBalancer.queueOffsets[server] = queueOffset
 
 	def endOfSimulation(at):
 		otherParams['simulateUntil'] = at
