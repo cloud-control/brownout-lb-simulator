@@ -237,6 +237,48 @@ class LoadBalancer:
 			request.chosenBackendIndex = \
 				min(range(0, len(self.queueLengths)), \
 				key = lambda i: self.queueLengths[i]-self.queueOffsets[i])
+		
+		elif self.algorithm == 'oracle':
+			serviceTimes = []
+			canHandleY = []
+			canHandleN = []
+			
+			# Draw service times and check if servers can handle 'em without breaking setPoint
+			for serverId in xrange(len(self.backends)):
+				server = self.backends[serverId]
+				
+				serviceTimes.append([server.drawServiceTime(True), server.drawServiceTime(False)])
+				
+				if server.oracle_can_handle(serviceTimes[-1][0]):
+					canHandleY.append(serverId)
+				if server.oracle_can_handle(serviceTimes[-1][1]):
+					canHandleN.append(serverId)
+
+			# Any servers that can handle with optional?
+			if len(canHandleY) > 0:
+				chc = random.choice(canHandleY)
+				request.chosenBackendIndex = chc
+				withOptional = True
+			
+			# Any servers that can handle without optional?
+			elif len(canHandleN) > 0:
+				chc = random.choice(canHandleN)
+				request.chosenBackendIndex = chc
+				withOptional = False
+			
+			# We're screwed, just pick one!
+			else:
+				chc = random.choice(xrange(len(self.backends)))
+				request.chosenBackendIndex = chc
+				withOptional = False
+			
+			# Push back the unused service times.
+			for stindex in xrange(len(serviceTimes)):
+				if not (request.chosenBackendIndex == stindex and withOptional):
+					server.pushBackServiceTime(True, serviceTimes[stindex][0])
+				if not (request.chosenBackendIndex == stindex and not withOptional):
+					server.pushBackServiceTime(False, serviceTimes[stindex][1])
+
 		else:
 			raise Exception("Unknown load-balancing algorithm " + self.algorithm)
 			
@@ -246,6 +288,9 @@ class LoadBalancer:
 		#self.sim.log(self, "Directed request to {0}", request.chosenBackendIndex)
 		self.queueLengths[request.chosenBackendIndex] += 1
 		self.numRequestsPerReplica[request.chosenBackendIndex] += 1
+		if self.algorithm == 'oracle':
+			self.backends[request.chosenBackendIndex].oracle_request \
+					(newRequest, serviceTimes[request.chosenBackendIndex][0 if withOptional else 1], withOptional)
 		self.backends[request.chosenBackendIndex].request(newRequest)
 
 	## Handles request completion.
