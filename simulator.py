@@ -21,7 +21,7 @@ from SimulatorKernel import *
 def main():
 	algorithms = ("weighted-RR theta-diff optimization SQF SQF-plus FRF equal-thetas equal-thetas-SQF " + \
 		"optim-SQF FRF-EWMA predictive 2RC RR random theta-diff-plus ctl-simplify equal-thetas-fast theta-diff-plus-SQF " + \
-		"theta-diff-plus-fast SRTF").split()
+		"theta-diff-plus-fast SRTF equal-thetas-fast-mul").split()
 
 	# Parsing command line options to find out the algorithm
 	parser = argparse.ArgumentParser( \
@@ -89,10 +89,11 @@ def main():
 			server.serviceTimeN = n
 		sim.add(at, changeServiceTimeHandler)
 		
-	def addServer(y, n):
+	def addServer(y, n, pole=0.99, initialTheta=0.5):
 		server = Server(sim, controlPeriod = serverControlPeriod,
 			serviceTimeY = y, serviceTimeN = n, \
-			timeSlice = args.timeSlice)
+			timeSlice = args.timeSlice, pole = pole, \
+			initialTheta = initialTheta)
 		servers.append(server)
 		loadBalancer.addBackend(server)
 	
@@ -102,6 +103,9 @@ def main():
 	def endOfSimulation(at):
 		otherParams['simulateUntil'] = at
 
+	def setQueueOffset(server, queueOffset):
+		loadBalancer.queueOffsets[server] = queueOffset
+		
 	# Load scenario
 	otherParams = {}
 	execfile(args.scenario)

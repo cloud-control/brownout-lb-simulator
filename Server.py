@@ -26,7 +26,7 @@ class Server:
 	def __init__(self, sim, serviceTimeY = 0.07, serviceTimeN = 0.001, \
 			initialTheta = 0.5, controlPeriod = 5, timeSlice = 0.01, \
 			serviceTimeYVariance = 0.01, serviceTimeNVariance = 0.001,
-			minimumServiceTime = 0.0001):
+			minimumServiceTime = 0.0001, pole = 0.99):
 		## time slice for scheduling requests (server model parameter)
 		self.timeSlice = timeSlice
 		## service time with optional content (server model parameter)
@@ -53,7 +53,7 @@ class Server:
 		## Current alpha (controller variable)
 		self.alpha = 1
 		## Pole (controller parameter)
-		self.pole = 0.99
+		self.pole = pole
 		## latencies measured during last control period (controller input)
 		self.latestLatencies = []
 		## dimmer value (controller output)

@@ -106,9 +106,9 @@ class LoadBalancer:
 		if self.algorithm in [ 'weighted-RR', 'theta-diff', 'theta-diff-plus', 'equal-thetas', 'optimization', 'ctl-simplify' ]:
 			request.chosenBackendIndex = \
 				weightedChoice(zip(range(0, len(self.backends)), self.weights))
-		elif self.algorithm == 'equal-thetas-SQF' or self.algorithm == 'equal-thetas-fast':
+		elif self.algorithm == 'equal-thetas-SQF' or self.algorithm == 'equal-thetas-fast' or self.algorithm == 'equal-thetas-fast-mul':
 			# Update controller in the -fast version
-			if self.algorithm == 'equal-thetas-fast':
+			if self.algorithm == 'equal-thetas-fast' or self.algorithm == 'equal-thetas-fast-mul':
 				dt = self.sim.now - self.lastDecision
 				if dt > 1: dt = 1
 				for i in range(0,len(self.backends)):
@@ -129,10 +129,16 @@ class LoadBalancer:
 			if empty_servers:
 				request.chosenBackendIndex = random.choice(empty_servers)
 			else:
-				# ...or choose replica with shortest (queue + queueOffset)
-				request.chosenBackendIndex = \
-					min(range(0, len(self.queueLengths)), \
-					key = lambda i: self.queueLengths[i]-self.queueOffsets[i])
+				if self.algorithm == 'equal-thetas-fast-mul':
+					# ...or choose replica with shortest (queue * 2 ** queueOffset)
+					request.chosenBackendIndex = \
+						min(range(0, len(self.queueLengths)), \
+						key = lambda i: self.queueLengths[i] * (2 ** (-self.queueOffsets[i])))
+				else:
+					# ...or choose replica with shortest (queue + queueOffset)
+					request.chosenBackendIndex = \
+						min(range(0, len(self.queueLengths)), \
+						key = lambda i: self.queueLengths[i]-self.queueOffsets[i])
 
 		elif self.algorithm == 'theta-diff-plus-SQF':
 			# choose replica with shortest (queue + queueOffset)
@@ -492,7 +498,9 @@ class LoadBalancer:
 		effectiveWeights = normalize(effectiveWeights)
 
 		# Output the offsets as weights to enable plotting and stuff
-		if self.algorithm == 'equal-thetas-SQF' or self.algorithm == 'equal-thetas-fast':
+		if self.algorithm == 'equal-thetas-SQF' or self.algorithm == 'equal-thetas-fast' or \
+			self.algorithm == 'equal-thetas-fast-mul' or self.algorithm == 'theta-diff-plus-fast' or \
+			self.algorithm == 'theta-diff-plus-SQF':
 			self.weights = self.queueOffsets
 
 		# Output the offsets as weights to enable plotting and stuff
