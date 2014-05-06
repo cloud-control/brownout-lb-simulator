@@ -91,7 +91,7 @@ def main():
 	try:
 		replicaControllerFactory = filter(lambda rc: rc.__name__[4:] == args.rc, replicaControllerFactories)[0]
 	except IndexError:
-		printf("Unsupported replica controller '{0}'".format(args.rc), file = sys.stderr)
+		print("Unsupported replica controller '{0}'".format(args.rc), file = sys.stderr)
 		parser.print_help()
 		quit()
 
