@@ -121,3 +121,6 @@ class MMReplicaController:
 
 	def reportResponseTime(self, responseTime):
 		self.latestLatencies.append(responseTime)
+	
+	def __str__(self):
+		return self.name
