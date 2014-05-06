@@ -52,11 +52,14 @@ for i = 1:m
    
     
     figure(i)
-    subplot(321), plot(t_lb,weights), title(d(i).name), ylabel('weights'), grid on
-    subplot(322), plot(t,dimmers,t,mean(dimmers,2),'--'), ylabel('dimmer'), grid on
-    subplot(323), plot(t,avg_latencies), ylabel('avg latency'), grid on
-    subplot(324), plot(t_lb,total_requests,t_lb,optional_requests), ylabel('requests'), legend('Total', 'w. Optional'), grid on
-    subplot(325), plot(t_lb,effective_weights), ylabel('eff. weights'), grid on
+    a=[];
+    a(end+1)=subplot(321); plot(t_lb,weights), title(d(i).name), ylabel('weights'), grid on
+    a(end+1)=subplot(322); plot(t,dimmers,t,mean(dimmers,2),'--'), ylabel('dimmer'), grid on
+    a(end+1)=subplot(323); plot(t,avg_latencies), ylabel('avg latency'), grid on
+    a(end+1)=subplot(324); plot(t_lb,total_requests,t_lb,optional_requests), ylabel('requests'), legend('Total', 'w. Optional'), grid on
+    a(end+1)=subplot(325); plot(t_lb,effective_weights), ylabel('eff. weights'), grid on
+    a(end+1)=subplot(326); plot(t, dimmers(:,1)-mean(dimmers,2)), grid on
+    linkaxes(a, 'x');
     r_names{end+1} = d(i).name;
     r_total(end+1) = sim_lb(end,4*n+2);
     r_opt(end+1) = sim_lb(end,4*n+3);

@@ -106,15 +106,14 @@ class LoadBalancer:
 		if self.algorithm in [ 'weighted-RR', 'theta-diff', 'theta-diff-plus', 'equal-thetas', 'optimization', 'ctl-simplify' ]:
 			request.chosenBackendIndex = \
 				weightedChoice(zip(range(0, len(self.backends)), self.weights), self.random)
-		elif self.algorithm == 'equal-thetas-SQF' or self.algorithm == 'equal-thetas-fast':
+		elif self.algorithm == 'equal-thetas-SQF' or self.algorithm == 'equal-thetas-fast' or self.algorithm == 'equal-thetas-fast-mul':
 			# Update controller in the -fast version
-			if self.algorithm == 'equal-thetas-fast':
+			if self.algorithm == 'equal-thetas-fast' or self.algorithm == 'equal-thetas-fast-mul':
 				dt = self.sim.now - self.lastDecision
 				if dt > 1: dt = 1
 				for i in range(0,len(self.backends)):
 					# Gain
-					gamma = .1 * dt
-					gammaTr = .01 * dt
+					gamma = self.equal_thetas_fast_gain * dt
 					
 					# Calculate the negative deviation from the average
 					e = self.lastThetas[i] - avg(self.lastThetas)
@@ -127,13 +126,19 @@ class LoadBalancer:
 			empty_servers = [i for i in range(0, len(self.queueLengths)) \
 				if self.queueLengths[i] == 0]
 			
-			if len(empty_servers) > 0:
+			if empty_servers:
 				request.chosenBackendIndex = self.random.choice(empty_servers)
 			else:
-				# ...or choose replica with shortest (queue + queueOffset)
-				request.chosenBackendIndex = \
-					min(range(0, len(self.queueLengths)), \
-					key = lambda i: self.queueLengths[i]-self.queueOffsets[i])
+				if self.algorithm == 'equal-thetas-fast-mul':
+					# ...or choose replica with shortest (queue * 2 ** queueOffset)
+					request.chosenBackendIndex = \
+						min(range(0, len(self.queueLengths)), \
+						key = lambda i: self.queueLengths[i] * (2 ** (-self.queueOffsets[i])))
+				else:
+					# ...or choose replica with shortest (queue + queueOffset)
+					request.chosenBackendIndex = \
+						min(range(0, len(self.queueLengths)), \
+						key = lambda i: self.queueLengths[i]-self.queueOffsets[i])
 
 		elif self.algorithm == 'theta-diff-plus-SQF':
 			# choose replica with shortest (queue + queueOffset)
@@ -232,6 +237,48 @@ class LoadBalancer:
 			request.chosenBackendIndex = \
 				min(range(0, len(self.queueLengths)), \
 				key = lambda i: self.queueLengths[i]-self.queueOffsets[i])
+		
+		elif self.algorithm == 'oracle':
+			serviceTimes = []
+			canHandleY = []
+			canHandleN = []
+			
+			# Draw service times and check if servers can handle 'em without breaking setPoint
+			for serverId in xrange(len(self.backends)):
+				server = self.backends[serverId]
+				
+				serviceTimes.append([server.drawServiceTime(True), server.drawServiceTime(False)])
+				
+				if server.oracle_can_handle(serviceTimes[-1][0]):
+					canHandleY.append(serverId)
+				if server.oracle_can_handle(serviceTimes[-1][1]):
+					canHandleN.append(serverId)
+
+			# Any servers that can handle with optional?
+			if len(canHandleY) > 0:
+				chc = random.choice(canHandleY)
+				request.chosenBackendIndex = chc
+				withOptional = True
+			
+			# Any servers that can handle without optional?
+			elif len(canHandleN) > 0:
+				chc = random.choice(canHandleN)
+				request.chosenBackendIndex = chc
+				withOptional = False
+			
+			# We're screwed, just pick one!
+			else:
+				chc = random.choice(xrange(len(self.backends)))
+				request.chosenBackendIndex = chc
+				withOptional = False
+			
+			# Push back the unused service times.
+			for stindex in xrange(len(serviceTimes)):
+				if not (request.chosenBackendIndex == stindex and withOptional):
+					server.pushBackServiceTime(True, serviceTimes[stindex][0])
+				if not (request.chosenBackendIndex == stindex and not withOptional):
+					server.pushBackServiceTime(False, serviceTimes[stindex][1])
+
 		else:
 			raise Exception("Unknown load-balancing algorithm " + self.algorithm)
 			
@@ -241,6 +288,9 @@ class LoadBalancer:
 		#self.sim.log(self, "Directed request to {0}", request.chosenBackendIndex)
 		self.queueLengths[request.chosenBackendIndex] += 1
 		self.numRequestsPerReplica[request.chosenBackendIndex] += 1
+		if self.algorithm == 'oracle':
+			self.backends[request.chosenBackendIndex].oracle_request \
+					(newRequest, serviceTimes[request.chosenBackendIndex][0 if withOptional else 1], withOptional)
 		self.backends[request.chosenBackendIndex].request(newRequest)
 
 	## Handles request completion.
@@ -478,7 +528,9 @@ class LoadBalancer:
 		effectiveWeights = normalize(effectiveWeights)
 
 		# Output the offsets as weights to enable plotting and stuff
-		if self.algorithm == 'equal-thetas-SQF' or self.algorithm == 'equal-thetas-fast':
+		if self.algorithm == 'equal-thetas-SQF' or self.algorithm == 'equal-thetas-fast' or \
+			self.algorithm == 'equal-thetas-fast-mul' or self.algorithm == 'theta-diff-plus-fast' or \
+			self.algorithm == 'theta-diff-plus-SQF':
 			self.weights = self.queueOffsets
 
 		# Output the offsets as weights to enable plotting and stuff

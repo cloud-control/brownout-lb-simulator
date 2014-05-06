@@ -20,7 +20,7 @@ from SimulatorKernel import *
 def main():
 	algorithms = ("weighted-RR theta-diff optimization SQF SQF-plus FRF equal-thetas equal-thetas-SQF " + \
 		"optim-SQF FRF-EWMA predictive 2RC RR random theta-diff-plus ctl-simplify equal-thetas-fast theta-diff-plus-SQF " + \
-		"theta-diff-plus-fast SRTF").split()
+		"theta-diff-plus-fast SRTF equal-thetas-fast-mul oracle").split()
 
 	# Parsing command line options to find out the algorithm
 	parser = argparse.ArgumentParser( \
@@ -40,6 +40,10 @@ def main():
 		type = float,
 		help = 'Gain in the equal-theta algorithm',
 		default = 0.025) #0.117)
+	parser.add_argument('--equal-thetas-fast-gain',
+		type = float,
+		help = 'Gain in the equal-thetas-fast algorithm',
+		default = 2.0) #0.117)
 	parser.add_argument('--scenario',
 		help = 'Specify a scenario in which to test the system',
 		default = os.path.join(os.path.dirname(sys.argv[0]), 'scenarios', 'A.py'))
@@ -60,6 +64,7 @@ def main():
 
 	loadBalancer.algorithm = algorithm
 	loadBalancer.equal_theta_gain = args.equal_theta_gain
+	loadBalancer.equal_thetas_fast_gain = args.equal_thetas_fast_gain
 
 	# Define verbs for scenarios
 	def addClients(at, n):
@@ -82,19 +87,26 @@ def main():
 			server.serviceTimeN = n
 		sim.add(at, changeServiceTimeHandler)
 		
-	def addServer(y, n):
+	def addServer(y, n, pole=0.9, initialTheta=0.5):
 		server = Server(sim, controlPeriod = serverControlPeriod,
 			serviceTimeY = y, serviceTimeN = n, \
-			timeSlice = args.timeSlice)
+			timeSlice = args.timeSlice, pole = pole, \
+			initialTheta = initialTheta)
 		servers.append(server)
 		loadBalancer.addBackend(server)
 	
 	def setRate(at, rate):
 		sim.add(at, lambda: openLoopClient.setRate(rate))
+	
+	def setQueueOffset(server, queueOffset):
+		loadBalancer.queueOffsets[server] = queueOffset
 
 	def endOfSimulation(at):
 		otherParams['simulateUntil'] = at
 
+	def setQueueOffset(server, queueOffset):
+		loadBalancer.queueOffsets[server] = queueOffset
+		
 	# Load scenario
 	otherParams = {}
 	execfile(args.scenario)

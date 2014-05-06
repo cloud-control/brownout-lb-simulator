@@ -11,7 +11,7 @@ class Request(object):
 	## List of allowed attributes (improves performance and reduces errors)
 	__slots__ = ('requestId', 'arrival', 'completion', 'onCompleted', \
 		'originalRequest', 'theta', 'withOptional', 'chosenBackendIndex',
-		'remainingTime', 'createdAt')
+		'remainingTime', 'oracle_stuff', 'createdAt')
 	
 	## Constructor
 	def __init__(self):

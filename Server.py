@@ -26,7 +26,7 @@ class Server:
 	def __init__(self, sim, serviceTimeY = 0.07, serviceTimeN = 0.001, \
 			initialTheta = 0.5, controlPeriod = 5, timeSlice = 0.01, \
 			serviceTimeYVariance = 0.01, serviceTimeNVariance = 0.001,
-			minimumServiceTime = 0.0001, seed = 1):
+			minimumServiceTime = 0.0001, pole = 0.99, seed = 1):
 		## time slice for scheduling requests (server model parameter)
 		self.timeSlice = timeSlice
 		## service time with optional content (server model parameter)
@@ -53,7 +53,7 @@ class Server:
 		## Current alpha (controller variable)
 		self.alpha = 1
 		## Pole (controller parameter)
-		self.pole = 0.9
+		self.pole = pole
 		## latencies measured during last control period (controller input)
 		self.latestLatencies = []
 		## dimmer value (controller output)
@@ -75,6 +75,9 @@ class Server:
 		self.sim = sim
 		if self.controlPeriod > 0:
 			self.sim.add(0, self.runControlLoop)
+		
+		self.savedServiceTimeY = None
+		self.savedServiceTimeN = None
 
 		## Random number generator
 		self.random = xxx_random.Random()
@@ -167,6 +170,56 @@ class Server:
 		]
 		self.sim.output(str(self) + '-arl', ','.join(["{0:.5f}".format(value) \
 			for value in valuesToOutput]))
+			
+		#print "request() to %s at time %f"%(self.name, self.sim.now)
+
+	def oracle_request(self, request, serviceTime, withOptional):
+		request.theta = self.theta
+		request.arrival = self.sim.now
+		request.oracle_stuff = (serviceTime, withOptional)
+
+	def oracle_can_handle(self, serviceTime):
+		# Can we handle the new request
+		if serviceTime * (len(self.activeRequests) + 1) > self.setPoint:
+			return False
+
+		# print "%s: %d"%(self.name, len(self.activeRequests))
+		# Can we handle all the old requests?
+		for request in self.activeRequests:
+			if hasattr(request, 'remainingTime'):
+				timeLeft = request.remainingTime
+			else:
+				timeLeft = request.oracle_stuff[0]
+				
+			if self.sim.now - request.arrival + timeLeft * (len(self.activeRequests) + 1) > self.setPoint:
+				return False
+				
+		return True
+
+	def pushBackServiceTime(self, withOptional, serviceTime):
+		if withOptional:
+			savedServiceTimeY = serviceTime
+		else:
+			savedServiceTimeN = serviceTime
+
+	def drawServiceTime(self, withOptional):
+		if (withOptional and self.savedServiceTimeY is None) or \
+				(not withOptional and self.savedServiceTimeN is None):
+			serviceTime, variance = (self.serviceTimeY, self.serviceTimeYVariance) \
+				if withOptional else \
+				(self.serviceTimeN, self.serviceTimeNVariance)
+
+			serviceTime = \
+				max(self.random.normalvariate(serviceTime, variance), self.minimumServiceTime)
+		else:
+			if withOptional:
+				serviceTime = self.savedServiceTimeY
+				self.savedServiceTimeY = None
+			else:
+				serviceTime = self.savedServiceTimeN
+				self.savedServiceTimeN = None
+		
+		return serviceTime
 
 	## Event handler for scheduling active requests.
 	# This function is the core of the processor-sharing with time-slice model.
@@ -191,17 +244,22 @@ class Server:
 		# Has this request been scheduled before?
 		if not hasattr(activeRequest, 'remainingTime'):
 			#self.sim.log(self, "request {0} entered the system", activeRequest)
-			# Pick whether to serve it with optional content or not
-			activeRequest.arrival = self.sim.now
-			activeRequest.withOptional = self.random.random() <= self.theta
-			activeRequest.theta = self.theta
+			
+			if hasattr(activeRequest, 'oracle_stuff'):
+				# Oracle LB has already given the request all it needs
+				activeRequest.withOptional = activeRequest.oracle_stuff[1]
 
-			serviceTime, variance = (self.serviceTimeY, self.serviceTimeYVariance) \
-				if activeRequest.withOptional else \
-				(self.serviceTimeN, self.serviceTimeNVariance)
+				# print activeRequest.oracle_stuff[0]
+				activeRequest.remainingTime = activeRequest.oracle_stuff[0]
 
-			activeRequest.remainingTime = \
-				max(self.random.normalvariate(serviceTime, variance), self.minimumServiceTime)
+			else:
+				# Pick whether to serve it with optional content or not
+				activeRequest.withOptional = self.random.random() <= self.theta
+
+				activeRequest.theta = self.theta
+				activeRequest.arrival = self.sim.now
+
+				activeRequest.remainingTime = self.drawServiceTime(activeRequest.withOptional)
 
 		# Schedule it to run for a bit
 		timeToExecuteActiveRequest = min(self.timeSlice, activeRequest.remainingTime)
