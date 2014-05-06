@@ -4,7 +4,7 @@ rm -rf results
 mkdir -p results
 
 #algs=( equal-thetas-fast SRTF random RR weighted-RR theta-diff theta-diff-plus theta-diff-plus-SQF optimization SQF SQF-plus FRF equal-thetas FRF-EWMA predictive 2RC ctl-simplify equal-thetas-SQF optim-SQF theta-diff-plus-fast)
-algs=( equal-thetas theta-diff-plus weighted-RR SQF predictive optimization random RR FRF FRF-EWMA 2RC )
+algs=( equal-thetas equal-thetas-SQF SQF )
 
 for algorithm in "${algs[@]}"
 do
