@@ -43,16 +43,6 @@ def main():
 	parser.add_argument('--algorithm',
 		help = 'Load-balancer algorithm: ' + ' '.join(algorithms),
 		default = algorithms[0])
-	parser.add_argument('--rc',
-		help = 'Replica controller: ' + ' '.join([ rcf.__name__ for rcf in replicaControllerFactories ]),
-		default = str(replicaControllerFactories[0].__name__))
-	parser.add_argument('--rcSetpoint',
-		type = float,
-		help = 'Replica controller setpoint',
-		default = 1)
-	parser.add_argument('--rcType',
-		help = 'Replica controller setpoint type: avg, 95, 99, max',
-		default = '95')
 	parser.add_argument('--outdir',
 		help = 'Destination folder for results and logs',
 		default = '.')
@@ -72,9 +62,22 @@ def main():
 		help = 'Specify a scenario in which to test the system',
 		default = os.path.join(os.path.dirname(sys.argv[0]), 'scenarios', 'replica-steady-1.py'))
 
+	group = parser.add_argument_group('rc', 'General replica controller options')
+	group.add_argument('--rc',
+		help = 'Replica controller: ' + ' '.join([ rcf.__name__ for rcf in replicaControllerFactories ]),
+		default = str(replicaControllerFactories[0].__name__))
+	group.add_argument('--rcSetpoint',
+		type = float,
+		help = 'Replica controller setpoint',
+		default = 1)
+	group.add_argument('--rcPercentile',
+		help = 'What percentile reponse time to drive to target',
+		default = '95')
+
 	# Add replica controller factories specific command-line arguments
 	for rcf in replicaControllerFactories:
-		rcf.addCommandLine(parser)
+		group = parser.add_argument_group(rcf.__name__)
+		rcf.addCommandLine(group)
 
 	args = parser.parse_args()
 	algorithm = args.algorithm
