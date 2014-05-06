@@ -20,9 +20,17 @@ from SimulatorKernel import *
 ## Entry-point for simulator.
 # Setups up all entities, then runs simulation.
 def main():
-	# Load all replica controllers
-	replicaControllers = []
-	# XXX: TODO
+	# Load all replica controller factories
+	replicaControllerFactories = []
+	replicaControllerFactoriesDir = os.path.dirname(sys.argv[0])
+	for filename in os.listdir(replicaControllerFactoriesDir):
+		# Not a replica controller factory
+		if filename[:4] != "rcf_": continue
+		if filename[-3:] != ".py": continue
+
+		# Load Python module
+		replicaControllerFactory = __import__(os.path.splitext(filename)[0])
+		replicaControllerFactories.append(replicaControllerFactory)
 
 	algorithms = ("weighted-RR theta-diff optimization SQF SQF-plus FRF equal-thetas equal-thetas-SQF " + \
 		"optim-SQF FRF-EWMA predictive 2RC RR random theta-diff-plus ctl-simplify equal-thetas-fast theta-diff-plus-SQF " + \
@@ -35,14 +43,14 @@ def main():
 	parser.add_argument('--algorithm',
 		help = 'Load-balancer algorithm: ' + ' '.join(algorithms),
 		default = algorithms[0])
-	parser.add_argument('--replicaController',
-		help = 'Replica controller',
-		default = '')
-	parser.add_argument('--replicaSetPoint',
+	parser.add_argument('--rc',
+		help = 'Replica controller: ' + ' '.join([ rcf.__name__ for rcf in replicaControllerFactories ]),
+		default = str(replicaControllerFactories[0].__name__))
+	parser.add_argument('--rcSetpoint',
 		type = float,
 		help = 'Replica controller setpoint',
 		default = 1)
-	parser.add_argument('--replicaSetPointType',
+	parser.add_argument('--rcType',
 		help = 'Replica controller setpoint type: avg, 95, 99, max',
 		default = '95')
 	parser.add_argument('--outdir',
@@ -63,14 +71,28 @@ def main():
 	parser.add_argument('--scenario',
 		help = 'Specify a scenario in which to test the system',
 		default = os.path.join(os.path.dirname(sys.argv[0]), 'scenarios', 'replica-steady-1.py'))
+
+	# Add replica controller factories specific command-line arguments
+	for rcf in replicaControllerFactories:
+		rcf.addCommandLine(parser)
+
 	args = parser.parse_args()
 	algorithm = args.algorithm
 	if algorithm not in algorithms:
-		print("Unsupported algorithm '{0}'".format(algorithm))
+		print("Unsupported algorithm '{0}'".format(algorithm), file = sys.stderr)
 		parser.print_help()
 		quit()
 
-	serverControlPeriod = 0.5
+	# Find replica controller factory
+	try:
+		replicaControllerFactory = filter(lambda rc: rc.__name__ == args.rc, replicaControllerFactories)[0]
+	except IndexError:
+		printf("Unsupported replica controller '{0}'".format(args.rc), file = sys.stderr)
+		parser.print_help()
+		quit()
+
+	# Allow replica controller factory to analyse command-line
+	replicaControllerFactory.parseCommandLine(args)
 
 	sim = SimulatorKernel(outputDirectory = args.outdir)
 	servers = []
@@ -107,6 +129,8 @@ def main():
 		server = Server(sim, \
 			serviceTimeY = y, serviceTimeN = n, \
 			timeSlice = args.timeSlice)
+		newReplicaController = replicaControllerFactory.newInstance(sim, str(server) + "-ctl")
+		server.controller = newReplicaController
 		servers.append(server)
 		loadBalancer.addBackend(server)
 	
@@ -142,7 +166,7 @@ def main():
 
 	toReport = []
 	toReport.append(( "loadBalancingAlgorithm", algorithm.ljust(20) ))
-	toReport.append(( "replicaAlgorithm", "periodic".ljust(20) ))
+	toReport.append(( "replicaAlgorithm", rcf.__name__.ljust(20) ))
 	toReport.append(( "numRequests", str(len(responseTimes)).rjust(7) ))
 	toReport.append(( "numRequestsWithOptional", str(numRequestsWithOptional).rjust(7) ))
 	toReport.append(( "optionalRatio", "{:.3f}".format(numRequestsWithOptional / len(responseTimes)) ))
