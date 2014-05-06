@@ -71,12 +71,13 @@ def main():
 		help = 'Replica controller setpoint',
 		default = 1)
 	group.add_argument('--rcPercentile',
+		type = float,
 		help = 'What percentile reponse time to drive to target',
-		default = '95')
+		default = 95)
 
 	# Add replica controller factories specific command-line arguments
 	for rcf in replicaControllerFactories:
-		group = parser.add_argument_group(rcf.__name__)
+		group = parser.add_argument_group('Options for ' + rcf.__name__[4:] + ' replica controller')
 		rcf.addCommandLine(group)
 
 	args = parser.parse_args()
@@ -169,7 +170,7 @@ def main():
 
 	toReport = []
 	toReport.append(( "loadBalancingAlgorithm", algorithm.ljust(20) ))
-	toReport.append(( "replicaAlgorithm", rcf.__name__.ljust(20) ))
+	toReport.append(( "replicaAlgorithm", rcf.__name__[4:].ljust(20) ))
 	toReport.append(( "numRequests", str(len(responseTimes)).rjust(7) ))
 	toReport.append(( "numRequestsWithOptional", str(numRequestsWithOptional).rjust(7) ))
 	toReport.append(( "optionalRatio", "{:.3f}".format(numRequestsWithOptional / len(responseTimes)) ))
