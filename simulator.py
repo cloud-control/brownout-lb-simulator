@@ -112,11 +112,26 @@ def main():
 	sim.run(until = otherParams['simulateUntil'])
 
 	# Report end results
-	recommendationPercentage = float(sim.optionalOn) / float(sim.optionalOff + sim.optionalOn)
-	sim.log(sim, loadBalancer.algorithm + \
-	    ", total recommendation percentage {0}, standard deviation {1} on mean {2}", \
-	    recommendationPercentage, sim.stdServiceTime, sim.avgServiceTime)
-	sim.output('final-results', "{algo:15}, {res:.5f}".format(algo = loadBalancer.algorithm, res = recommendationPercentage))
+	responseTimes = reduce(lambda x,y: x+y, [client.responseTimes for client in clients], []) + openLoopClient.responseTimes
+
+	toReport = []
+	toReport.append(("loadBalancingAlgorithm", algorithm))
+	toReport.append(("replicaAlgorithm", "periodic"))
+	toReport.append(("numRequests", len(responseTimes)))
+	numRequestsWithOptional = sum([client.numCompletedRequestsWithOptional for client in clients]) + openLoopClient.numCompletedRequestsWithOptional
+	toReport.append(("numRequestsWithOptional", numRequestsWithOptional))
+	toReport.append(("avgResponseTime", avg(responseTimes)))
+	toReport.append(("p95ResponseTime", np.percentile(responseTimes, 95)))
+	toReport.append(("p99ResponseTime", np.percentile(responseTimes, 99)))
+	toReport.append(("maxResponseTime", max(responseTimes)))
+	toReport.append(("optionalRatio", numRequestsWithOptional / len(responseTimes)))
+	toReport.append(("stddevResponseTime", np.std(responseTimes)))
+
+	print(*[k for k,v in toReport], sep = ',')
+	print(*[v for k,v in toReport], sep = ',')
+
+	sim.output('final-results', ','.join([str(k) for k,v in toReport]))
+	sim.output('final-results', ','.join([str(v) for k,v in toReport]))
 
 if __name__ == "__main__":
 	main()

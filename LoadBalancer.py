@@ -249,11 +249,9 @@ class LoadBalancer:
 		# "Decapsulate"
 		self.numRequests += 1
 		if request.withOptional:
-			self.sim.optionalOn += 1
 			self.numRequestsWithOptional += 1
-		else:
-			self.sim.optionalOff += 1
 		theta = request.theta
+		request.originalRequest.withOptional = request.withOptional
 		request = request.originalRequest
 
 		# Store stats
