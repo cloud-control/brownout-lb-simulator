@@ -1,5 +1,5 @@
 from collections import defaultdict, deque
-import random
+import random as xxx_random # prevent accidental usage
 import numpy as np
 
 from utils import *
@@ -26,7 +26,7 @@ class Server:
 	def __init__(self, sim, serviceTimeY = 0.07, serviceTimeN = 0.001, \
 			initialTheta = 0.5, controlPeriod = 5, timeSlice = 0.01, \
 			serviceTimeYVariance = 0.01, serviceTimeNVariance = 0.001,
-			minimumServiceTime = 0.0001):
+			minimumServiceTime = 0.0001, seed = 1):
 		## time slice for scheduling requests (server model parameter)
 		self.timeSlice = timeSlice
 		## service time with optional content (server model parameter)
@@ -75,6 +75,10 @@ class Server:
 		self.sim = sim
 		if self.controlPeriod > 0:
 			self.sim.add(0, self.runControlLoop)
+
+		## Random number generator
+		self.random = xxx_random.Random()
+		self.random.seed(seed)
 
 	## Compute the (simulated) amount of time this server has been active.
 	# @note In a real OS, the active time would be updated at each context switch.
@@ -189,7 +193,7 @@ class Server:
 			#self.sim.log(self, "request {0} entered the system", activeRequest)
 			# Pick whether to serve it with optional content or not
 			activeRequest.arrival = self.sim.now
-			activeRequest.withOptional = random.random() <= self.theta
+			activeRequest.withOptional = self.random.random() <= self.theta
 			activeRequest.theta = self.theta
 
 			serviceTime, variance = (self.serviceTimeY, self.serviceTimeYVariance) \
@@ -197,7 +201,7 @@ class Server:
 				(self.serviceTimeN, self.serviceTimeNVariance)
 
 			activeRequest.remainingTime = \
-				max(random.normalvariate(serviceTime, variance), self.minimumServiceTime)
+				max(self.random.normalvariate(serviceTime, variance), self.minimumServiceTime)
 
 		# Schedule it to run for a bit
 		timeToExecuteActiveRequest = min(self.timeSlice, activeRequest.remainingTime)

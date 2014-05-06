@@ -4,6 +4,7 @@ from __future__ import division
 #import cvxopt
 import math
 import numpy as np
+import random as xxx_random # prevent accidental usage
 
 from Request import *
 from utils import *
@@ -16,7 +17,7 @@ class LoadBalancer:
 	# @param controlPeriod control period
 	# @param initialTheta initial dimmer value to consider before receiving any
 	# replies from a server
-	def __init__(self, sim, controlPeriod = 1, initialTheta = 0.5):
+	def __init__(self, sim, controlPeriod = 1, initialTheta = 0.5, seed = 1):
 		## control period (control parameter)
 		self.controlPeriod = controlPeriod # second
 		## initial value of measured theta (control initialization parameter)
@@ -26,6 +27,9 @@ class LoadBalancer:
 
 		## Simulator to which the load-balancer is attached
 		self.sim = sim
+		## Separate random number generator
+		self.random = xxx_random.Random()
+		self.random.seed(seed)
 		## list of back-end servers to which requests can be directed
 		self.backends = []
 		## weights determining how to load-balance requests (control output)
@@ -101,7 +105,7 @@ class LoadBalancer:
 		request.arrival = self.sim.now
 		if self.algorithm in [ 'weighted-RR', 'theta-diff', 'theta-diff-plus', 'equal-thetas', 'optimization', 'ctl-simplify' ]:
 			request.chosenBackendIndex = \
-				weightedChoice(zip(range(0, len(self.backends)), self.weights))
+				weightedChoice(zip(range(0, len(self.backends)), self.weights), self.random)
 		elif self.algorithm == 'equal-thetas-SQF' or self.algorithm == 'equal-thetas-fast':
 			# Update controller in the -fast version
 			if self.algorithm == 'equal-thetas-fast':
@@ -124,7 +128,7 @@ class LoadBalancer:
 				if self.queueLengths[i] == 0]
 			
 			if len(empty_servers) > 0:
-				request.chosenBackendIndex = random.choice(empty_servers)
+				request.chosenBackendIndex = self.random.choice(empty_servers)
 			else:
 				# ...or choose replica with shortest (queue + queueOffset)
 				request.chosenBackendIndex = \
@@ -144,7 +148,7 @@ class LoadBalancer:
 		elif self.algorithm == 'random':
 			# round robin
 			request.chosenBackendIndex = \
-				random.choice(range(0, len(self.backends)))
+				self.random.choice(range(0, len(self.backends)))
 		elif self.algorithm == 'RR':
 			# round robin
 			request.chosenBackendIndex = \
@@ -170,7 +174,7 @@ class LoadBalancer:
 			# randomly select two backends and send it to the one with lowest latency
 			else:
 				backends = set(range(0, len(self.backends)))
-				randomlychosen = random.sample(backends, 2)
+				randomlychosen = self.random.sample(backends, 2)
 				if maxlat[randomlychosen[0]] > maxlat[randomlychosen[1]]:
 					request.chosenBackendIndex = randomlychosen[1]
 				else:

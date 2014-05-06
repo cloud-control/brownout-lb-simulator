@@ -6,7 +6,6 @@ from __future__ import division, print_function
 # with the @ref simulator namespace.
 
 import argparse
-import random
 
 from Clients import *
 from LoadBalancer import *
@@ -53,7 +52,6 @@ def main():
 
 	serverControlPeriod = 0.5
 
-	random.seed(1)
 	sim = SimulatorKernel(outputDirectory = args.outdir)
 	servers = []
 	clients = []
