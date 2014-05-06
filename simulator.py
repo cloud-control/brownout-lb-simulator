@@ -64,8 +64,8 @@ def main():
 
 	group = parser.add_argument_group('rc', 'General replica controller options')
 	group.add_argument('--rc',
-		help = 'Replica controller: ' + ' '.join([ rcf.__name__ for rcf in replicaControllerFactories ]),
-		default = str(replicaControllerFactories[0].__name__))
+		help = 'Replica controller: ' + ' '.join([ rcf.__name__[4:] for rcf in replicaControllerFactories ]),
+		default = 'static')
 	group.add_argument('--rcSetpoint',
 		type = float,
 		help = 'Replica controller setpoint',
@@ -88,7 +88,7 @@ def main():
 
 	# Find replica controller factory
 	try:
-		replicaControllerFactory = filter(lambda rc: rc.__name__ == args.rc, replicaControllerFactories)[0]
+		replicaControllerFactory = filter(lambda rc: rc.__name__[4:] == args.rc, replicaControllerFactories)[0]
 	except IndexError:
 		printf("Unsupported replica controller '{0}'".format(args.rc), file = sys.stderr)
 		parser.print_help()
