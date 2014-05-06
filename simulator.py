@@ -6,6 +6,8 @@ from __future__ import division, print_function
 # with the @ref simulator namespace.
 
 import argparse
+import os
+import sys
 
 from Clients import *
 from LoadBalancer import *
@@ -60,7 +62,7 @@ def main():
 		default = 2.0) #0.117)
 	parser.add_argument('--scenario',
 		help = 'Specify a scenario in which to test the system',
-		default = os.path.join(os.path.dirname(sys.argv[0]), 'scenarios', 'A.py'))
+		default = os.path.join(os.path.dirname(sys.argv[0]), 'scenarios', 'replica-steady-1.py'))
 	args = parser.parse_args()
 	algorithm = args.algorithm
 	if algorithm not in algorithms:
