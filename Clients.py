@@ -18,8 +18,13 @@ class OpenLoopClient:
 		## server to which requests are issued
 		self.server = server
 
+		## Variable that measure the number of requests completed for this user
+		# (metric)
 		self.numCompletedRequests = 0
-		## Vector of response-times, useful to compute average or distribution (metric)
+		## Variable that measure the number of requests completed for this user
+		# with optional content (metric)
+		self.numCompletedRequestsWithOptional = 0
+		## Store all response times (metric)
 		self.responseTimes = []
 
 		self.scheduleRequest()
@@ -30,6 +35,7 @@ class OpenLoopClient:
 			return
 
 		request = Request()
+		request.createdAt = self.sim.now
 		request.onCompleted = lambda: self.onCompleted(request)
 		self.server.request(request)
 
@@ -44,9 +50,12 @@ class OpenLoopClient:
 			self.sim.update(interval, self.issueRequest)
 
 	## Called when a request completes
-	# @param _request the request that has been completed (ignored for now)
+	# @param request the request that has been completed
 	def onCompleted(self, request):
-		self.responseTimes.append(self.sim.now - request.arrival)
+		self.numCompletedRequests += 1
+		if request.withOptional:
+			self.numCompletedRequestsWithOptional += 1
+		self.responseTimes.append(self.sim.now - request.createdAt)
 		
 	def setRate(self, rate):
 		self.rate = rate
@@ -77,28 +86,39 @@ class ClosedLoopClient:
 		## Variable that measure the number of requests completed for this user
 		# (metric)
 		self.numCompletedRequests = 0
+		## Variable that measure the number of requests completed for this user
+		# with optional content (metric)
+		self.numCompletedRequestsWithOptional = 0
+		## Store all response times (metric)
+		self.responseTimes = []
 		## Variable used to deactive the client
 		self.active = True
 		
 		# Launch client in the thinking phase
-		self.sim.add(0, lambda: self.onCompleted(None))
+		self.sim.add(0, self.think)
 
 	## Issues a new request to the server.
 	def issueRequest(self):
 		if not self.active:
 			return
 		request = Request()
+		request.createdAt = self.sim.now
 		request.onCompleted = lambda: self.onCompleted(request)
 		#self.sim.log(self, "Requested {0}", request)
 		self.server.request(request)
 
 	## Called when a request completes
-	# @param _request the request that has been completed (ignored for now)
-	def onCompleted(self, _request):
+	# @param request the request that has been completed
+	def onCompleted(self, request):
+		self.numCompletedRequests += 1
+		if request.withOptional:
+			self.numCompletedRequestsWithOptional += 1
+		self.responseTimes.append(self.sim.now - request.createdAt)
+		self.think()
+
+	def think(self):
 		thinkTime = random.expovariate(1.0 / self.averageThinkTime)
 		self.sim.add(thinkTime, self.issueRequest)
-		#self.sim.log(self, "Thinking for {0}", thinkTime)
-		self.numCompletedRequests += 1
 
 	## Deactive this client.
 	# The client will not issue any more requests and no new simulator events
