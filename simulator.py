@@ -113,25 +113,25 @@ def main():
 
 	# Report end results
 	responseTimes = reduce(lambda x,y: x+y, [client.responseTimes for client in clients], []) + openLoopClient.responseTimes
+	numRequestsWithOptional = sum([client.numCompletedRequestsWithOptional for client in clients]) + openLoopClient.numCompletedRequestsWithOptional
 
 	toReport = []
-	toReport.append(("loadBalancingAlgorithm", algorithm))
-	toReport.append(("replicaAlgorithm", "periodic"))
-	toReport.append(("numRequests", len(responseTimes)))
-	numRequestsWithOptional = sum([client.numCompletedRequestsWithOptional for client in clients]) + openLoopClient.numCompletedRequestsWithOptional
-	toReport.append(("numRequestsWithOptional", numRequestsWithOptional))
-	toReport.append(("avgResponseTime", avg(responseTimes)))
-	toReport.append(("p95ResponseTime", np.percentile(responseTimes, 95)))
-	toReport.append(("p99ResponseTime", np.percentile(responseTimes, 99)))
-	toReport.append(("maxResponseTime", max(responseTimes)))
-	toReport.append(("optionalRatio", numRequestsWithOptional / len(responseTimes)))
-	toReport.append(("stddevResponseTime", np.std(responseTimes)))
+	toReport.append(( "loadBalancingAlgorithm", algorithm.ljust(20) ))
+	toReport.append(( "replicaAlgorithm", "periodic".ljust(20) ))
+	toReport.append(( "numRequests", str(len(responseTimes)).rjust(7) ))
+	toReport.append(( "numRequestsWithOptional", str(numRequestsWithOptional).rjust(7) ))
+	toReport.append(( "optionalRatio", "{:.3f}".format(numRequestsWithOptional / len(responseTimes)) ))
+	toReport.append(( "avgResponseTime", "{:.3f}".format(avg(responseTimes)) ))
+	toReport.append(( "p95ResponseTime", "{:.3f}".format(np.percentile(responseTimes, 95)) ))
+	toReport.append(( "p99ResponseTime", "{:.3f}".format(np.percentile(responseTimes, 99)) ))
+	toReport.append(( "maxResponseTime", "{:.3f}".format(max(responseTimes)) ))
+	toReport.append(( "stddevResponseTime", "{:.3f}".format(np.std(responseTimes)) ))
 
-	print(*[k for k,v in toReport], sep = ',')
-	print(*[v for k,v in toReport], sep = ',')
+	print(*[k for k,v in toReport], sep = ', ')
+	print(*[v for k,v in toReport], sep = ', ')
 
-	sim.output('final-results', ','.join([str(k) for k,v in toReport]))
-	sim.output('final-results', ','.join([str(v) for k,v in toReport]))
+	sim.output('final-results', ', '.join([k for k,v in toReport]))
+	sim.output('final-results', ', '.join([v for k,v in toReport]))
 
 if __name__ == "__main__":
 	main()
