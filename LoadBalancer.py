@@ -1,7 +1,7 @@
 from __future__ import division
 
-from cvxopt import solvers, matrix, spdiag, log
-import cvxopt
+#from cvxopt import solvers, matrix, spdiag, log
+#import cvxopt
 import math
 import numpy as np
 
@@ -72,7 +72,7 @@ class LoadBalancer:
 		self.lastDecision = 0
 		
 		# suppress output of cvxopt solver
-		solvers.options['show_progress'] = False
+		#solvers.options['show_progress'] = False
 
 		# Launch control loop
 		self.sim.add(0, self.runControlLoop)
