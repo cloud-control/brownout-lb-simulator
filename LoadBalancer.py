@@ -61,10 +61,6 @@ class LoadBalancer:
 		self.ewmaResponseTime = []
 		## number of sample to use for computing average response time (parameter for FRF-EWMA algorithm)
 		self.ewmaNumSamples = 10
-		## average service time and standard deviation for performance indexes
-		self.averageServiceTime = 0
-		self.intermediateForVariance = 0 	
-		self.stdServiceTime = 0
 		## for the ctl-simplify algorithm
 		self.ctlRlsP = []
 		self.ctlAlpha = []
@@ -264,19 +260,6 @@ class LoadBalancer:
 		self.ewmaResponseTime[request.chosenBackendIndex] = \
 			ewmaAlpha * (request.completion - request.arrival) + \
 			(1 - ewmaAlpha) * self.ewmaResponseTime[request.chosenBackendIndex]
-	
-		# Compute performance indexes
-		serviceTime = request.completion - request.arrival
-		delta = serviceTime - self.averageServiceTime
-		self.averageServiceTime = self.averageServiceTime + delta / self.numRequests
-		self.intermediateForVariance += delta * (serviceTime - self.averageServiceTime)
-		if self.numRequests > 1:
-			variance = self.intermediateForVariance / (self.numRequests - 1)
-		else:
-			variance = 0
-		self.stdServiceTime = math.sqrt(variance)
-		self.sim.stdServiceTime = self.stdServiceTime
-		self.sim.avgServiceTime = self.averageServiceTime
 	
 		# Call original onCompleted
 		request.onCompleted()
