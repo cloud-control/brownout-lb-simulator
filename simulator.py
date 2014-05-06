@@ -18,6 +18,10 @@ from SimulatorKernel import *
 ## Entry-point for simulator.
 # Setups up all entities, then runs simulation.
 def main():
+	# Load all replica controllers
+	replicaControllers = []
+	# XXX: TODO
+
 	algorithms = ("weighted-RR theta-diff optimization SQF SQF-plus FRF equal-thetas equal-thetas-SQF " + \
 		"optim-SQF FRF-EWMA predictive 2RC RR random theta-diff-plus ctl-simplify equal-thetas-fast theta-diff-plus-SQF " + \
 		"theta-diff-plus-fast SRTF equal-thetas-fast-mul oracle").split()
@@ -29,6 +33,16 @@ def main():
 	parser.add_argument('--algorithm',
 		help = 'Load-balancer algorithm: ' + ' '.join(algorithms),
 		default = algorithms[0])
+	parser.add_argument('--replicaController',
+		help = 'Replica controller',
+		default = '')
+	parser.add_argument('--replicaSetPoint',
+		type = float,
+		help = 'Replica controller setpoint',
+		default = 1)
+	parser.add_argument('--replicaSetPointType',
+		help = 'Replica controller setpoint type: avg, 95, 99, max',
+		default = '95')
 	parser.add_argument('--outdir',
 		help = 'Destination folder for results and logs',
 		default = '.')
@@ -87,11 +101,10 @@ def main():
 			server.serviceTimeN = n
 		sim.add(at, changeServiceTimeHandler)
 		
-	def addServer(y, n, pole=0.9, initialTheta=0.5):
-		server = Server(sim, controlPeriod = serverControlPeriod,
+	def addServer(y, n):
+		server = Server(sim, \
 			serviceTimeY = y, serviceTimeN = n, \
-			timeSlice = args.timeSlice, pole = pole, \
-			initialTheta = initialTheta)
+			timeSlice = args.timeSlice)
 		servers.append(server)
 		loadBalancer.addBackend(server)
 	
