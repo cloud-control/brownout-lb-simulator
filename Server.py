@@ -175,9 +175,17 @@ class Server:
 		request.oracle_stuff = (serviceTime, withOptional)
 
 	def oracle_can_handle(self, serviceTime):
+		breaks = 0
+		totals = len(self.activeRequests) + 1
+		maxBreaks = np.ceil(0.05 * totals)
+		
 		# Can we handle the new request
 		if serviceTime * (len(self.activeRequests) + 1) > self.setPoint:
-			return False
+			#return False
+			
+			breaks += 1
+			if breaks > maxBreaks:
+				return False
 
 		# print "%s: %d"%(self.name, len(self.activeRequests))
 		# Can we handle all the old requests?
@@ -188,7 +196,9 @@ class Server:
 				timeLeft = request.oracle_stuff[0]
 				
 			if self.sim.now - request.arrival + timeLeft * (len(self.activeRequests) + 1) > self.setPoint:
-				return False
+				breaks += 1
+				if breaks > maxBreaks:
+					return False
 				
 		return True
 
