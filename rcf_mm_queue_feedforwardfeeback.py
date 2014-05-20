@@ -25,11 +25,11 @@ def parseCommandLine(_args):
 	args = _args
 
 def newInstance(sim, name):
-	return MMQueueReplicaController(sim, name, \
+	return MMQueueFeedforwardFeedbackReplicaController(sim, name, \
 		args.rcMmQueueInitialDimmer, args.rcPercentile, \
 		args.rcMmQueuePeriod, args.rcSetpoint, args.rcMmQueueDiscountFactor)
 
-class MMQueueReplicaController:
+class MMQueueFeedforwardFeedbackReplicaController:
 	def __init__(self, sim, name, initialDimmer, percentile, period, \
 		setpoint, discountFactor, seed = 1):
 		## control period (controller parameter)
@@ -50,6 +50,16 @@ class MMQueueReplicaController:
 		self.timeN = 0.1
 		## queue lenght
 		self.queueLenght = 0
+		## parameters
+		self.Kp = 0.15
+		self.Ki = 0.10
+		self.Kd = 0.10
+		## error
+		self.error = 0
+		## terms of feedback controller
+		self.proportional = 0
+		self.integral = 0
+		self.derivative = 0
 
 		## Reference to simulator
 		self.sim = sim
@@ -72,14 +82,21 @@ class MMQueueReplicaController:
 			serviceTime = np.percentile(self.latestLatencies, self.percentile)
 			serviceLevel = self.dimmer
 
-			error = self.setpoint - serviceTime
+			# feedforward
 			firstFactor = self.dimmer
 			secondFactor = ((2 * self.setpoint / (self.timeY * (1 + self.queueLenght))) 
 			  - self.timeN / self.timeY)
 			serviceLevel = (1-self.discountFactor) * firstFactor + self.discountFactor * secondFactor
-
+			
+			# feedback pid
+			error_old = self.error
+			self.error = self.setpoint - serviceTime
+			self.proportional = self.Kp * self.error
+			self.derivative = self.Kd * (self.error - error_old) / self.controlPeriod
+			serviceLevel += self.proportional + self.integral + self.derivative
 			# saturation, it's a probability
-			self.dimmer = min(max(serviceLevel, 0.0), 1.0)
+			self.dimmer = min(max(serviceLevel, 0.0001), 1.0)
+			self.integral = self.integral + self.Ki * (self.error*self.controlPeriod) + 1/self.Ki *(self.dimmer - serviceLevel);
 		
 		# Report
 		valuesToOutput = [ \
