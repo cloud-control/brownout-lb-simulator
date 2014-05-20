@@ -150,8 +150,6 @@ class Server:
 		
 		# Can we handle the new request
 		if serviceTime * (len(self.activeRequests) + 1) > self.setPoint:
-			#return False
-			
 			breaks += 1
 			if breaks > maxBreaks:
 				return False
