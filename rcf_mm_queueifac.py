@@ -1,5 +1,6 @@
 import numpy as np
 import random as xxx_random # prevent accidental usage
+import math
 
 from utils import *
 
@@ -96,7 +97,7 @@ class MMQueueFeedforwardFeedbackReplicaController:
 			serviceLevel += self.proportional + self.integral + self.derivative
 			# saturation, it's a probability
 			self.dimmer = min(max(serviceLevel, 0.0001), 1.0)
-			self.integral = self.integral + self.Ki * (self.error*self.controlPeriod) + 1/self.Ki *(self.dimmer - serviceLevel);
+			self.integral += self.Ki * (self.error*self.controlPeriod) + self.controlPeriod * self.Ki * (self.dimmer - serviceLevel)
 		
 		# Report
 		valuesToOutput = [ \
