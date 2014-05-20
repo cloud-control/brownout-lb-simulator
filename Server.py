@@ -271,7 +271,8 @@ class Server:
 		request.completion = self.sim.now
 		self.latestLatencies.append(request.completion - request.arrival)
 		if self.controller:
-			self.controller.reportResponseTime(request.completion - request.arrival)
+			self.controller.reportData(request.completion - request.arrival,
+			  len(self.activeRequests), self.serviceTimeY, self.serviceTimeN)
 		request.onCompleted()
 
 		# Report

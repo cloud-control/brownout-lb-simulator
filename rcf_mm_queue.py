@@ -4,25 +4,20 @@ import random as xxx_random # prevent accidental usage
 from utils import *
 
 def addCommandLine(parser):
-	parser.add_argument('--rcMmInitialDimmer',
+	parser.add_argument('--rcMmQueueInitialDimmer',
 		type = float,
-		help = 'Specify the initial dimmer for the MM controller',
+		help = 'Specify the initial dimmer for the MM queue based controller',
 		default = 0.5,
 	)
-	parser.add_argument('--rcMmPeriod',
+	parser.add_argument('--rcMmQueuePeriod',
 		type = float,
-		help = 'Specify the control period for the MM controller',
+		help = 'Specify the control period for the MM queue based controller',
 		default = 0.5,
 	)
-	parser.add_argument('--rcMmPole',
+	parser.add_argument('--rcMmQueueDiscountFactor',
 		type = float,
-		help = 'Specify the pole for the MM controller',
+		help = 'Specify the discount factor for the MM queue based controller',
 		default = 0.9,
-	)
-	parser.add_argument('--rcMmRlsForgetting',
-		type = float,
-		help = 'Specify the RLS forgetting factor for the MM controller',
-		default = 0.95,
 	)
 
 def parseCommandLine(_args):
@@ -30,32 +25,31 @@ def parseCommandLine(_args):
 	args = _args
 
 def newInstance(sim, name):
-	return MMReplicaController(sim, name, \
-		args.rcMmInitialDimmer, args.rcPercentile, \
-		args.rcMmPeriod, args.rcMmPole, args.rcMmRlsForgetting, \
-		args.rcSetpoint)
+	return MMQueueReplicaController(sim, name, \
+		args.rcMmQueueInitialDimmer, args.rcPercentile, \
+		args.rcMmQueuePeriod, args.rcSetpoint, args.rcMmQueueDiscountFactor)
 
-class MMReplicaController:
-	def __init__(self, sim, name, initialDimmer, percentile, period, pole, \
-		rlsForgetting, setpoint, seed = 1):
+class MMQueueReplicaController:
+	def __init__(self, sim, name, initialDimmer, percentile, period, \
+		setpoint, discountFactor, seed = 1):
 		## control period (controller parameter)
 		self.controlPeriod = period # second
 		## setpoint (controller parameter)
 		self.setpoint = setpoint
 		## percentile to control (controller parameter)
 		self.percentile = percentile
-		## initialization for the RLS estimator (controller variable)
-		self.rlsP = 1000
-		## RLS forgetting factor (controller parameter)
-		self.rlsForgetting = rlsForgetting
-		## Current alpha (controller variable)
-		self.alpha = 1
-		## Pole (controller parameter)
-		self.pole = pole
 		## latencies measured during last control period (controller input)
 		self.latestLatencies = []
 		## dimmer value (controller output)
 		self.dimmer = initialDimmer
+		## discount factor
+		self.discountFactor = discountFactor
+		## time to serve optional
+		self.timeY = 1.0
+		## time to serve mandatory
+		self.timeN = 0.1
+		## queue lenght
+		self.queueLenght = 0
 
 		## Reference to simulator
 		self.sim = sim
@@ -75,29 +69,14 @@ class MMReplicaController:
 	def runControlLoop(self):
 		if self.latestLatencies:
 			# Possible choices: max or avg latency control
-			#serviceTime = avg(self.latestLatencies) # avg latency
-			# serviceTime = max(self.latestLatencies) # max latency
 			serviceTime = np.percentile(self.latestLatencies, self.percentile)
 			serviceLevel = self.dimmer
 
-			# choice of the estimator:
-			# ------- bare estimator
-			# self.alpha = serviceTime / serviceLevel # very rough estimate
-			# ------- RLS estimation algorithm
-			a = self.rlsP*serviceLevel
-			g = 1 / (serviceLevel*a + self.rlsForgetting)
-			k = g*a
-			e = serviceTime - serviceLevel*self.alpha
-			self.alpha = self.alpha + k*e
-			self.rlsP  = (self.rlsP - g * a*a) / self.rlsForgetting
-			# end of the estimator - in the end self.alpha should be set
-			
 			error = self.setpoint - serviceTime
-			# NOTE: control knob allowing slow increase
-			#if error > 0:
-			#	error *= 0.1
-			variation = (1 / self.alpha) * (1 - self.pole) * error
-			serviceLevel += self.controlPeriod * variation
+			firstFactor = self.dimmer
+			secondFactor = ((2 * self.setpoint / (self.timeY * (1 + self.queueLenght))) 
+			  - self.timeN / self.timeY)
+			serviceLevel = (1-self.discountFactor) * firstFactor + self.discountFactor * secondFactor
 
 			# saturation, it's a probability
 			self.dimmer = min(max(serviceLevel, 0.0), 1.0)
@@ -120,8 +99,11 @@ class MMReplicaController:
 		return self.random.random() <= self.dimmer, self.dimmer
 
 	def reportData(self, responseTime, queueLenght, timeY, timeN):
-	  # save only the latencies, the rest is not needed
+	  # save all
 		self.latestLatencies.append(responseTime)
+		self.queueLenght = queueLenght
+		self.timeY = timeY
+		self.timeN = timeN
 	
 	def __str__(self):
 		return self.name
