@@ -20,10 +20,6 @@ class SimulatorKernel:
 		self.outputFiles = {}
 		## output directory
 		self.outputDirectory = outputDirectory
-		self.optionalOn = 0
-		self.optionalOff = 0
-		self.avgServiceTime = 0
-		self.stdServiceTime = 0
 
 	## Adds a new event
 	# @param delay non-negative float representing in how much time should the

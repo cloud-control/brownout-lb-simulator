@@ -6,7 +6,8 @@ from __future__ import division, print_function
 # with the @ref simulator namespace.
 
 import argparse
-import random
+import os
+import sys
 
 from Clients import *
 from LoadBalancer import *
@@ -19,6 +20,18 @@ from SimulatorKernel import *
 ## Entry-point for simulator.
 # Setups up all entities, then runs simulation.
 def main():
+	# Load all replica controller factories
+	replicaControllerFactories = []
+	replicaControllerFactoriesDir = os.path.dirname(sys.argv[0])
+	for filename in os.listdir(replicaControllerFactoriesDir):
+		# Not a replica controller factory
+		if filename[:4] != "rcf_": continue
+		if filename[-3:] != ".py": continue
+
+		# Load Python module
+		replicaControllerFactory = __import__(os.path.splitext(filename)[0])
+		replicaControllerFactories.append(replicaControllerFactory)
+
 	algorithms = ("weighted-RR theta-diff optimization SQF SQF-plus FRF equal-thetas equal-thetas-SQF " + \
 		"optim-SQF FRF-EWMA predictive 2RC RR random theta-diff-plus ctl-simplify equal-thetas-fast theta-diff-plus-SQF " + \
 		"theta-diff-plus-fast SRTF equal-thetas-fast-mul oracle").split()
@@ -47,17 +60,44 @@ def main():
 		default = 2.0) #0.117)
 	parser.add_argument('--scenario',
 		help = 'Specify a scenario in which to test the system',
-		default = os.path.join(os.path.dirname(sys.argv[0]), 'scenarios', 'A.py'))
+		default = os.path.join(os.path.dirname(sys.argv[0]), 'scenarios', 'replica-steady-1.py'))
+
+	group = parser.add_argument_group('rc', 'General replica controller options')
+	group.add_argument('--rc',
+		help = 'Replica controller: ' + ' '.join([ rcf.__name__[4:] for rcf in replicaControllerFactories ]),
+		default = 'static')
+	group.add_argument('--rcSetpoint',
+		type = float,
+		help = 'Replica controller setpoint',
+		default = 1)
+	group.add_argument('--rcPercentile',
+		type = float,
+		help = 'What percentile reponse time to drive to target',
+		default = 95)
+
+	# Add replica controller factories specific command-line arguments
+	for rcf in replicaControllerFactories:
+		group = parser.add_argument_group('Options for ' + rcf.__name__[4:] + ' replica controller')
+		rcf.addCommandLine(group)
+
 	args = parser.parse_args()
 	algorithm = args.algorithm
 	if algorithm not in algorithms:
-		print("Unsupported algorithm '{0}'".format(algorithm))
+		print("Unsupported algorithm '{0}'".format(algorithm), file = sys.stderr)
 		parser.print_help()
 		quit()
 
-	serverControlPeriod = 0.5
+	# Find replica controller factory
+	try:
+		replicaControllerFactory = filter(lambda rc: rc.__name__[4:] == args.rc, replicaControllerFactories)[0]
+	except IndexError:
+		print("Unsupported replica controller '{0}'".format(args.rc), file = sys.stderr)
+		parser.print_help()
+		quit()
 
-	random.seed(1)
+	# Allow replica controller factory to analyse command-line
+	replicaControllerFactory.parseCommandLine(args)
+
 	sim = SimulatorKernel(outputDirectory = args.outdir)
 	servers = []
 	clients = []
@@ -89,11 +129,12 @@ def main():
 			server.serviceTimeN = n
 		sim.add(at, changeServiceTimeHandler)
 		
-	def addServer(y, n, pole=0.99, initialTheta=0.5):
-		server = Server(sim, controlPeriod = serverControlPeriod,
+	def addServer(y, n):
+		server = Server(sim, \
 			serviceTimeY = y, serviceTimeN = n, \
-			timeSlice = args.timeSlice, pole = pole, \
-			initialTheta = initialTheta)
+			timeSlice = args.timeSlice)
+		newReplicaController = replicaControllerFactory.newInstance(sim, str(server) + "-ctl")
+		server.controller = newReplicaController
 		servers.append(server)
 		loadBalancer.addBackend(server)
 	
@@ -124,11 +165,26 @@ def main():
 	sim.run(until = otherParams['simulateUntil'])
 
 	# Report end results
-	recommendationPercentage = float(sim.optionalOn) / float(sim.optionalOff + sim.optionalOn)
-	sim.log(sim, loadBalancer.algorithm + \
-	    ", total recommendation percentage {0}, standard deviation {1} on mean {2}", \
-	    recommendationPercentage, sim.stdServiceTime, sim.avgServiceTime)
-	sim.output('final-results', "{algo:15}, {res:.5f}".format(algo = loadBalancer.algorithm, res = recommendationPercentage))
+	responseTimes = reduce(lambda x,y: x+y, [client.responseTimes for client in clients], []) + openLoopClient.responseTimes
+	numRequestsWithOptional = sum([client.numCompletedRequestsWithOptional for client in clients]) + openLoopClient.numCompletedRequestsWithOptional
+
+	toReport = []
+	toReport.append(( "loadBalancingAlgorithm", algorithm.ljust(20) ))
+	toReport.append(( "replicaAlgorithm", replicaControllerFactory.__name__[4:].ljust(20) ))
+	toReport.append(( "numRequests", str(len(responseTimes)).rjust(7) ))
+	toReport.append(( "numRequestsWithOptional", str(numRequestsWithOptional).rjust(7) ))
+	toReport.append(( "optionalRatio", "{:.3f}".format(numRequestsWithOptional / len(responseTimes)) ))
+	toReport.append(( "avgResponseTime", "{:.3f}".format(avg(responseTimes)) ))
+	toReport.append(( "p95ResponseTime", "{:.3f}".format(np.percentile(responseTimes, 95)) ))
+	toReport.append(( "p99ResponseTime", "{:.3f}".format(np.percentile(responseTimes, 99)) ))
+	toReport.append(( "maxResponseTime", "{:.3f}".format(max(responseTimes)) ))
+	toReport.append(( "stddevResponseTime", "{:.3f}".format(np.std(responseTimes)) ))
+
+	print(*[k for k,v in toReport], sep = ', ')
+	print(*[v for k,v in toReport], sep = ', ')
+
+	sim.output('final-results', ', '.join([k for k,v in toReport]))
+	sim.output('final-results', ', '.join([v for k,v in toReport]))
 
 if __name__ == "__main__":
 	main()

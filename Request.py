@@ -11,7 +11,7 @@ class Request(object):
 	## List of allowed attributes (improves performance and reduces errors)
 	__slots__ = ('requestId', 'arrival', 'completion', 'onCompleted', \
 		'originalRequest', 'theta', 'withOptional', 'chosenBackendIndex',
-		'remainingTime', 'oracle_stuff')
+		'remainingTime', 'oracle_stuff', 'createdAt')
 	
 	## Constructor
 	def __init__(self):
@@ -22,6 +22,8 @@ class Request(object):
 		self.onCompleted = lambda: ()
 		## Request originating this request
 		self.originalRequest = None
+		## Original request creation time
+		self.createdAt = None
 
 
 	## Pretty-printer

@@ -1,5 +1,5 @@
 from collections import defaultdict, deque
-import random
+import random as xxx_random # prevent accidental usage
 import numpy as np
 
 from utils import *
@@ -23,10 +23,12 @@ class Server:
 	# @param initialTheta initial dimmer value
 	# @param controlPeriod control period of brownout controller (0 = disabled)
 	# @note The constructor adds an event into the simulator
-	def __init__(self, sim, serviceTimeY = 0.07, serviceTimeN = 0.001, \
-			initialTheta = 0.5, controlPeriod = 5, timeSlice = 0.01, \
-			serviceTimeYVariance = 0.01, serviceTimeNVariance = 0.001,
-			minimumServiceTime = 0.0001, pole = 0.99):
+	def __init__(self, sim, seed = 1,
+			timeSlice = 0.01, \
+			serviceTimeY = 0.07, serviceTimeN = 0.001, \
+			serviceTimeYVariance = 0.01, serviceTimeNVariance = 0.001, \
+			minimumServiceTime = 0.0001, \
+			controller = None):
 		## time slice for scheduling requests (server model parameter)
 		self.timeSlice = timeSlice
 		## service time with optional content (server model parameter)
@@ -41,23 +43,12 @@ class Server:
 		self.minimumServiceTime = minimumServiceTime
 		## list of active requests (server model variable)
 		self.activeRequests = deque()
-
-		## control period (controller parameter)
-		self.controlPeriod = controlPeriod # second
-		## setpoint (controller parameter)
-		self.setPoint = 1
-		## initialization for the RLS estimator (controller variable)
-		self.rlsP = 1000
-		## RLS forgetting factor (controller parameter)
-		self.rlsForgetting = 0.95
-		## Current alpha (controller variable)
-		self.alpha = 1
-		## Pole (controller parameter)
-		self.pole = pole
-		## latencies measured during last control period (controller input)
+		## how often to report metrics
+		self.reportPeriod = 1
+		## latencies during the last report interval
 		self.latestLatencies = []
-		## dimmer value (controller output)
-		self.theta = initialTheta
+		## reference to controller
+		self.controller = controller
 
 		## The amount of time this server is active. Useful to compute utilization
 		# Since we are in a simulator, this value is hard to use correctly. Use getActiveTime() instead.
@@ -73,11 +64,20 @@ class Server:
 
 		## Reference to simulator
 		self.sim = sim
-		if self.controlPeriod > 0:
-			self.sim.add(0, self.runControlLoop)
 		
 		self.savedServiceTimeY = None
 		self.savedServiceTimeN = None
+
+		## Random number generator
+		self.random = xxx_random.Random()
+		self.random.seed(seed)
+
+		# Initialize controller if present
+		if self.controller:
+			self.controller.runControlLoop()
+
+		# Initialize reporting
+		self.runReportLoop()
 
 	## Compute the (simulated) amount of time this server has been active.
 	# @note In a real OS, the active time would be updated at each context switch.
@@ -90,41 +90,11 @@ class Server:
 			ret += self.sim.now - self.__activeTimeStarted
 		return ret
 
-	## Runs the control loop.
-	# Basically retrieves self.lastestLatencies and computes a new self.theta.
-	# Ask Martina for details. :P
-	def runControlLoop(self):
-		if self.latestLatencies:
-			# Possible choices: max or avg latency control
-			#serviceTime = avg(self.latestLatencies) # avg latency
-			# serviceTime = max(self.latestLatencies) # max latency
-			serviceTime = np.percentile(self.latestLatencies, 95) # 95 percentile
-			serviceLevel = self.theta
-
-			# choice of the estimator:
-			# ------- bare estimator
-			# self.alpha = serviceTime / serviceLevel # very rough estimate
-			# ------- RLS estimation algorithm
-			a = self.rlsP*serviceLevel
-			g = 1 / (serviceLevel*a + self.rlsForgetting)
-			k = g*a
-			e = serviceTime - serviceLevel*self.alpha
-			self.alpha = self.alpha + k*e
-			self.rlsP  = (self.rlsP - g * a*a) / self.rlsForgetting
-			# end of the estimator - in the end self.alpha should be set
-			
-			error = self.setPoint - serviceTime
-			# NOTE: control knob allowing slow increase
-			#if error > 0:
-			#	error *= 0.1
-			variation = (1 / self.alpha) * (1 - self.pole) * error
-			serviceLevel += self.controlPeriod * variation
-
-			# saturation, it's a probability
-			self.theta = min(max(serviceLevel, 0.0), 1.0)
-		
+	## Runs report loop.
+	# Regularly report on the status of the server
+	def runReportLoop(self):
 		# Compute utilization
-		utilization = (self.getActiveTime() - self.lastActiveTime) / self.controlPeriod
+		utilization = (self.getActiveTime() - self.lastActiveTime) / self.reportPeriod
 		self.lastActiveTime = self.getActiveTime()
 
 		# Report
@@ -132,7 +102,6 @@ class Server:
 			self.sim.now, \
 			avg(self.latestLatencies), \
 			maxOrNan(self.latestLatencies), \
-			self.theta, \
 			utilization, \
 		]
 		self.sim.output(self, ','.join(["{0:.5f}".format(value) \
@@ -140,7 +109,7 @@ class Server:
 
 		# Re-run later
 		self.latestLatencies = []
-		self.sim.add(self.controlPeriod, self.runControlLoop)
+		self.sim.add(self.reportPeriod, self.runReportLoop)
 
 	## Tells the server to serve a request.
 	# @param request request to serve
@@ -216,7 +185,7 @@ class Server:
 				(self.serviceTimeN, self.serviceTimeNVariance)
 
 			serviceTime = \
-				max(random.normalvariate(serviceTime, variance), self.minimumServiceTime)
+				max(self.random.normalvariate(serviceTime, variance), self.minimumServiceTime)
 		else:
 			if withOptional:
 				serviceTime = self.savedServiceTimeY
@@ -260,9 +229,11 @@ class Server:
 
 			else:
 				# Pick whether to serve it with optional content or not
-				activeRequest.withOptional = random.random() <= self.theta
+				if self.controller:
+					activeRequest.withOptional, activeRequest.theta = self.controller.withOptional()
+				else:
+					activeRequest.withOptional, activeRequest.theta = True, 1
 
-				activeRequest.theta = self.theta
 				activeRequest.arrival = self.sim.now
 
 				activeRequest.remainingTime = self.drawServiceTime(activeRequest.withOptional)
@@ -309,6 +280,9 @@ class Server:
 		# And completed it
 		request.completion = self.sim.now
 		self.latestLatencies.append(request.completion - request.arrival)
+		if self.controller:
+			self.controller.reportData(request.completion - request.arrival,
+			  len(self.activeRequests), self.serviceTimeY, self.serviceTimeN)
 		request.onCompleted()
 
 		# Report

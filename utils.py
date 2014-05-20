@@ -1,5 +1,4 @@
 from __future__ import division, print_function
-import random
 # for numpy >= 1.7
 #from numpy.random import choice
 
@@ -9,14 +8,14 @@ import random
 #
 # @param choiceWeightPairs list of pairs to choose from; first item in pair is
 # choice, second is weight
-def weightedChoice(choiceWeightPairs):
+def weightedChoice(choiceWeightPairs, rng):
 	# for numpy >= 1.7
 	#weights  = [w for c,w in choiceWeightPairs]
 	#elements = [c for c,w in choiceWeightPairs]
 	#weights  = [w/sum(weights) for w in weights]
 	#return choice(elements, p=weights)
 	totalWeight = sum(weight for choice, weight in choiceWeightPairs)
-	rnd = random.uniform(0, totalWeight)
+	rnd = rng.uniform(0, totalWeight)
 	upto = 0
 	for choice, weight in choiceWeightPairs:
 		if upto + weight > rnd:

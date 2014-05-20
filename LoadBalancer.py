@@ -1,9 +1,10 @@
 from __future__ import division
 
-from cvxopt import solvers, matrix, spdiag, log
-import cvxopt
+#from cvxopt import solvers, matrix, spdiag, log
+#import cvxopt
 import math
 import numpy as np
+import random as xxx_random # prevent accidental usage
 
 from Request import *
 from utils import *
@@ -16,7 +17,7 @@ class LoadBalancer:
 	# @param controlPeriod control period
 	# @param initialTheta initial dimmer value to consider before receiving any
 	# replies from a server
-	def __init__(self, sim, controlPeriod = 1, initialTheta = 0.5):
+	def __init__(self, sim, controlPeriod = 1, initialTheta = 0.5, seed = 1):
 		## control period (control parameter)
 		self.controlPeriod = controlPeriod # second
 		## initial value of measured theta (control initialization parameter)
@@ -26,6 +27,9 @@ class LoadBalancer:
 
 		## Simulator to which the load-balancer is attached
 		self.sim = sim
+		## Separate random number generator
+		self.random = xxx_random.Random()
+		self.random.seed(seed)
 		## list of back-end servers to which requests can be directed
 		self.backends = []
 		## weights determining how to load-balance requests (control output)
@@ -61,10 +65,6 @@ class LoadBalancer:
 		self.ewmaResponseTime = []
 		## number of sample to use for computing average response time (parameter for FRF-EWMA algorithm)
 		self.ewmaNumSamples = 10
-		## average service time and standard deviation for performance indexes
-		self.averageServiceTime = 0
-		self.intermediateForVariance = 0 	
-		self.stdServiceTime = 0
 		## for the ctl-simplify algorithm
 		self.ctlRlsP = []
 		self.ctlAlpha = []
@@ -72,7 +72,7 @@ class LoadBalancer:
 		self.lastDecision = 0
 		
 		# suppress output of cvxopt solver
-		solvers.options['show_progress'] = False
+		#solvers.options['show_progress'] = False
 
 		# Launch control loop
 		self.sim.add(0, self.runControlLoop)
@@ -105,7 +105,7 @@ class LoadBalancer:
 		request.arrival = self.sim.now
 		if self.algorithm in [ 'weighted-RR', 'theta-diff', 'theta-diff-plus', 'equal-thetas', 'optimization', 'ctl-simplify' ]:
 			request.chosenBackendIndex = \
-				weightedChoice(zip(range(0, len(self.backends)), self.weights))
+				weightedChoice(zip(range(0, len(self.backends)), self.weights), self.random)
 		elif self.algorithm == 'equal-thetas-SQF' or self.algorithm == 'equal-thetas-fast' or self.algorithm == 'equal-thetas-fast-mul':
 			# Update controller in the -fast version
 			if self.algorithm == 'equal-thetas-fast' or self.algorithm == 'equal-thetas-fast-mul':
@@ -127,7 +127,7 @@ class LoadBalancer:
 				if self.queueLengths[i] == 0]
 			
 			if empty_servers:
-				request.chosenBackendIndex = random.choice(empty_servers)
+				request.chosenBackendIndex = self.random.choice(empty_servers)
 			else:
 				if self.algorithm == 'equal-thetas-fast-mul':
 					# ...or choose replica with shortest (queue * 2 ** queueOffset)
@@ -153,7 +153,7 @@ class LoadBalancer:
 		elif self.algorithm == 'random':
 			# round robin
 			request.chosenBackendIndex = \
-				random.choice(range(0, len(self.backends)))
+				self.random.choice(range(0, len(self.backends)))
 		elif self.algorithm == 'RR':
 			# round robin
 			request.chosenBackendIndex = \
@@ -179,7 +179,7 @@ class LoadBalancer:
 			# randomly select two backends and send it to the one with lowest latency
 			else:
 				backends = set(range(0, len(self.backends)))
-				randomlychosen = random.sample(backends, 2)
+				randomlychosen = self.random.sample(backends, 2)
 				if maxlat[randomlychosen[0]] > maxlat[randomlychosen[1]]:
 					request.chosenBackendIndex = randomlychosen[1]
 				else:
@@ -299,11 +299,9 @@ class LoadBalancer:
 		# "Decapsulate"
 		self.numRequests += 1
 		if request.withOptional:
-			self.sim.optionalOn += 1
 			self.numRequestsWithOptional += 1
-		else:
-			self.sim.optionalOff += 1
 		theta = request.theta
+		request.originalRequest.withOptional = request.withOptional
 		request = request.originalRequest
 
 		# Store stats
@@ -316,19 +314,6 @@ class LoadBalancer:
 		self.ewmaResponseTime[request.chosenBackendIndex] = \
 			ewmaAlpha * (request.completion - request.arrival) + \
 			(1 - ewmaAlpha) * self.ewmaResponseTime[request.chosenBackendIndex]
-	
-		# Compute performance indexes
-		serviceTime = request.completion - request.arrival
-		delta = serviceTime - self.averageServiceTime
-		self.averageServiceTime = self.averageServiceTime + delta / self.numRequests
-		self.intermediateForVariance += delta * (serviceTime - self.averageServiceTime)
-		if self.numRequests > 1:
-			variance = self.intermediateForVariance / (self.numRequests - 1)
-		else:
-			variance = 0
-		self.stdServiceTime = math.sqrt(variance)
-		self.sim.stdServiceTime = self.stdServiceTime
-		self.sim.avgServiceTime = self.averageServiceTime
 	
 		# Call original onCompleted
 		request.onCompleted()
