@@ -29,6 +29,6 @@ class StaticReplicaController:
 	def withOptional(self):
 		return self.random.random() <= staticDimmer, staticDimmer
 
-	def reportData(self, responseTime, queueLenght, timeY, timeN):
+	def reportData(self, responseTime, queueLenght, timeY, timeN, withOptional):
 		# Not needed for the static controller
 		pass

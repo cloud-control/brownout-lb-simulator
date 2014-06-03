@@ -119,7 +119,7 @@ class MMReplicaController:
 	def withOptional(self):
 		return self.random.random() <= self.dimmer, self.dimmer
 
-	def reportData(self, responseTime, queueLenght, timeY, timeN):
+	def reportData(self, responseTime, queueLenght, timeY, timeN, withOptional):
 	  # save only the latencies, the rest is not needed
 		self.latestLatencies.append(responseTime)
 	

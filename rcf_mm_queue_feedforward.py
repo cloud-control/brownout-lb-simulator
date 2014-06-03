@@ -99,7 +99,7 @@ class MMQueueFeedforwardReplicaController:
 	def withOptional(self):
 		return self.random.random() <= self.dimmer, self.dimmer
 
-	def reportData(self, responseTime, queueLenght, timeY, timeN):
+	def reportData(self, responseTime, queueLenght, timeY, timeN, withOptional):
 	  # save all
 		self.latestLatencies.append(responseTime)
 		self.queueLenght = queueLenght

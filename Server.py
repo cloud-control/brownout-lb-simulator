@@ -30,7 +30,7 @@ class Server:
 			minimumServiceTime = 0.0001, \
 			controller = None):
 		## time slice for scheduling requests (server model parameter)
-		self.timeSlice = timeSlice
+		self.timeSlice = 1000#timeSlice
 		## service time with optional content (server model parameter)
 		self.serviceTimeY = serviceTimeY
 		## service time without optional content (server model parameter)
@@ -127,6 +127,9 @@ class Server:
 			self.sim.add(0, self.onScheduleRequests)
 		# Add request to list of active requests
 		self.activeRequests.append(request)
+		request.withOptional, request.theta = self.controller.withOptional()
+		request.remainingTime = self.drawServiceTime(request.withOptional)
+		request.arrival = self.sim.now
 
 		# Report queue length
 		valuesToOutput = [ \
@@ -176,21 +179,13 @@ class Server:
 			savedServiceTimeN = serviceTime
 
 	def drawServiceTime(self, withOptional):
-		if (withOptional and self.savedServiceTimeY is None) or \
-				(not withOptional and self.savedServiceTimeN is None):
-			serviceTime, variance = (self.serviceTimeY, self.serviceTimeYVariance) \
-				if withOptional else \
-				(self.serviceTimeN, self.serviceTimeNVariance)
+		serviceTime, variance = (self.serviceTimeY, self.serviceTimeYVariance) \
+			if withOptional else \
+			(self.serviceTimeN, self.serviceTimeNVariance)
 
-			serviceTime = \
-				max(self.random.normalvariate(serviceTime, variance), self.minimumServiceTime)
-		else:
-			if withOptional:
-				serviceTime = self.savedServiceTimeY
-				self.savedServiceTimeY = None
-			else:
-				serviceTime = self.savedServiceTimeN
-				self.savedServiceTimeN = None
+		#serviceTime = \
+		#	max(self.random.normalvariate(serviceTime, variance), self.minimumServiceTime)
+		serviceTime = self.random.expovariate(1.0 / serviceTime)
 		
 		return serviceTime
 
@@ -280,7 +275,7 @@ class Server:
 		self.latestLatencies.append(request.completion - request.arrival)
 		if self.controller:
 			self.controller.reportData(request.completion - request.arrival,
-			  len(self.activeRequests), self.serviceTimeY, self.serviceTimeN)
+			  len(self.activeRequests), self.serviceTimeY, self.serviceTimeN, request.withOptional)
 		request.onCompleted()
 
 		# Report
