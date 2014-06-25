@@ -1,6 +1,6 @@
 class BrownoutProxy:
 	class Request(object):
-		__slots__ = ('requestId', 'replyTo', 'expectedResponseTime', 'generatedAt')
+		__slots__ = ('requestId', 'replyTo', 'expectedStartTime', 'expectedResponseTime', 'generatedAt')
 
 	def __init__(self, sim, server, setPoint = 0.5):
 		self._sim = sim
@@ -28,6 +28,7 @@ class BrownoutProxy:
 		if self._timeToProcess < 0:
 			self._timeToProcess = 0
 
+		request.expectedStartTime = self._sim.now + self._timeToProcess
 		if self._timeToProcess + self._timeY < self.setPoint:
 			withOptional = True
 			self._timeToProcess += self._timeY
@@ -52,12 +53,19 @@ class BrownoutProxy:
 		request = self._requests[requestId]
 		request.replyTo.reply(requestId, headers)
 
+		if headers.get('withOptional'):
+			self._timeY = max(self._sim.now - request.expectedStartTime, 0)
+		else:
+			self._timeN = max(self._sim.now - request.expectedStartTime, 0)
+
 		# Report
 		valuesToOutput = [ \
 			self._sim.now, \
 			self._sim.now - request.generatedAt, \
 			request.expectedResponseTime, \
 			headers['withOptional'], \
+			self._timeY,
+			self._timeN,
 		]
 		self._sim.output(str(self) + '-return-path', ','.join(["{0:.5f}".format(value) \
 			for value in valuesToOutput]))
