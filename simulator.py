@@ -8,7 +8,9 @@ from __future__ import division, print_function
 import argparse
 import os
 import sys
+import numpy as np
 
+from BrownoutProxy import *
 from Clients import *
 from Replica import *
 from SimulatorKernel import *
@@ -42,11 +44,23 @@ def main():
 
 	args = parser.parse_args()
 
-	sim = SimulatorKernel(outputDirectory = args.outdir)
-	replica = Replica(sim = sim, timeSlice = args.timeSlice)
-	client = Client(sim = sim, server = replica, rate = 10)
+	print("arrivalRate,rtAvg,rt95,rt99,rtMax,optionalRatio")
 
-	sim.run(until = 100)
+	for arrivalRate in range(1, 30):
+		sim = SimulatorKernel(outputDirectory = args.outdir)
+		replica = Replica(sim = sim, timeSlice = args.timeSlice)
+		brownoutProxy = BrownoutProxy(sim = sim, server = replica)
+		client = Client(sim = sim, server = brownoutProxy, rate = arrivalRate)
+
+		sim.run(until = 100)
+
+		# Report results
+		rtAvg = avg(client.responseTimes)
+		rtP95 = np.percentile(client.responseTimes, 95)
+		rtP99 = np.percentile(client.responseTimes, 99)
+		rtMax = max(client.responseTimes)
+		optionalRatio = client.numCompletedRequestsWithOptional / client.numCompletedRequests
+		print(arrivalRate, rtAvg, rtP95, rtP99, rtMax, optionalRatio, sep = ',')
 
 if __name__ == "__main__":
 	main()
