@@ -28,8 +28,8 @@ class Replica:
 	# @note The constructor adds an event into the simulator
 	def __init__(self, sim, seed = 1,
 			timeSlice = 0.01, \
-			serviceTimeY = 0.07, serviceTimeN = 0.001, \
-			serviceTimeYVariance = 0.01, serviceTimeNVariance = 0.001, \
+			serviceTimeY = 0.07, serviceTimeN = 0.00067, \
+			serviceTimeYVariance = 0.001, serviceTimeNVariance = 0.0001, \
 			minimumServiceTime = 0.0001):
 		## time slice for scheduling requests (server model parameter)
 		self.timeSlice = timeSlice
