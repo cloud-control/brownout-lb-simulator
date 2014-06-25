@@ -11,9 +11,6 @@ class Replica:
 	class Request(object):
 		__slots__ = ('requestId', 'replyTo', 'withOptional', 'arrival', 'departure', 'remainingTime')
 
-	## Variable used for giving IDs to servers for pretty-printing
-	_lastReplicaId = 1
-
 	## Constructor.
 	# @param sim Simulator to attach the server to
 	# @param serviceTimeY time to service one request with optional content
@@ -59,8 +56,7 @@ class Replica:
 		self._lastActiveTime = 0
 
 		## Server ID for pretty-printing
-		self.name = 'replica' + str(Replica._lastReplicaId)
-		Replica._lastReplicaId += 1
+		self.name = 'replica' + str(replicaId)
 
 		## Reference to simulator
 		self._sim = sim
