@@ -27,7 +27,7 @@ def main():
 	parser.add_argument('--timeSlice',
 		type = float,
 		help = 'Time-slice of server scheduler',
-		default = 0.01)
+		default = 1)
 
 	group = parser.add_argument_group('rc', 'General replica controller options')
 	group.add_argument('--rcSetpoint',
