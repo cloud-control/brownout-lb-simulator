@@ -24,9 +24,6 @@ def main():
 	parser = argparse.ArgumentParser( \
 		description='Run brownout load balancer simulation.', \
 		formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-	parser.add_argument('--outdir',
-		help = 'Destination folder for results and logs',
-		default = '.')
 	parser.add_argument('--timeSlice',
 		type = float,
 		help = 'Time-slice of server scheduler',
@@ -47,7 +44,13 @@ def main():
 	print("arrivalRate,rtAvg,rt95,rt99,rtMax,optionalRatio")
 
 	for arrivalRate in range(1, 30):
-		sim = SimulatorKernel(outputDirectory = args.outdir)
+		outDir = 'results-{0:02d}'.format(arrivalRate)
+		try:
+			os.makedirs(outDir)
+		except:
+			pass
+
+		sim = SimulatorKernel(outputDirectory = outDir)
 		replica = Replica(sim = sim, timeSlice = args.timeSlice)
 		brownoutProxy = BrownoutProxy(sim = sim, server = replica)
 		client = Client(sim = sim, server = brownoutProxy, rate = arrivalRate)
