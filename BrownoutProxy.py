@@ -50,6 +50,7 @@ class BrownoutProxy:
 			self._sim.now, \
 			self._timeToProcess, \
 			withOptional, \
+			self._activeRequests,
 		]
 		self._sim.output(str(self) + '-decision', ','.join(["{0:.5f}".format(value) \
 			for value in valuesToOutput]))
