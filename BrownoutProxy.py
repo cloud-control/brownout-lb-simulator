@@ -13,6 +13,7 @@ class BrownoutProxy:
 		self._timeY = 0.07
 		self._timeN = 0.00067
 		self.setPoint = setPoint
+		self.forgettingFactor = 0.2
 
 	def request(self, requestId, replyTo, headers):
 		request = BrownoutProxy.Request()
@@ -55,10 +56,12 @@ class BrownoutProxy:
 		request = self._requests[requestId]
 		request.replyTo.reply(requestId, headers)
 
+		alpha = self.forgettingFactor
+		lastServiceTime = max(self._sim.now - request.expectedStartTime, 0)
 		if headers.get('withOptional'):
-			self._timeY = max(self._sim.now - request.expectedStartTime, 0)
+			self._timeY = self._timeY * (1 - alpha) + lastServiceTime * alpha
 		else:
-			self._timeN = max(self._sim.now - request.expectedStartTime, 0)
+			self._timeN = self._timeN * (1 - alpha) + lastServiceTime * alpha
 
 		# Report
 		valuesToOutput = [ \
