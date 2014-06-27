@@ -62,10 +62,10 @@ class BrownoutProxy:
 
 		alpha = self.forgettingFactor
 		lastServiceTime = max(self._sim.now - request.expectedStartTime, 0)
-		if headers.get('withOptional'):
-			self._timeY = self._timeY * (1 - alpha) + lastServiceTime * alpha
-		else:
-			self._timeN = self._timeN * (1 - alpha) + lastServiceTime * alpha
+		#if headers.get('withOptional'):
+		#	self._timeY = self._timeY * (1 - alpha) + lastServiceTime * alpha
+		#else:
+		#	self._timeN = self._timeN * (1 - alpha) + lastServiceTime * alpha
 
 		# Report
 		valuesToOutput = [ \
