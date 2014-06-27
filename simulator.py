@@ -41,7 +41,7 @@ def main():
 
 	args = parser.parse_args()
 
-	print("arrivalRate,rtAvg,rt95,rt99,rtMax,optionalRatio")
+	print("arrivalRate,rtAvg,rt95,rt99,rtMax,optionalRatio,utilization")
 
 	for arrivalRate in range(1, 30):
 		outDir = 'results-{0:02d}'.format(arrivalRate)
@@ -63,7 +63,8 @@ def main():
 		rtP99 = np.percentile(client.responseTimes, 99)
 		rtMax = max(client.responseTimes)
 		optionalRatio = client.numCompletedRequestsWithOptional / client.numCompletedRequests
-		print(arrivalRate, rtAvg, rtP95, rtP99, rtMax, optionalRatio, sep = ',')
+		utilization = replica.getActiveTime() / sim.now
+		print(arrivalRate, rtAvg, rtP95, rtP99, rtMax, optionalRatio, utilization, sep = ',')
 
 if __name__ == "__main__":
 	main()
