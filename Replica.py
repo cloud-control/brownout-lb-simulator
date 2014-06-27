@@ -74,7 +74,7 @@ class Replica:
 	# However, this is a simulation, therefore, in order not to waste time on
 	# simulating context-switches, we compute this value when requested, as if it
 	# were continuously updated.
-	def _getActiveTime(self):
+	def getActiveTime(self):
 		ret = self._activeTime
 		if self._activeTimeStarted is not None:
 			ret += self._sim.now - self._activeTimeStarted
@@ -84,8 +84,8 @@ class Replica:
 	# Regularly report on the status of the server
 	def _runReportLoop(self):
 		# Compute utilization
-		utilization = (self._getActiveTime() - self._lastActiveTime) / self.reportPeriod
-		self._lastActiveTime = self._getActiveTime()
+		utilization = (self.getActiveTime() - self._lastActiveTime) / self.reportPeriod
+		self._lastActiveTime = self.getActiveTime()
 
 		# Report
 		valuesToOutput = [ \
