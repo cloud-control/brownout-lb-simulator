@@ -20,6 +20,8 @@ class SimulatorKernel:
 		self.outputFiles = {}
 		## output directory
 		self.outputDirectory = outputDirectory
+		## what CSV had their headers printer
+		self._headersPrintedFor = set()
 
 	## Adds a new event
 	# @param delay non-negative float representing in how much time should the
@@ -99,6 +101,21 @@ class SimulatorKernel:
 
 		# kills performance, but reduces experimenter's impatience :D
 		outputFile.flush()
+
+	## Report simulation data as CSV
+	# This function is designed to simplify outputting metrics from a simulated
+	# entity. It prints the given line to a file, whose name is derived based on
+	# the issuer (currently "sim-{issuer}.csv").
+	# @param issuer something that can be rendered as a string through str()
+	# @param kwargs metrics to output
+	# @note current simulation time is prepended
+	# is added.
+	def report(self, issuer, **kwargs):
+		if issuer not in self._headersPrintedFor:
+			self.output(issuer, ','.join(['now'] + sorted(kwargs.keys())))
+			self._headersPrintedFor.add(issuer)
+		stringValues = map(str, [self.now] + sorted(kwargs.values()))
+		self.output(issuer, ','.join(stringValues))
 
 	## Pretty-print the simulator kernel's name
 	def __str__(self):
