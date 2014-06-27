@@ -111,10 +111,12 @@ class SimulatorKernel:
 	# @note current simulation time is prepended
 	# is added.
 	def report(self, issuer, **kwargs):
+		keys = [ 'now' ] + sorted(kwargs.keys())
+		kwargs['now'] = self.now
 		if issuer not in self._headersPrintedFor:
-			self.output(issuer, ','.join(['now'] + sorted(kwargs.keys())))
+			self.output(issuer, ','.join(keys))
 			self._headersPrintedFor.add(issuer)
-		stringValues = map(str, [self.now] + sorted(kwargs.values()))
+		stringValues = map(str, [ kwargs[k] for k in keys ])
 		self.output(issuer, ','.join(stringValues))
 
 	## Pretty-print the simulator kernel's name
