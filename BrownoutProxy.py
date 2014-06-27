@@ -14,6 +14,7 @@ class BrownoutProxy:
 		self._timeN = 0.00067
 		self.setPoint = setPoint
 		self.forgettingFactor = 0.2
+		self._activeRequests = 0
 
 	def request(self, requestId, replyTo, headers):
 		request = BrownoutProxy.Request()
@@ -40,6 +41,7 @@ class BrownoutProxy:
 			self._timeToProcess += self._timeN
 		request.expectedResponseTime = self._timeToProcess
 
+		self._activeRequests += 1
 		headers['withOptional'] = withOptional
 		self._server.request(requestId, self, headers)
 
@@ -53,6 +55,7 @@ class BrownoutProxy:
 			for value in valuesToOutput]))
 
 	def reply(self, requestId, headers):
+		self._activeRequests -= 1
 		request = self._requests[requestId]
 		request.replyTo.reply(requestId, headers)
 
