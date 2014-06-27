@@ -11,7 +11,6 @@ class BrownoutProxy:
 		self._timeToProcess = 0
 		self._lastTimeToProcessAdjustment = 0
 		self._timeY = 0.07
-		self._timeN = 0.00067
 		self.setPoint = setPoint
 		self.forgettingFactor = 0.2
 		self._activeRequests = 0
@@ -38,7 +37,6 @@ class BrownoutProxy:
 			self._timeToProcess += self._timeY
 		else:
 			withOptional = False
-			self._timeToProcess += self._timeN
 		request.expectedResponseTime = self._timeToProcess
 
 		self._activeRequests += 1
@@ -74,7 +72,6 @@ class BrownoutProxy:
 			request.expectedResponseTime, \
 			headers['withOptional'], \
 			self._timeY,
-			self._timeN,
 		]
 		self._sim.output(str(self) + '-return-path', ','.join(["{0:.5f}".format(value) \
 			for value in valuesToOutput]))
