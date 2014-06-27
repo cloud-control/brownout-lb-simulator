@@ -1,3 +1,5 @@
+from __future__ import division, print_function
+
 class BrownoutProxy:
 	class Request(object):
 		__slots__ = ('requestId', 'replyTo', 'expectedStartTime', 'expectedResponseTime', 'generatedAt')
