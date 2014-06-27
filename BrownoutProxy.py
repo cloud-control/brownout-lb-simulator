@@ -58,23 +58,15 @@ class BrownoutProxy:
 		request = self._requests[requestId]
 		request.replyTo.reply(requestId, headers)
 
-		alpha = self.forgettingFactor
-		lastServiceTime = max(self._sim.now - request.expectedStartTime, 0)
-		#if headers.get('withOptional'):
-		#	self._timeY = self._timeY * (1 - alpha) + lastServiceTime * alpha
-		#else:
-		#	self._timeN = self._timeN * (1 - alpha) + lastServiceTime * alpha
+		responseTime = self._sim.now - request.generatedAt
 
 		# Report
-		valuesToOutput = [ \
-			self._sim.now, \
-			self._sim.now - request.generatedAt, \
-			request.expectedResponseTime, \
-			headers['withOptional'], \
-			self._timeY,
-		]
-		self._sim.output(str(self) + '-return-path', ','.join(["{0:.5f}".format(value) \
-			for value in valuesToOutput]))
+		self._sim.report(str(self) + '-return-path',
+			responseTime = responseTime,
+			expectedResponseTime = request.expectedResponseTime,
+			withOptional = '1' if headers['withOptional'] else '0',
+			timeY = self._timeY,
+		)
 
 	def __str__(self):
 		return "brownout-proxy"
