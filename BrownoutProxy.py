@@ -10,10 +10,11 @@ class BrownoutProxy:
 		self._requests = {}
 		self._timeToProcess = 0
 		self._lastTimeToProcessAdjustment = 0
-		self._timeY = 0.07
+		self._timeY = 0.075
 		self.setPoint = setPoint
 		self.forgettingFactor = 0.2
 		self._activeRequests = 0
+		self._lastReplyWithOptional = 0
 
 	def request(self, requestId, replyTo, headers):
 		request = BrownoutProxy.Request()
@@ -44,19 +45,24 @@ class BrownoutProxy:
 		self._server.request(requestId, self, headers)
 
 		# Report
+		whereToReport = str(self) + '-decision'
 		valuesToOutput = [ \
 			self._sim.now, \
 			self._timeToProcess, \
 			withOptional, \
 			self._activeRequests,
 		]
-		self._sim.output(str(self) + '-decision', ','.join(["{0:.5f}".format(value) \
+		self._sim.output(whereToReport, ','.join(["{0:.5f}".format(value) \
 			for value in valuesToOutput]))
 
 	def reply(self, requestId, headers):
 		self._activeRequests -= 1
 		request = self._requests[requestId]
 		request.replyTo.reply(requestId, headers)
+		
+		if headers['withOptional']:
+			self._timeY = 0.9 * self._timeY + 0.1 * min(self._sim.now - self._lastReplyWithOptional, 0.1)
+			self._lastReplyWithOptional = self._sim.now
 
 		responseTime = self._sim.now - request.generatedAt
 
