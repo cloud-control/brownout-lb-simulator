@@ -29,13 +29,12 @@ class Client:
 		self.responseTimes = []
 
 		self._scheduleRequest()
-		
-		# Initialize reporting
-		self._sim.output(self, ','.join(['generatedAt', 'sentAt', 'repliedAt', 'responseTime', 'withOptional1', 'withOptional2']))
 
 	## Issues a new request to the server.
-	def _issueRequest(self):
+	def _issueRequest(self, rate):
 		if self._rate <= 0:
+			return
+		if self._rate != rate:
 			return
 
 		# XXX: Maybe create a new event?
@@ -50,7 +49,7 @@ class Client:
 		# If rate is changed from nonzero to zero, event will still be in simulator
 		if self._rate > 0:
 			interval = self._random.expovariate(self._rate)
-			self._sim.update(interval, self._issueRequest)
+			self._sim.add(interval, lambda: self._issueRequest(self._rate))
 
 	## Called when a request completes
 	# @param requestId Identify the request that has completed (unused)
@@ -69,16 +68,14 @@ class Client:
 		self.responseTimes.append(responseTime)
 
 		# Report
-		valuesToOutput = [
-			generatedAt,
-			sentAt,
-			repliedAt,
-			responseTime,
-			1 if withOptional else 0,
-			1 if withOptional2 else 0
-		]
-		self._sim.output(self, ','.join(["{0:.5f}".format(value) \
-			for value in valuesToOutput]))
+		self._sim.report(self,
+			generatedAt = generatedAt,
+			sentAt = sentAt,
+			repliedAt = repliedAt,
+			responseTime = responseTime,
+			withOptional  = 1 if withOptional else 0,
+			withOptional2 = 1 if withOptional2 else 0,
+		)
 		
 	def setRate(self, rate):
 		self._rate = rate

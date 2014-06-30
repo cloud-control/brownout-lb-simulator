@@ -88,14 +88,11 @@ class Replica:
 		self._lastActiveTime = self.getActiveTime()
 
 		# Report
-		valuesToOutput = [ \
-			self._sim.now, \
-			avg(self._latestLatencies), \
-			maxOrNan(self._latestLatencies), \
-			utilization, \
-		]
-		self._sim.output(self, ','.join(["{0:.5f}".format(value) \
-			for value in valuesToOutput]))
+		self._sim.report(self,
+			avgLatency = avg(self._latestLatencies),
+			maxLatency = maxOrNan(self._latestLatencies),
+			utilization = utilization,
+		)
 
 		# Re-run later
 		self._latestLatencies = []
@@ -120,14 +117,6 @@ class Replica:
 		request.withOptional = headers.get('withOptional', False)
 		request.remainingTime = self.drawServiceTime(request.withOptional)
 		self._activeRequests.append(request)
-
-		# Report queue length
-		valuesToOutput = [ \
-			self._sim.now, \
-			len(self._activeRequests), \
-		]
-		self._sim.output(str(self) + '-arl', ','.join(["{0:.5f}".format(value) \
-			for value in valuesToOutput]))
 
 	def drawServiceTime(self, withOptional):
 		serviceTime, variance = (self.serviceTimeY, self.serviceTimeYVariance) \
@@ -198,23 +187,6 @@ class Replica:
 		self._latestLatencies.append(request.departure - request.arrival)
 		headers = { 'withOptional' : request.withOptional }
 		self._sim.add(0, lambda: request.replyTo.reply(request.requestId, headers))
-
-		# Report
-		valuesToOutput = [ \
-			self._sim.now, \
-			request.arrival, \
-			request.departure - request.arrival, \
-		]
-		self._sim.output(str(self)+'-rt', ','.join(["{0:.5f}".format(value) \
-			for value in valuesToOutput]))
-
-		# Report queue length
-		valuesToOutput = [ \
-			self._sim.now, \
-			len(self._activeRequests), \
-		]
-		self._sim.output(str(self) + '-arl', ','.join(["{0:.5f}".format(value) \
-			for value in valuesToOutput]))
 
 		# Continue with scheduler
 		if len(self._activeRequests) > 0:

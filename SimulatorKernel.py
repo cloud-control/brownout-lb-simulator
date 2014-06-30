@@ -1,6 +1,7 @@
 from __future__ import print_function
 
-from collections import defaultdict, deque
+from collections import deque
+from heapq import heappush, heappop, heapify
 import os
 import sys
 
@@ -10,9 +11,7 @@ class SimulatorKernel:
 	## Constructor
 	def __init__(self, outputDirectory = '.'):
 		## events indexed by time
-		self.events = defaultdict(list)
-		## reverse index from event handlers to time index, to allow easy update
-		self.whatToTime = {}
+		self.events = []
 		## current simulation time
 		self.now = 0.0
 		## cache of open file descriptors: for each issuer, this dictionary maps
@@ -20,8 +19,6 @@ class SimulatorKernel:
 		self.outputFiles = {}
 		## output directory
 		self.outputDirectory = outputDirectory
-		## what CSV had their headers printer
-		self._headersPrintedFor = set()
 
 	## Adds a new event
 	# @param delay non-negative float representing in how much time should the
@@ -30,24 +27,7 @@ class SimulatorKernel:
 	# @param what Event handler, can be a function, class method or lambda
 	# @see Callable
 	def add(self, delay, what):
-		self.events[self.now + delay].append(what)
-		self.whatToTime[what] = self.now + delay
-
-	## Update an existing event or add a new event
-	# @param delay in how much time should the event be triggered
-	# @param what Callable to call for handling this event. Can be a function,
-	# class method or lambda
-	# @note Deletes the previously existing event that is handled by what.
-	# The current implementation stores at most one such event.
-	def update(self, delay, what):
-		if what in self.whatToTime:
-			oldTime = self.whatToTime[what]
-			events = self.events[oldTime]
-			events.remove(what)
-			if len(events) == 0:
-				del self.events[oldTime]
-			del self.whatToTime[what]
-		self.add(delay, what)
+		heappush(self.events, (self.now + delay, what))
 
 	## Run the simulation
 	# @param until time limit to stop simulation
@@ -55,14 +35,9 @@ class SimulatorKernel:
 		numEvents = 0
 		while self.events:
 			prevNow = self.now
-			self.now = min(self.events)
+			self.now, event = heappop(self.events)
 			#if int(prevNow / 100) < int(self.now / 100):
 			#	self.log(self, "progressing, handled {0} events", numEvents)
-			events = self.events[self.now]
-			event = events.pop()
-			del self.whatToTime[event]
-			if len(events) == 0:
-				del self.events[self.now]
 
 			if self.now > until:
 				return
@@ -83,25 +58,6 @@ class SimulatorKernel:
 		print("{0:.6f}".format(self.now), str(issuer), \
 			message.format(*args, **kwargs), file = sys.stderr)
 
-	## Output simulation data.
-	# This function is designed to simplify outputting metrics from a simulated
-	# entity. It prints the given line to a file, whose name is derived based on
-	# the issuer (currently "sim-{issuer}.csv").
-	# @param issuer something that can be rendered as a string through str()
-	# @param outputLine the line to output
-	# @note outputLine is written verbatimly to the output file, plus a newline
-	# is added.
-	def output(self, issuer, outputLine):
-		if issuer not in self.outputFiles:
-			outputFilename = 'sim-' + str(issuer) + '.csv'
-			outputFilename = os.path.join(self.outputDirectory, outputFilename)
-			self.outputFiles[issuer] = open(outputFilename, 'w')
-		outputFile = self.outputFiles[issuer]
-		outputFile.write(outputLine + "\n")
-
-		# kills performance, but reduces experimenter's impatience :D
-		outputFile.flush()
-
 	## Report simulation data as CSV
 	# This function is designed to simplify outputting metrics from a simulated
 	# entity. It prints the given line to a file, whose name is derived based on
@@ -111,13 +67,23 @@ class SimulatorKernel:
 	# @note current simulation time is prepended
 	# is added.
 	def report(self, issuer, **kwargs):
-		keys = [ 'now' ] + sorted(kwargs.keys())
+		keys = kwargs.keys()
+		keys.sort()
+		keys.insert(0, 'now')
 		kwargs['now'] = self.now
-		if issuer not in self._headersPrintedFor:
-			self.output(issuer, ','.join(keys))
-			self._headersPrintedFor.add(issuer)
-		stringValues = map(str, [ kwargs[k] for k in keys ])
-		self.output(issuer, ','.join(stringValues))
+
+		if issuer not in self.outputFiles:
+			outputFilename = 'sim-' + str(issuer) + '.csv'
+			outputFilename = os.path.join(self.outputDirectory, outputFilename)
+			outputFile = open(outputFilename, 'w')
+			outputFile.write(str(issuer))
+			outputFile.write(','.join(keys))
+			outputFile.write('\n')
+			self.outputFiles[issuer] = outputFile
+
+		stringValues = [ str(kwargs[k]) for k in keys ]
+		outputFile = self.outputFiles[issuer]
+		outputFile.write(','.join(stringValues) + '\n')
 
 	## Pretty-print the simulator kernel's name
 	def __str__(self):
