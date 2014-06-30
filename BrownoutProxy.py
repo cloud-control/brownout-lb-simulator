@@ -45,15 +45,11 @@ class BrownoutProxy:
 		self._server.request(requestId, self, headers)
 
 		# Report
-		whereToReport = str(self) + '-decision'
-		valuesToOutput = [ \
-			self._sim.now, \
-			self._timeToProcess, \
-			withOptional, \
-			self._activeRequests,
-		]
-		self._sim.output(whereToReport, ','.join(["{0:.5f}".format(value) \
-			for value in valuesToOutput]))
+		self._sim.report(str(self) + '-forward-path',
+			timeToProcess = self._timeToProcess,
+			withOptional = '1' if headers['withOptional'] else '0',
+			activeRequests = self._activeRequests,
+		)
 
 	def reply(self, requestId, headers):
 		self._activeRequests -= 1
