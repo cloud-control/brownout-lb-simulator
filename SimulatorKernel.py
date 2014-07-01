@@ -69,21 +69,17 @@ class SimulatorKernel:
 	def report(self, issuer, **kwargs):
 		keys = kwargs.keys()
 		keys.sort()
-		keys.insert(0, 'now')
-		kwargs['now'] = self.now
 
 		if issuer not in self.outputFiles:
 			outputFilename = 'sim-' + str(issuer) + '.csv'
 			outputFilename = os.path.join(self.outputDirectory, outputFilename)
 			outputFile = open(outputFilename, 'w')
-			outputFile.write(str(issuer))
-			outputFile.write(','.join(keys))
-			outputFile.write('\n')
+			print('now', *keys, sep = ',', file = outputFile)
 			self.outputFiles[issuer] = outputFile
 
 		stringValues = [ str(kwargs[k]) for k in keys ]
 		outputFile = self.outputFiles[issuer]
-		outputFile.write(','.join(stringValues) + '\n')
+		print(self.now, *stringValues, sep = ',', file = outputFile)
 
 	## Pretty-print the simulator kernel's name
 	def __str__(self):
