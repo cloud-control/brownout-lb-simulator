@@ -1,0 +1,5 @@
+Discipline: PS (time-slice = 0.01)
+Service times:
+- timeY: 0.07 (sigma = 0.01)
+- timeN: 0.00067 (sigma = 0.0001)
+

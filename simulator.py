@@ -27,7 +27,7 @@ def main():
 	parser.add_argument('--timeSlice',
 		type = float,
 		help = 'Time-slice of server scheduler',
-		default = 1)
+		default = 0.01)
 
 	group = parser.add_argument_group('rc', 'General replica controller options')
 	group.add_argument('--rcSetpoint',
@@ -55,7 +55,7 @@ def main():
 		brownoutProxy = BrownoutProxy(sim = sim, server = replica)
 		client = Client(sim = sim, server = brownoutProxy, rate = arrivalRate)
 
-		sim.run(until = 1000)
+		sim.run(until = 100)
 
 		# Report results
 		rtAvg = avg(client.responseTimes)
