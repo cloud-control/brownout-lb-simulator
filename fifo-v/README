@@ -1,0 +1,10 @@
+Discipline: FIFO
+Service times:
+- timeY: 0.07 (sigma = 0.01)
+- timeN: 0.00067 (sigma = 0.0001)
+
+Brownout schemes:
+- time-cut with timeY = 0.073
+- time-cut with timeY = 0.075
+- queue-cut (q<7)
+- queue-cut (q<8)
