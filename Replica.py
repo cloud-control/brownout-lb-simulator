@@ -158,7 +158,7 @@ class Replica:
 
 			# Run onComplete when done
 			self._sim.add(timeToExecuteActiveRequest, \
-				lambda: self._onCompleted(activeRequest))
+				self._onCompleted)
 		else:
 			# Reintroduce it in the active request list at the end for
 			# round-robin scheduling
@@ -171,26 +171,23 @@ class Replica:
 	# Marks the request as completed, calls replyTo.reply() and calls
 	# _onScheduleRequests() to pick a new request to schedule.
 	# @param request request that has received enough service time
-	def _onCompleted(self, request):
+	def _onCompleted(self):
 		# Track utilization
 		self._activeTime += self._sim.now - self._activeTimeStarted
 		self._activeTimeStarted = None
 
 		# Remove request from active list
-		activeRequest = self._activeRequests.popleft()
-		if activeRequest != request:
-			raise Exception("Weird! Expected request {0} but got {1} instead". \
-				format(request, activeRequest))
+		request = self._activeRequests.popleft()
 
 		# And completed it
 		request.departure = self._sim.now
 		self._latestLatencies.append(request.departure - request.arrival)
 		headers = { 'withOptional' : request.withOptional }
-		self._sim.add(0, lambda: request.replyTo.reply(request.requestId, headers))
+		request.replyTo.reply(request.requestId, headers)
 
 		# Continue with scheduler
 		if len(self._activeRequests) > 0:
-			self._sim.add(0, self._onScheduleRequests)
+			self._onScheduleRequests()
 
 	## Pretty-print server's ID
 	def __str__(self):

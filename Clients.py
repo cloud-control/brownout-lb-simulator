@@ -31,13 +31,10 @@ class Client:
 		self._scheduleRequest()
 
 	## Issues a new request to the server.
-	def _issueRequest(self, rate):
+	def _issueRequest(self):
 		if self._rate <= 0:
 			return
-		if self._rate != rate:
-			return
 
-		# XXX: Maybe create a new event?
 		self.server.request(requestId = self._sim.now,
 			headers = {}, replyTo = self)
 
@@ -49,7 +46,7 @@ class Client:
 		# If rate is changed from nonzero to zero, event will still be in simulator
 		if self._rate > 0:
 			interval = self._random.expovariate(self._rate)
-			self._sim.add(interval, lambda: self._issueRequest(self._rate))
+			self._sim.add(interval, self._issueRequest)
 
 	## Called when a request completes
 	# @param requestId Identify the request that has completed (unused)
@@ -78,8 +75,10 @@ class Client:
 		)
 		
 	def setRate(self, rate):
+		oldRate = self._rate
 		self._rate = rate
-		self._scheduleRequest()
+		if oldRate == 0 and rate != 0:
+			self._scheduleRequest()
 
 	## Pretty-print client's name
 	def __str__(self):
