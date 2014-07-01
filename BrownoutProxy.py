@@ -61,7 +61,7 @@ class BrownoutProxy:
 		request.expectedResponseTime = self._timeToProcess
 
 		self._activeRequests += 1
-		if queueCut:
+		if self.queueCut:
 			withOptional = (self._activeRequests < (self.setPoint / self._timeY()))
 		headers['withOptional'] = withOptional
 		self._server.request(requestId, self, headers)
