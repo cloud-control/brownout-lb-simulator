@@ -1,20 +1,39 @@
 from __future__ import division, print_function
 
+import numpy as np
+
+class PercentileFilter:
+	def __init__(self, initialValue, percentile = 90):
+		self.length = 30
+		self.values = [ initialValue ] * self.length
+		self.index = 0
+		self.percentile = percentile
+
+	def __call__(self):
+		return np.percentile(self.values, self.percentile)
+
+	def __iadd__(self, newValue):
+		self.values[self.index] = newValue
+		self.index = (self.index + 1) % self.length
+		return self
+
 class BrownoutProxy:
 	class Request(object):
 		__slots__ = ('requestId', 'replyTo', 'expectedStartTime', 'expectedResponseTime', 'generatedAt')
 
-	def __init__(self, sim, server, setPoint = 0.5):
+	def __init__(self, sim, server, setPoint = 0.5, queueCut = True):
 		self._sim = sim
 		self._server = server
 		self._requests = {}
 		self._timeToProcess = 0
 		self._lastTimeToProcessAdjustment = 0
-		self._timeY = 0.075
+		self._timeY = PercentileFilter(0.073)
+		self._timeN = PercentileFilter(0.001)
 		self.setPoint = setPoint
 		self.forgettingFactor = 0.2
 		self._activeRequests = 0
-		self._lastReplyWithOptional = 0
+		self._lastReply = 0
+		self.queueCut = queueCut # otherwise cut based on time to process
 
 	def request(self, requestId, replyTo, headers):
 		request = BrownoutProxy.Request()
@@ -33,14 +52,17 @@ class BrownoutProxy:
 			self._timeToProcess = 0
 
 		request.expectedStartTime = self._sim.now + self._timeToProcess
-		if self._timeToProcess + self._timeY < self.setPoint:
+		if self._timeToProcess + self._timeY() < self.setPoint:
 			withOptional = True
-			self._timeToProcess += self._timeY
+			self._timeToProcess += self._timeY()
 		else:
 			withOptional = False
+			self._timeToProcess += self._timeN()
 		request.expectedResponseTime = self._timeToProcess
 
 		self._activeRequests += 1
+		if queueCut:
+			withOptional = (self._activeRequests < (self.setPoint / self._timeY()))
 		headers['withOptional'] = withOptional
 		self._server.request(requestId, self, headers)
 
@@ -55,16 +77,23 @@ class BrownoutProxy:
 		request = self._requests[requestId]
 		request.replyTo.reply(requestId, headers)
 		
-		if headers['withOptional']:
-			self._timeY = 0.9 * self._timeY + 0.1 * min(self._sim.now - self._lastReplyWithOptional, 0.1)
-			self._lastReplyWithOptional = self._sim.now
-
 		responseTime = self._sim.now - request.generatedAt
+		if headers['withOptional']:
+			newTimeY = min(self._sim.now - self._lastReply, responseTime)
+			newTimeN = float('NaN')
+			self._timeY += newTimeY
+		else:
+			newTimeY = float('NaN')
+			newTimeN = min(self._sim.now - self._lastReply, responseTime)
+			self._timeN += newTimeN
+		self._lastReply = self._sim.now
+
 
 		# Report
 		self._sim.report(str(self) + '-return-path',
-			( 'responseTime', 'expectedResponseTime', 'withOptional', 'timeY'),
-			( responseTime, request.expectedResponseTime, '1' if headers['withOptional'] else '0', self._timeY),
+			( 'responseTime', 'withOptional', 'newTimeY', 'newTimeN', 'timeY', 'timeN'),
+			( responseTime, '1' if headers['withOptional'] else '0',
+			newTimeY, newTimeN, self._timeY(), self._timeN()),
 		)
 
 	def __str__(self):
