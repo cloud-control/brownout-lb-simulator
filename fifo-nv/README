@@ -1,0 +1,9 @@
+Discipline: FIFO
+Service times:
+- timeY: 0.07 (no variance)
+- timeN: 0.00067 (no variance)
+
+Brownout schemes:
+- time-cut with perfect information
+- queue-cut (q<7)
+- queue-cut (q<8)
