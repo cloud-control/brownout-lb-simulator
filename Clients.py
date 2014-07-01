@@ -66,12 +66,8 @@ class Client:
 
 		# Report
 		self._sim.report(self,
-			generatedAt = generatedAt,
-			sentAt = sentAt,
-			repliedAt = repliedAt,
-			responseTime = responseTime,
-			withOptional  = 1 if withOptional else 0,
-			withOptional2 = 1 if withOptional2 else 0,
+			('generatedAt', 'sentAt', 'repliedAt', 'responseTime', 'withOptional', 'withOptional2'),
+			( generatedAt, sentAt, repliedAt, responseTime, 1 if withOptional else 0, 1 if withOptional2 else 0),
 		)
 		
 	def setRate(self, rate):

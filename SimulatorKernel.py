@@ -66,20 +66,16 @@ class SimulatorKernel:
 	# @param kwargs metrics to output
 	# @note current simulation time is prepended
 	# is added.
-	def report(self, issuer, **kwargs):
-		keys = kwargs.keys()
-		keys.sort()
-
-		if issuer not in self.outputFiles:
+	def report(self, issuer, header, values):
+		outputFile = self.outputFiles.get(issuer)
+		if outputFile is None:
 			outputFilename = 'sim-' + str(issuer) + '.csv'
 			outputFilename = os.path.join(self.outputDirectory, outputFilename)
 			outputFile = open(outputFilename, 'w')
-			print('now', *keys, sep = ',', file = outputFile)
+			print('now', *header, sep = ',', file = outputFile)
 			self.outputFiles[issuer] = outputFile
 
-		stringValues = [ str(kwargs[k]) for k in keys ]
-		outputFile = self.outputFiles[issuer]
-		print(self.now, *stringValues, sep = ',', file = outputFile)
+		print(self.now, *values, sep = ',', file = outputFile)
 
 	## Pretty-print the simulator kernel's name
 	def __str__(self):

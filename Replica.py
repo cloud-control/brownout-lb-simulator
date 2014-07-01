@@ -89,9 +89,8 @@ class Replica:
 
 		# Report
 		self._sim.report(self,
-			avgLatency = avg(self._latestLatencies),
-			maxLatency = maxOrNan(self._latestLatencies),
-			utilization = utilization,
+			( 'avgLatency', 'maxLatency', 'utilization' ),
+			( avg(self._latestLatencies), maxOrNan(self._latestLatencies), utilization),
 		)
 
 		# Re-run later

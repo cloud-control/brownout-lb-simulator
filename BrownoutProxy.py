@@ -46,9 +46,8 @@ class BrownoutProxy:
 
 		# Report
 		self._sim.report(str(self) + '-forward-path',
-			timeToProcess = self._timeToProcess,
-			withOptional = '1' if headers['withOptional'] else '0',
-			activeRequests = self._activeRequests,
+			( 'timeToProcess', 'withOptional', 'activeRequests' ),
+			( self._timeToProcess, '1' if headers['withOptional'] else '0', self._activeRequests),
 		)
 
 	def reply(self, requestId, headers):
@@ -64,10 +63,8 @@ class BrownoutProxy:
 
 		# Report
 		self._sim.report(str(self) + '-return-path',
-			responseTime = responseTime,
-			expectedResponseTime = request.expectedResponseTime,
-			withOptional = '1' if headers['withOptional'] else '0',
-			timeY = self._timeY,
+			( 'responseTime', 'expectedResponseTime', 'withOptional', 'timeY'),
+			( responseTime, request.expectedResponseTime, '1' if headers['withOptional'] else '0', self._timeY),
 		)
 
 	def __str__(self):
