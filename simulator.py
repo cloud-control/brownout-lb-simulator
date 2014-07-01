@@ -55,7 +55,7 @@ def main():
 		brownoutProxy = BrownoutProxy(sim = sim, server = replica)
 		client = Client(sim = sim, server = brownoutProxy, rate = arrivalRate)
 
-		sim.run(until = 100)
+		sim.run(until = 1000)
 
 		# Report results
 		rtAvg = avg(client.responseTimes)
