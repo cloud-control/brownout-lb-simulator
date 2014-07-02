@@ -19,9 +19,9 @@ class PercentileFilter:
 
 class BrownoutProxy:
 	class Request(object):
-		__slots__ = ('requestId', 'replyTo', 'expectedStartTime', 'expectedResponseTime', 'generatedAt')
+		__slots__ = ('requestId', 'replyTo', 'generatedAt')
 
-	def __init__(self, sim, server, setPoint = 0.5, queueCut = True):
+	def __init__(self, sim, server, setPoint = 0.5, queueCut = True, processorSharing = True):
 		self._sim = sim
 		self._server = server
 		self._requests = {}
@@ -34,6 +34,7 @@ class BrownoutProxy:
 		self._activeRequests = 0
 		self._lastReply = 0
 		self.queueCut = queueCut # otherwise cut based on time to process
+		self.processorSharing = processorSharing
 
 	def request(self, requestId, replyTo, headers):
 		request = BrownoutProxy.Request()
@@ -51,18 +52,20 @@ class BrownoutProxy:
 		if self._timeToProcess < 0:
 			self._timeToProcess = 0
 
-		request.expectedStartTime = self._sim.now + self._timeToProcess
-		if self._timeToProcess + self._timeY() < self.setPoint:
-			withOptional = True
-			self._timeToProcess += self._timeY()
-		else:
-			withOptional = False
-			self._timeToProcess += self._timeN()
-		request.expectedResponseTime = self._timeToProcess
-
-		self._activeRequests += 1
 		if self.queueCut:
 			withOptional = (self._activeRequests < (self.setPoint / self._timeY()))
+		else:
+			if self.processorSharing:
+				withOptional = self._activeRequests * self._timeY() < self.setPoint
+			else:
+				withOptional = self._timeToProcess + self._timeY() < self.setPoint
+
+		if withOptional:
+			self._timeToProcess += self._timeY()
+		else:
+			self._timeToProcess += self._timeN()
+
+		self._activeRequests += 1
 		headers['withOptional'] = withOptional
 		self._server.request(requestId, self, headers)
 
@@ -73,21 +76,26 @@ class BrownoutProxy:
 		)
 
 	def reply(self, requestId, headers):
-		self._activeRequests -= 1
 		request = self._requests[requestId]
 		request.replyTo.reply(requestId, headers)
 		
 		responseTime = self._sim.now - request.generatedAt
+		if self.processorSharing:
+			serviceTime = responseTime / self._activeRequests
+		else:
+			serviceTime = min(self._sim.now - self._lastReply, responseTime)
+
 		if headers['withOptional']:
-			newTimeY = min(self._sim.now - self._lastReply, responseTime)
+			newTimeY = serviceTime
 			newTimeN = float('NaN')
 			self._timeY += newTimeY
 		else:
 			newTimeY = float('NaN')
-			newTimeN = min(self._sim.now - self._lastReply, responseTime)
+			newTimeN = serviceTime
 			self._timeN += newTimeN
 		self._lastReply = self._sim.now
 
+		self._activeRequests -= 1
 
 		# Report
 		self._sim.report(str(self) + '-return-path',

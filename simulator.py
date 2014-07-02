@@ -24,23 +24,16 @@ def main():
 	parser = argparse.ArgumentParser( \
 		description='Run brownout load balancer simulation.', \
 		formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-	parser.add_argument('--timeSlice',
-		type = float,
-		help = 'Time-slice of server scheduler',
-		default = 0.01)
-
-	group = parser.add_argument_group('rc', 'General replica controller options')
-	group.add_argument('--rcSetpoint',
-		type = float,
-		help = 'Replica controller setpoint',
-		default = 1)
-	group.add_argument('--rcPercentile',
-		type = float,
-		help = 'What percentile reponse time to drive to target',
-		default = 95)
+	parser.add_argument('--processorSharing',
+		help = 'Use processor sharing service discipline (default: %default)',
+		default = False)
+	parser.add_argument('--queueCut',
+		help = 'Cut based on queue-length, not processing time (default: %default)',
+		default = False)
 
 	args = parser.parse_args()
 
+	print("#", ' '.join(sys.argv))
 	print("arrivalRate,rtAvg,rt95,rt99,rt999,rtMax,optionalRatio,utilization")
 
 	for arrivalRate in range(1, 50):
@@ -51,8 +44,13 @@ def main():
 			pass
 
 		sim = SimulatorKernel(outputDirectory = outDir)
-		replica = Replica(sim = sim, timeSlice = args.timeSlice)
-		brownoutProxy = BrownoutProxy(sim = sim, server = replica)
+		replica = Replica(sim = sim,
+			timeSlice = 0.01 if args.processorSharing else 1)
+
+		brownoutProxy = BrownoutProxy(sim = sim, server = replica,
+			processorSharing = args.processorSharing,
+			queueCut = args.queueCut)
+
 		client = Client(sim = sim, server = brownoutProxy, rate = arrivalRate)
 
 		sim.run(until = 100)
