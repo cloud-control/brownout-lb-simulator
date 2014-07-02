@@ -67,7 +67,11 @@ class BrownoutProxy:
 			withOptional = (self._activeRequests < (self.setPoint / self._timeY()))
 		else:
 			if self.processorSharing:
-				withOptional = self._activeRequests * self._timeY() < self.setPoint
+				# TODO: Does not work! timeToProcess is accumulating
+				estimatedResponseTime = self._timeY() * self._activeRequests
+				if self._activeRequests > 1:
+					estimatedResponseTime = self._timeToProcess * self._activeRequests / (self._activeRequests - 1)
+				withOptional = estimatedResponseTime < self.setPoint
 			else:
 				withOptional = self._timeToProcess + self._timeY() < self.setPoint
 
