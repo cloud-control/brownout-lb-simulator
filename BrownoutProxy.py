@@ -35,7 +35,7 @@ class BrownoutProxy:
 		if processorSharing:
 			varianceWeight = 0.8
 		else:
-			varianceWeight = 0.4
+			varianceWeight = 2
 
 		self._timeY = VarianceBasedFilter(initialValue = 0.200, varianceWeight = varianceWeight)
 		self._timeN = VarianceBasedFilter(initialValue = 0.001, varianceWeight = varianceWeight)
