@@ -32,6 +32,10 @@ def main():
 		help = 'Brownout method to deactive optional content',
 		choices = [ 'queuecut', 'timecut' ],
 		default = 'queuecut')
+	parser.add_argument('--seed',
+		help = 'Seed to initialize random number generators',
+		type = int,
+		default = 1)
 
 	args = parser.parse_args()
 
@@ -47,13 +51,14 @@ def main():
 
 		sim = SimulatorKernel(outputDirectory = outDir)
 		replica = Replica(sim = sim,
+			seed = args.seed,
 			timeSlice = 0.01 if args.discipline == 'ps' else 1)
 
 		brownoutProxy = BrownoutProxy(sim = sim, server = replica,
 			processorSharing = True if args.discipline == 'ps' else False,
 			queueCut = True if args.brownoutMethod == 'queuecut' else False)
 
-		client = Client(sim = sim, server = brownoutProxy, rate = arrivalRate)
+		client = Client(sim = sim, server = brownoutProxy, rate = arrivalRate, seed = args.seed)
 
 		sim.run(until = 100)
 
