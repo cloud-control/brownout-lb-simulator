@@ -71,27 +71,32 @@ def main():
 	args = parser.parse_args()
 
 	header = None
-	for arrivalRate in range(1, 10) + range(10, 100, 10):
-		outDir = 'results-{0:02d}'.format(arrivalRate)
-		try:
-			os.makedirs(outDir)
-		except:
-			pass
+	for seed in range(1, 10):
+		for arrivalRate in range(1, 10) + range(10, 100, 10):
+			parameters = {
+				'arrivalRate'   : arrivalRate,
+				'discipline'    : args.discipline,
+				'brownoutMethod': args.brownoutMethod,
+				'seed'          : seed,
+			}
 
-		parameters = {
-			'arrivalRate'   : arrivalRate,
-			'discipline'    : args.discipline,
-			'brownoutMethod': args.brownoutMethod,
-			'outDir'        : outDir,
-			'seed'          : args.seed,
-		}
-		metrics = runSimulation(**parameters)
+			outDir = '-'.join(
+				['results'] +
+				[v for v in parameters.itervalues() if type(v) == str] +
+				['{0}{1:04d}'.format(k, v) for k, v in parameters.iteritems() if type(v) == int]
+			)
+			try:
+				os.makedirs(outDir)
+			except:
+				pass
+			parameters['outDir'] = outDir
+			metrics = runSimulation(**parameters)
 
-		if header is None:
-			header = sorted(parameters) + sorted(metrics)
-			print(*header, sep = ',')
-		metrics.update(parameters)
-		print(*[ metrics[k] for k in header ], sep = ',')
+			if header is None:
+				header = sorted(parameters) + sorted(metrics)
+				print(*header, sep = ',')
+			metrics.update(parameters)
+			print(*[ metrics[k] for k in header ], sep = ',')
 
 if __name__ == "__main__":
 	main()
