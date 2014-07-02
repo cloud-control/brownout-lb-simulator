@@ -25,10 +25,12 @@ def main():
 		description='Run brownout load balancer simulation.', \
 		formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 	parser.add_argument('--processorSharing',
-		help = 'Use processor sharing service discipline (default: %default)',
+		type = bool,
+		help = 'Use processor sharing service discipline',
 		default = False)
 	parser.add_argument('--queueCut',
-		help = 'Cut based on queue-length, not processing time (default: %default)',
+		type = bool,
+		help = 'Cut based on queue-length, not processing time',
 		default = False)
 
 	args = parser.parse_args()
