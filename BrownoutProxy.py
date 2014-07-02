@@ -4,14 +4,14 @@ from math import sqrt
 import numpy as np
 
 class VarianceBasedFilter:
-	def __init__(self, varianceWeight, initialValue):
+	def __init__(self, sigmaWeight, initialValue):
 		self.t = 0
 		self.mean = initialValue
 		self.variance = 0
-		self.varianceWeight = varianceWeight
+		self.sigmaWeight = sigmaWeight
 
 	def __call__(self):
-		return self.mean + self.varianceWeight * sqrt(self.variance)
+		return self.mean + self.sigmaWeight * sqrt(self.variance)
 
 	def __iadd__(self, newValue):
 		self.t += 1
@@ -33,12 +33,12 @@ class BrownoutProxy:
 
 		# XXX: determined empirically
 		if processorSharing:
-			varianceWeight = 0.8
+			sigmaWeight = 0.8
 		else:
-			varianceWeight = 2
+			sigmaWeight = 2
 
-		self._timeY = VarianceBasedFilter(initialValue = 0.200, varianceWeight = varianceWeight)
-		self._timeN = VarianceBasedFilter(initialValue = 0.001, varianceWeight = varianceWeight)
+		self._timeY = VarianceBasedFilter(initialValue = 0.200, sigmaWeight = sigmaWeight)
+		self._timeN = VarianceBasedFilter(initialValue = 0.001, sigmaWeight = sigmaWeight)
 		self.setPoint = setPoint
 		self.forgettingFactor = 0.2
 		self._activeRequests = 0
