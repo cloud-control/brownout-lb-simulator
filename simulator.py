@@ -85,6 +85,7 @@ def main():
 					'discipline'    : args.discipline,
 					'brownoutMethod': args.brownoutMethod,
 					'seed'          : seed,
+					'relativeDeviation': relativeDeviation,
 					'timeYmu'       : 0.07,
 					'timeYsigma'    : 0.07 * relativeDeviation / 100,
 					'timeNmu'       : 0.00067,
