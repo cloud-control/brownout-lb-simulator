@@ -66,7 +66,8 @@ class BrownoutProxy(object):
 
 		self._activeRequests += 1
 		if self.queueCut:
-			withOptional = (self._activeRequests < (self.setPoint / self._timeY()))
+			withOptional = ((self._activeRequests == 1) or
+				(self._activeRequests < (self.setPoint / self._timeY())))
 		else:
 			if self.processorSharing:
 				# TODO: Does not work! timeToProcess is accumulating
