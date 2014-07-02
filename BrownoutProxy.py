@@ -1,20 +1,23 @@
 from __future__ import division, print_function
 
+from math import sqrt
 import numpy as np
 
-class PercentileFilter:
-	def __init__(self, initialValue, percentile = 90):
-		self.length = 30
-		self.values = [ initialValue ] * self.length
-		self.index = 0
-		self.percentile = percentile
+class Filter:
+	def __init__(self, initialValue):
+		self.t = 0
+		self.mean = initialValue
+		self.variance = 0
 
 	def __call__(self):
-		return np.percentile(self.values, self.percentile)
+		# XXX: 0.4 determined empirically
+		return self.mean + 0.4 * sqrt(self.variance)
 
 	def __iadd__(self, newValue):
-		self.values[self.index] = newValue
-		self.index = (self.index + 1) % self.length
+		self.t += 1
+		self.mean = (self.t - 1) / self.t * self.mean + 1.0 / self.t * newValue
+		if self.t > 1:
+			self.variance = (self.t - 1) / self.t * self.variance + 1.0 / (self.t - 1) * (newValue - self.mean) ** 2
 		return self
 
 class BrownoutProxy:
@@ -27,8 +30,8 @@ class BrownoutProxy:
 		self._requests = {}
 		self._timeToProcess = 0
 		self._lastTimeToProcessAdjustment = 0
-		self._timeY = PercentileFilter(0.073)
-		self._timeN = PercentileFilter(0.001)
+		self._timeY = Filter(0.200)
+		self._timeN = Filter(0.001)
 		self.setPoint = setPoint
 		self.forgettingFactor = 0.2
 		self._activeRequests = 0
@@ -52,6 +55,7 @@ class BrownoutProxy:
 		if self._timeToProcess < 0:
 			self._timeToProcess = 0
 
+		self._activeRequests += 1
 		if self.queueCut:
 			withOptional = (self._activeRequests < (self.setPoint / self._timeY()))
 		else:
@@ -65,7 +69,6 @@ class BrownoutProxy:
 		else:
 			self._timeToProcess += self._timeN()
 
-		self._activeRequests += 1
 		headers['withOptional'] = withOptional
 		self._server.request(requestId, self, headers)
 
