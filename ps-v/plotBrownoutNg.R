@@ -1,7 +1,7 @@
 qcA = read.csv('queue-cut-6.csv')
-qcB = read.csv('queue-cut-6.csv')
-tcA = read.csv('queue-cut-6.csv')
-tcB = read.csv('queue-cut-6.csv')
+qcB = read.csv('queue-cut-est.csv')
+tcA = read.csv('queue-cut-est-hv.csv')
+tcB = read.csv('time-cut-est.csv')
 
 par(mfrow=c(4,1), lwd = 2,
     oma = c(4,1,0,0) + 0.1,
@@ -16,7 +16,7 @@ points(qcA$arrivalRate, qcA$optionalRatio, type = 'l', col = 'darkgreen' )
 points(qcB$arrivalRate, qcB$optionalRatio, type = 'l', col = 'darkblue'  )
 
 legend('topright',
-       legend = c('Time Cut (timeY=0.073)', 'Time Cut (est)', 'Queue Cut (q<6)', 'Queue Cut (est)'),
+       legend = c('Queue Cut HV', 'Time Cut (est)', 'Queue Cut (q<6)', 'Queue Cut (est)'),
        col = c('darkred', 'darkviolet', 'darkgreen', 'darkblue'), lty = 1)
 
 plot(c(0, max(tcA$arrivalRate)), c(0.1, 0.6), type = 'n',
