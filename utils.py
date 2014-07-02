@@ -47,10 +47,10 @@ def maxOrNan(numbers):
 def normalize(numbers):
 	if len(numbers) == 0:
 		# Nothing to do
-		return [ ]
-	
-	s = sum(numbers)
-	if s == 0:
+		return []
+
+	total = sum(numbers)
+	if total == 0:
 	# How to normalize a zero vector is a matter of much debate
-		return [ float('nan') ] * len(numbers)
-	return [ n / s for n in numbers ]
+		return [float('nan')] * len(numbers)
+	return [n / total for n in numbers]

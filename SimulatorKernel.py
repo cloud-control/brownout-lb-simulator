@@ -6,9 +6,9 @@ import sys
 
 ## Simulation kernel.
 # Implements an event-driven simulator
-class SimulatorKernel:
+class SimulatorKernel(object):
 	## Constructor
-	def __init__(self, outputDirectory = '.'):
+	def __init__(self, outputDirectory='.'):
 		## events indexed by time
 		self.events = []
 		## current simulation time
@@ -30,7 +30,7 @@ class SimulatorKernel:
 
 	## Run the simulation
 	# @param until time limit to stop simulation
-	def run(self, until = 2000):
+	def run(self, until=2000):
 		while self.events:
 			self.now, event = heappop(self.events)
 			if self.now > until:
@@ -47,8 +47,8 @@ class SimulatorKernel:
 	# @param message the message, first input to String.format
 	# @param *args,**kwargs additional arguments to pass to String.format
 	def log(self, issuer, message, *args, **kwargs):
-		print("{0:.6f}".format(self.now), str(issuer), \
-			message.format(*args, **kwargs), file = sys.stderr)
+		print("{0:.6f}".format(self.now), str(issuer),
+			message.format(*args, **kwargs), file=sys.stderr)
 
 	## Report simulation data as CSV
 	# This function is designed to simplify outputting metrics from a simulated
@@ -58,16 +58,17 @@ class SimulatorKernel:
 	# @param kwargs metrics to output
 	# @note current simulation time is prepended
 	# is added.
+	# pylint: disable=star-args
 	def report(self, issuer, header, values):
 		outputFile = self.outputFiles.get(issuer)
 		if outputFile is None:
 			outputFilename = 'sim-' + str(issuer) + '.csv'
 			outputFilename = os.path.join(self.outputDirectory, outputFilename)
 			outputFile = open(outputFilename, 'w')
-			print('now', *header, sep = ',', file = outputFile)
+			print('now', *header, sep=',', file=outputFile)
 			self.outputFiles[issuer] = outputFile
 
-		print(self.now, *values, sep = ',', file = outputFile)
+		print(self.now, *values, sep=',', file=outputFile)
 
 	## Pretty-print the simulator kernel's name
 	def __str__(self):
