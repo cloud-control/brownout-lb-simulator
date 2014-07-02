@@ -36,7 +36,7 @@ def main():
 	print("#", ' '.join(sys.argv))
 	print("arrivalRate,rtAvg,rt95,rt99,rt999,rtMax,optionalRatio,utilization")
 
-	for arrivalRate in range(1, 50):
+	for arrivalRate in range(1, 10) + range(10, 100, 10):
 		outDir = 'results-{0:02d}'.format(arrivalRate)
 		try:
 			os.makedirs(outDir)
