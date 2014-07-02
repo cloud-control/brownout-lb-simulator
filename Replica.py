@@ -25,22 +25,15 @@ class Replica:
 	# @note The constructor adds an event into the simulator
 	def __init__(self, sim, seed = 1,
 			timeSlice = 0.01,
-			serviceTimeY = 0.07, serviceTimeN = 0.00067,
-			serviceTimeYVariance = 0.01, serviceTimeNVariance = 0.0001,
-			minimumServiceTime = 0.0001,
+			timeY = (0.07, 0.01),
+			timeN = (0.00067, 0.0001),
 			replicaId = 0):
 		## time slice for scheduling requests (server model parameter)
 		self.timeSlice = timeSlice
-		## service time with optional content (server model parameter)
-		self.serviceTimeY = serviceTimeY
-		## service time without optional content (server model parameter)
-		self.serviceTimeN = serviceTimeN
-		## service time variance with optional content (server model parameter)
-		self.serviceTimeYVariance = serviceTimeYVariance
-		## service time variance without optional content (server model parameter)
-		self.serviceTimeNVariance = serviceTimeNVariance
-		## minimum service time, despite variance (server model parameter)
-		self.minimumServiceTime = minimumServiceTime
+		## service time (mean and standard deviation) with optional content (server model parameter)
+		self.timeY = timeY
+		## service time (mean and standard deviation) without optional content (server model parameter)
+		self.timeN = timeN
 		## how often to report metrics
 		self.reportPeriod = 1
 		## list of active requests (server model variable)
@@ -118,13 +111,10 @@ class Replica:
 		self._activeRequests.append(request)
 
 	def drawServiceTime(self, withOptional):
-		serviceTime, variance = (self.serviceTimeY, self.serviceTimeYVariance) \
-			if withOptional else \
-			(self.serviceTimeN, self.serviceTimeNVariance)
+		mu, sigma = self.timeY \
+			if withOptional else self.timeN
 
-		serviceTime = \
-			max(self._random.normalvariate(serviceTime, variance), self.minimumServiceTime)
-		
+		serviceTime = max(self._random.normalvariate(mu, sigma), 0)
 		return serviceTime
 
 	## Event handler for scheduling active requests.
