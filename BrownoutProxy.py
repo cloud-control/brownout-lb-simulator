@@ -3,15 +3,15 @@ from __future__ import division, print_function
 from math import sqrt
 import numpy as np
 
-class Filter:
-	def __init__(self, initialValue):
+class VarianceBasedFilter:
+	def __init__(self, varianceWeight, initialValue):
 		self.t = 0
 		self.mean = initialValue
 		self.variance = 0
+		self.varianceWeight = varianceWeight
 
 	def __call__(self):
-		# XXX: 0.4 determined empirically
-		return self.mean + 0.4 * sqrt(self.variance)
+		return self.mean + self.varianceWeight * sqrt(self.variance)
 
 	def __iadd__(self, newValue):
 		self.t += 1
@@ -30,8 +30,15 @@ class BrownoutProxy:
 		self._requests = {}
 		self._timeToProcess = 0
 		self._lastTimeToProcessAdjustment = 0
-		self._timeY = Filter(0.200)
-		self._timeN = Filter(0.001)
+
+		# XXX: determined empirically
+		if processorSharing:
+			varianceWeight = 0.8
+		else:
+			varianceWeight = 0.4
+
+		self._timeY = VarianceBasedFilter(initialValue = 0.200, varianceWeight = varianceWeight)
+		self._timeN = VarianceBasedFilter(initialValue = 0.001, varianceWeight = varianceWeight)
 		self.setPoint = setPoint
 		self.forgettingFactor = 0.2
 		self._activeRequests = 0
