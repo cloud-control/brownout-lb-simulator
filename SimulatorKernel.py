@@ -1,7 +1,6 @@
 from __future__ import print_function
 
-from collections import deque
-from heapq import heappush, heappop, heapify
+from heapq import heappush, heappop
 import os
 import sys
 
@@ -32,18 +31,11 @@ class SimulatorKernel:
 	## Run the simulation
 	# @param until time limit to stop simulation
 	def run(self, until = 2000):
-		numEvents = 0
 		while self.events:
-			prevNow = self.now
 			self.now, event = heappop(self.events)
-			#if int(prevNow / 100) < int(self.now / 100):
-			#	self.log(self, "progressing, handled {0} events", numEvents)
-
 			if self.now > until:
 				return
 			event()
-			numEvents += 1
-		self.log(self, "Handled {0} events", numEvents)
 
 	## Log a simulation message.
 	# This function is designed to simplify logging inside the simulator. It

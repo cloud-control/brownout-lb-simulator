@@ -1,11 +1,12 @@
 from __future__ import division, print_function
 
+from collections import namedtuple
 from math import sqrt
-import numpy as np
 
-class VarianceBasedFilter:
+# pylint: disable=too-few-public-methods
+class VarianceBasedFilter(object):
 	def __init__(self, sigmaWeight, initialValue):
-		self.t = 0
+		self.num = 0
 		self.mean = initialValue
 		self.variance = 0
 		self.sigmaWeight = sigmaWeight
@@ -14,17 +15,18 @@ class VarianceBasedFilter:
 		return self.mean + self.sigmaWeight * sqrt(self.variance)
 
 	def __iadd__(self, newValue):
-		self.t += 1
-		self.mean = (self.t - 1) / self.t * self.mean + 1.0 / self.t * newValue
-		if self.t > 1:
-			self.variance = (self.t - 1) / self.t * self.variance + 1.0 / (self.t - 1) * (newValue - self.mean) ** 2
+		self.num += 1
+		self.mean = (self.num - 1) / self.num * self.mean + 1.0 / self.num * newValue
+		if self.num > 1:
+			self.variance = (
+				(self.num - 1) / self.num * self.variance +
+				1.0 / (self.num - 1) * (newValue - self.mean) ** 2)
 		return self
 
-class BrownoutProxy:
-	class Request(object):
-		__slots__ = ('requestId', 'replyTo', 'generatedAt')
+class BrownoutProxy(object):
+	def __init__(self, sim, server, setPoint=0.5, queueCut=True,
+		processorSharing=True):
 
-	def __init__(self, sim, server, setPoint = 0.5, queueCut = True, processorSharing = True):
 		self._sim = sim
 		self._server = server
 		self._requests = {}
@@ -33,12 +35,12 @@ class BrownoutProxy:
 
 		# XXX: determined empirically
 		if processorSharing:
-			sigmaWeight = 0.8
+			sigmaWeight = 2
 		else:
 			sigmaWeight = 2
 
-		self._timeY = VarianceBasedFilter(initialValue = 0.200, sigmaWeight = sigmaWeight)
-		self._timeN = VarianceBasedFilter(initialValue = 0.001, sigmaWeight = sigmaWeight)
+		self._timeY = VarianceBasedFilter(initialValue=0.200, sigmaWeight=sigmaWeight)
+		self._timeN = VarianceBasedFilter(initialValue=0.001, sigmaWeight=sigmaWeight)
 		self.setPoint = setPoint
 		self.forgettingFactor = 0.2
 		self._activeRequests = 0
@@ -47,7 +49,7 @@ class BrownoutProxy:
 		self.processorSharing = processorSharing
 
 	def request(self, requestId, replyTo, headers):
-		request = BrownoutProxy.Request()
+		request = namedtuple('Request', ['generatedAt', 'replyTo', 'requestId'])
 		request.generatedAt = self._sim.now
 		request.replyTo = replyTo
 		request.requestId = requestId
@@ -55,10 +57,10 @@ class BrownoutProxy:
 		self._requests[requestId] = request
 		headers = dict(headers) # copy
 
-		dt = self._sim.now - self._lastTimeToProcessAdjustment
+		timeSinceLastRequest = self._sim.now - self._lastTimeToProcessAdjustment
 		self._lastTimeToProcessAdjustment = self._sim.now
 
-		self._timeToProcess -= dt
+		self._timeToProcess -= timeSinceLastRequest
 		if self._timeToProcess < 0:
 			self._timeToProcess = 0
 
@@ -70,7 +72,8 @@ class BrownoutProxy:
 				# TODO: Does not work! timeToProcess is accumulating
 				estimatedResponseTime = self._timeY() * self._activeRequests
 				if self._activeRequests > 1:
-					estimatedResponseTime = self._timeToProcess * self._activeRequests / (self._activeRequests - 1)
+					estimatedResponseTime = \
+						self._timeToProcess * self._activeRequests / (self._activeRequests - 1)
 				withOptional = estimatedResponseTime < self.setPoint
 			else:
 				withOptional = self._timeToProcess + self._timeY() < self.setPoint
@@ -85,14 +88,15 @@ class BrownoutProxy:
 
 		# Report
 		self._sim.report(str(self) + '-forward-path',
-			( 'timeToProcess', 'withOptional', 'activeRequests' ),
-			( self._timeToProcess, '1' if headers['withOptional'] else '0', self._activeRequests),
+			('timeToProcess', 'withOptional', 'activeRequests'),
+			(self._timeToProcess, '1' if headers['withOptional'] else '0',
+			self._activeRequests),
 		)
 
 	def reply(self, requestId, headers):
 		request = self._requests[requestId]
 		request.replyTo.reply(requestId, headers)
-		
+
 		responseTime = self._sim.now - request.generatedAt
 		if self.processorSharing:
 			serviceTime = responseTime / self._activeRequests
@@ -113,8 +117,8 @@ class BrownoutProxy:
 
 		# Report
 		self._sim.report(str(self) + '-return-path',
-			( 'responseTime', 'withOptional', 'newTimeY', 'newTimeN', 'timeY', 'timeN'),
-			( responseTime, '1' if headers['withOptional'] else '0',
+			('responseTime', 'withOptional', 'newTimeY', 'newTimeN', 'timeY', 'timeN'),
+			(responseTime, '1' if headers['withOptional'] else '0',
 			newTimeY, newTimeN, self._timeY(), self._timeN()),
 		)
 

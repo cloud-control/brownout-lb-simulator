@@ -8,13 +8,14 @@ from __future__ import division, print_function
 import argparse
 import os
 from os.path import join as pathjoin
-import sys
 import numpy as np
 
-from BrownoutProxy import *
-from Clients import *
-from Replica import *
-from SimulatorKernel import *
+from BrownoutProxy import BrownoutProxy
+from Clients import Client
+from Replica import Replica
+from SimulatorKernel import SimulatorKernel
+
+from utils import avg
 
 ## @package simulator Main simulator namespace
 
@@ -74,8 +75,8 @@ def main():
 	args = parser.parse_args()
 
 	header = None
-	for relativeDeviation in range(1, 30):
-		for seed in range(1, 10):
+	for relativeDeviation in range(1, 50):
+		for seed in range(1, 4):
 			for arrivalRate in range(1, 10) + range(10, 100, 10):
 				parameters = {
 					'arrivalRate'   : arrivalRate,
@@ -95,7 +96,7 @@ def main():
 				)
 				try:
 					os.makedirs(outDir)
-				except:
+				except OSError:
 					pass
 				parameters['outDir'] = outDir
 				metrics = runSimulation(**parameters)

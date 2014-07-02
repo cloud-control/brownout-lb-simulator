@@ -1,8 +1,7 @@
-from collections import defaultdict, deque
+from collections import deque
 import random as xxx_random # prevent accidental usage
-import numpy as np
 
-from utils import *
+from utils import avg, maxOrNan
 
 ## Represents a replica capable of executing (or not) optional code.
 # Current implementation simulates processor-sharing with an infinite number of
