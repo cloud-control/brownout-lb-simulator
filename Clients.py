@@ -7,7 +7,7 @@ class Client:
 	# @param sim Simulator to attach client to
 	# @param server server-like entity to which requests are sent
 	# @param rate average arrival rate
-	def __init__(self, sim, server, rate = 0, seed = 1):
+	def __init__(self, sim, server, rate = 0, seed = 1, warmUpTime = 10):
 		## average arrival rate (model parameter)
 		self._rate = rate
 
@@ -27,6 +27,8 @@ class Client:
 		self.numCompletedRequestsWithOptional = 0
 		## Store all response times (metric)
 		self.responseTimes = []
+		## Give the system some time to warm up
+		self.warmUpTime = warmUpTime
 
 		self._scheduleRequest()
 
@@ -59,10 +61,11 @@ class Client:
 		withOptional = headers.get('withOptional')
 		withOptional2 = headers.get('withOptional2')
 
-		self.numCompletedRequests += 1
-		if withOptional:
-			self.numCompletedRequestsWithOptional += 1
-		self.responseTimes.append(responseTime)
+		if self._sim.now >= self.warmUpTime:
+			self.numCompletedRequests += 1
+			if withOptional:
+				self.numCompletedRequestsWithOptional += 1
+			self.responseTimes.append(responseTime)
 
 		# Report
 		self._sim.report(self,
