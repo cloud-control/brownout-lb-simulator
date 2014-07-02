@@ -24,14 +24,14 @@ def main():
 	parser = argparse.ArgumentParser( \
 		description='Run brownout load balancer simulation.', \
 		formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-	parser.add_argument('--processorSharing',
-		type = bool,
-		help = 'Use processor sharing service discipline',
-		default = False)
-	parser.add_argument('--queueCut',
-		type = bool,
-		help = 'Cut based on queue-length, not processing time',
-		default = False)
+	parser.add_argument('--discipline',
+		help = 'Service discipline',
+		choices = [ 'fifo', 'ps' ],
+		default = 'fifo')
+	parser.add_argument('--brownoutMethod',
+		help = 'Brownout method to deactive optional content',
+		choices = [ 'queuecut', 'timecut' ],
+		default = 'queuecut')
 
 	args = parser.parse_args()
 
@@ -47,11 +47,11 @@ def main():
 
 		sim = SimulatorKernel(outputDirectory = outDir)
 		replica = Replica(sim = sim,
-			timeSlice = 0.01 if args.processorSharing else 1)
+			timeSlice = 0.01 if args.discipline == 'ps' else 1)
 
 		brownoutProxy = BrownoutProxy(sim = sim, server = replica,
-			processorSharing = args.processorSharing,
-			queueCut = args.queueCut)
+			processorSharing = True if args.discipline == 'ps' else False,
+			queueCut = True if args.brownoutMethod == 'queuecut' else False)
 
 		client = Client(sim = sim, server = brownoutProxy, rate = arrivalRate)
 
