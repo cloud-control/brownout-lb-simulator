@@ -21,9 +21,11 @@ from utils import avg
 
 def runSimulation(params):
 	with open(pathjoin(params['outDir'], 'parameters.csv'), 'w') as _file:
-		print('name,value', file=_file)
-		for name, value in sorted(params.iteritems()):
-			print(name, value, sep=',', file=_file)
+		keys = params.keys()
+		# pylint: disable=star-args
+		print(*keys, sep=',', file=_file)
+		print(*[params[key] for key in keys], sep=',', file=_file)
+		# pylint: enable=star-args
 
 	sim = SimulatorKernel(outputDirectory=params['outDir'])
 	replica = Replica(sim=sim,
@@ -43,7 +45,7 @@ def runSimulation(params):
 
 	# Report results
 	# pylint: disable=no-member
-	return {
+	results = {
 		'rtAvg' : avg(client.responseTimes),
 		'rtP95' : np.percentile(client.responseTimes, 95),
 		'rtP99' : np.percentile(client.responseTimes, 99),
@@ -53,6 +55,14 @@ def runSimulation(params):
 		'utilization'  : replica.getActiveTime() / sim.now,
 	}
 	# pylint: enable=no-member
+	with open(pathjoin(params['outDir'], 'results.csv'), 'w') as _file:
+		keys = results.keys()
+		# pylint: disable=star-args
+		print(*keys, sep=',', file=_file)
+		print(*[results[key] for key in keys], sep=',', file=_file)
+		# pylint: enable=star-args
+
+	return results
 
 ## Entry-point for simulator.
 # Setups up all entities, then runs simulation.
