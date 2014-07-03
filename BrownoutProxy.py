@@ -54,11 +54,10 @@ class BrownoutProxy(object):
 		self._timeToProcess = 0
 		self._lastTimeToProcessAdjustment = 0
 
-		# XXX: determined empirically
 		if processorSharing:
 			sigmaWeight = 2
 		else:
-			sigmaWeight = 2
+			sigmaWeight = 2 # corresponds to 99.73th percentile, shown empirically to work
 
 		self._timeY = VarianceBasedFilter(initialValue=0.200, sigmaWeight=sigmaWeight)
 		self._timeN = VarianceBasedFilter(initialValue=0.001, sigmaWeight=sigmaWeight)
