@@ -1,12 +1,16 @@
-from collections import deque, namedtuple
+from collections import deque
 import random as xxx_random # prevent accidental usage
 
+from recordtype import recordtype
 from utils import avg, maxOrNan
 
 ## Represents a replica capable of executing (or not) optional code.
 # Current implementation simulates processor-sharing with an infinite number of
 # concurrent requests and a fixed time-slice.
 class Replica(object):
+	Request = recordtype('Request',
+		'arrival departure remainingTime replyTo requestId withOptional')
+
 	## Constructor.
 	# @param sim Simulator to attach the server to
 	# @param serviceTimeY time to service one request with optional content
@@ -107,16 +111,14 @@ class Replica(object):
 		if len(self._activeRequests) == 0:
 			self._sim.add(0, self._onScheduleRequests)
 		# Add request to list of active requests
-		request = namedtuple('Request', ['requestId', 'replyTo', 'withOptional',
-			'arrival', 'departure', 'remainingTime'])
-		request.arrival = self._sim.now
-		request.departure = None
-		request.requestId = requestId
-		request.replyTo = replyTo
-		request.withOptional = headers.get('withOptional', False)
-		# pylint: disable=no-member
-		request.remainingTime = self.drawServiceTime(request.withOptional)
-		# pylint: enable=no-member
+		withOptional = headers.get('withOptional', False)
+		request = Replica.Request(
+			arrival=self._sim.now,
+			departure=None,
+			requestId=requestId,
+			replyTo=replyTo,
+			withOptional=withOptional,
+			remainingTime=self.drawServiceTime(withOptional))
 		self._activeRequests.append(request)
 
 	def drawServiceTime(self, withOptional):
