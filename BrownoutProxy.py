@@ -1,6 +1,7 @@
 from __future__ import division, print_function
 
 from math import sqrt
+import numpy as np
 
 from recordtype import recordtype
 
@@ -23,6 +24,23 @@ class VarianceBasedFilter(object):
 				(self.num - 1) / self.num * self.variance +
 				1.0 / (self.num - 1) * (newValue - self.mean) ** 2)
 		return self
+
+# pylint: disable=no-member
+class PercentileBasedFilter(object):
+	def __init__(self, initialValue, windowLength=100, percentile=99):
+		self._samples = np.array([initialValue] * windowLength)
+		self._index = 0
+		self._windowLength = windowLength
+		self._percentile = percentile
+
+	def __call__(self):
+		return np.percentile(self._samples, self._percentile)
+
+	def __iadd__(self, newValue):
+		self._samples[self._index] = newValue
+		self._index = (self._index + 1) % self._windowLength
+		return self
+# pylint: enable=too-few-public-methods,no-member
 
 class BrownoutProxy(object):
 	Request = recordtype('Request', 'generatedAt replyTo requestId')
