@@ -1,7 +1,8 @@
 from __future__ import division, print_function
 
-from collections import namedtuple
 from math import sqrt
+
+from recordtype import recordtype
 
 # pylint: disable=too-few-public-methods
 class VarianceBasedFilter(object):
@@ -24,6 +25,8 @@ class VarianceBasedFilter(object):
 		return self
 
 class BrownoutProxy(object):
+	Request = recordtype('Request', 'generatedAt replyTo requestId')
+
 	def __init__(self, sim, server, setPoint=0.5, queueCut=True,
 		processorSharing=True):
 
@@ -49,11 +52,9 @@ class BrownoutProxy(object):
 		self.processorSharing = processorSharing
 
 	def request(self, requestId, replyTo, headers):
-		request = namedtuple('Request', ['generatedAt', 'replyTo', 'requestId'])
-		request.generatedAt = self._sim.now
-		request.replyTo = replyTo
-		request.requestId = requestId
-
+		request = BrownoutProxy.Request(generatedAt=self._sim.now,
+			replyTo=replyTo,
+			requestId=requestId)
 		self._requests[requestId] = request
 		headers = dict(headers) # copy
 
