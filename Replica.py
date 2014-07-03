@@ -123,7 +123,8 @@ class Replica(object):
 		mean, sigma = self.timeY \
 			if withOptional else self.timeN
 
-		serviceTime = max(self._random.normalvariate(mean, sigma), self.minimumServiceTime)
+		serviceTime = max(self._random.normalvariate(mean, sigma),
+			self.minimumServiceTime)
 		return serviceTime
 
 	## Event handler for scheduling active requests.
