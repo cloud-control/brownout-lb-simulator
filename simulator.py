@@ -22,7 +22,7 @@ from utils import avg
 def runSimulation(params):
 	with open(pathjoin(params['outDir'], 'parameters.csv'), 'w') as _file:
 		print('name,value', file=_file)
-		for name, value in params.iteritems():
+		for name, value in sorted(params.iteritems()):
 			print(name, value, sep=',', file=_file)
 
 	sim = SimulatorKernel(outputDirectory=params['outDir'])
