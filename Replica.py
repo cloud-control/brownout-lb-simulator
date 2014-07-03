@@ -23,6 +23,7 @@ class Replica(object):
 			timeSlice=0.01,
 			timeY=(0.07, 0.01),
 			timeN=(0.00067, 0.0001),
+			minimumServiceTime=0.000001,
 			replicaId=0):
 		## time slice for scheduling requests (server model parameter)
 		self.timeSlice = timeSlice
@@ -32,6 +33,8 @@ class Replica(object):
 		## service time (mean and standard deviation) without optional content
 		# (server model parameter)
 		self.timeN = timeN
+		## minimum service time (server model parameter)
+		self.minimumServiceTime = minimumServiceTime
 		## how often to report metrics
 		self.reportPeriod = 1
 		## list of active requests (server model variable)
@@ -120,7 +123,7 @@ class Replica(object):
 		mean, sigma = self.timeY \
 			if withOptional else self.timeN
 
-		serviceTime = max(self._random.normalvariate(mean, sigma), 0)
+		serviceTime = max(self._random.normalvariate(mean, sigma), self.minimumServiceTime)
 		return serviceTime
 
 	## Event handler for scheduling active requests.
