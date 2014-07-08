@@ -13,7 +13,8 @@ abline(h = 0.5)
 grid()
 
 par(xpd=TRUE)
-legend(10, 1.31,
+legend(10, 1.30,
+      text.width=c(20,20,20),
       horiz = TRUE,
       c('optionalRatio', 'rtMax', 'utilization'),
       pch = '+',
