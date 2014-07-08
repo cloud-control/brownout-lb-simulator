@@ -89,7 +89,9 @@ def main():
 	header = None
 	for relativeDeviation in range(1, 50):
 		for seed in range(0, 10):
-			for arrivalRate in range(1, 10) + range(10, 100, 10):
+			for arrivalRate in range(1, 10) + range(10, 100, 10) + \
+					range(100, 1000, 100):
+
 				parameters = {
 					'arrivalRate'   : arrivalRate,
 					'discipline'    : args.discipline,
