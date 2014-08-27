@@ -74,11 +74,11 @@ def main():
 	parser.add_argument('--discipline',
 		help='Service discipline',
 		choices=['fifo', 'ps'],
-		default='fifo')
+		default='ps')
 	parser.add_argument('--brownoutMethod',
 		help='Brownout method to deactive optional content',
 		choices=['queuecut', 'timecut'],
-		default='queuecut')
+		default='timecut')
 	parser.add_argument('--seed',
 		help='Seed to initialize random number generators',
 		type=int,

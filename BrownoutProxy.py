@@ -43,7 +43,7 @@ class PercentileBasedFilter(object):
 # pylint: enable=too-few-public-methods,no-member
 
 class BrownoutProxy(object):
-	Request = recordtype('Request', 'generatedAt replyTo requestId')
+	Request = recordtype('Request', 'generatedAt replyTo requestId time')
 
 	def __init__(self, sim, server, setPoint=0.5, queueCut=True,
 		processorSharing=True):
@@ -54,15 +54,9 @@ class BrownoutProxy(object):
 		self._timeToProcess = 0
 		self._lastTimeToProcessAdjustment = 0
 
-		if processorSharing:
-			sigmaWeight = 2
-		else:
-			sigmaWeight = 2 # corresponds to 95th percentile, shown empirically to work
-
+		sigmaWeight = 0
 		self._timeY = VarianceBasedFilter(initialValue=0.200, sigmaWeight=sigmaWeight)
 		self._timeN = VarianceBasedFilter(initialValue=0.001, sigmaWeight=sigmaWeight)
-		#self._timeY = PercentileBasedFilter(initialValue=0.200)
-		#self._timeN = PercentileBasedFilter(initialValue=0.001)
 		self.setPoint = setPoint
 		self.forgettingFactor = 0.2
 		self._activeRequests = 0
@@ -75,38 +69,19 @@ class BrownoutProxy(object):
 	def request(self, requestId, replyTo, headers):
 		request = BrownoutProxy.Request(generatedAt=self._sim.now,
 			replyTo=replyTo,
-			requestId=requestId)
+			requestId=requestId,
+			time=0)
 		self._requests[requestId] = request
 		headers = dict(headers) # copy
 
-		timeSinceLastRequest = self._sim.now - self._lastTimeToProcessAdjustment
-		self._lastTimeToProcessAdjustment = self._sim.now
-
-		self._timeToProcess -= timeSinceLastRequest
-		if self._timeToProcess < 0:
-			self._timeToProcess = 0
-
 		self._activeRequests += 1
-		if self.queueCut:
-			withOptional = ((self._activeRequests == 1) or
-				(self._activeRequests * self._timeY() < self.setPoint))
-		else:
-			if self.processorSharing:
-				# TODO: Does not work! timeToProcess is accumulating
-				estimatedResponseTime = self._timeY() * self._activeRequests
-				if self._activeRequests > 1:
-					estimatedResponseTime = \
-						self._timeToProcess * self._activeRequests / (self._activeRequests - 1)
-				withOptional = estimatedResponseTime < self.setPoint
-			else:
-				withOptional = self._timeToProcess + self._timeY() < self.setPoint
 
+		withOptional = self._timeToProcess + self._timeY() < self.setPoint
 		if withOptional:
-			self._timeToProcess += self._timeY()
-			self._activeRequestsWithOptional += 1
+			request.time = self._timeY()
 		else:
-			self._timeToProcess += self._timeN()
-			self._activeRequestsWithoutOptional += 1
+			request.time = self._timeN()
+		self._timeToProcess += request.time
 
 		headers['withOptional'] = withOptional
 		self._server.request(requestId, self, headers)
@@ -123,19 +98,16 @@ class BrownoutProxy(object):
 		request.replyTo.reply(requestId, headers)
 
 		responseTime = self._sim.now - request.generatedAt
-		if self.processorSharing:
-			serviceTime = responseTime / self._activeRequests
-		else:
-			serviceTime = min(self._sim.now - self._lastReply, responseTime)
+		self._timeToProcess -= request.time
 
 		if headers['withOptional']:
-			newTimeY = serviceTime
+			newTimeY = responseTime
 			newTimeN = float('NaN')
 			self._timeY += newTimeY
 			self._activeRequestsWithOptional -= 1
 		else:
 			newTimeY = float('NaN')
-			newTimeN = serviceTime
+			newTimeN = responseTime
 			self._timeN += newTimeN
 			self._activeRequestsWithoutOptional += 1
 		self._lastReply = self._sim.now
