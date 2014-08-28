@@ -6,7 +6,6 @@ html
 latex
 
 # Results (maybe later we'll have them in the repo)
-results
-*.csv
+results*/*.csv
 
 plotscripts/data.mat
