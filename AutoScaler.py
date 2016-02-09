@@ -90,7 +90,6 @@ class AutoScaler:
 			# We decided to fail hard here, but another option would be to ignore the command
 			raise Exception("AutoScaler was asked to scale up, but no backends are available.")
 
-		backendToStart = backendToStart[0]
 		backendToStart.autoScaleStatus = BackendStatus.STARTING
 
 		def startupComplete():
@@ -112,7 +111,6 @@ class AutoScaler:
 			# We decided to fail hard here, but another option would be to ignore the command
 			raise Exception("AutoScaler was asked to scale down, but no backends are started.")
 
-		backendToStop = backendToStop[-1]
 		backendToStop.autoScaleStatus = BackendStatus.STOPPED
 		self.loadBalancer.removeBackend(backendToStop)
 
