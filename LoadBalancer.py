@@ -81,10 +81,17 @@ class LoadBalancer:
 	# @param backend the server to add
 	def addBackend(self, backend):
 		self.backends.append(backend)
-		self.lastThetaErrors.append(0)
-		self.lastThetas.append(self.initialTheta) # to be updated at onComplete
-		self.lastLastThetas.append(self.initialTheta) # to be updated at onComplete
+		self.resetDecisionVariables()
+
+	## Reset the decision variables
+	def resetDecisionVariables(self):
+		n = len(self.backends)
+
+		self.lastThetaErrors = [ 0 ] * n
+		self.lastThetas = [ self.initialTheta ] * n # to be updated at onComplete
+		self.lastLastThetas = [ self.initialTheta ] * n # to be updated at onComplete
 		self.lastLatencies.append([]) # to be updated at onComplete
+		# LEFT HERE:
 		self.lastLastLatencies.append([])
 		self.queueLengths.append(0) # to be updated in request and onComplete
 		self.lastQueueLengths.append(0)
