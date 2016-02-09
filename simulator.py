@@ -129,14 +129,17 @@ def main():
 			server.serviceTimeN = n
 		sim.add(at, changeServiceTimeHandler)
 		
-	def addServer(y, n):
+	def addServer(y, n, autoScale = False):
 		server = Server(sim, \
 			serviceTimeY = y, serviceTimeN = n, \
 			timeSlice = args.timeSlice)
 		newReplicaController = replicaControllerFactory.newInstance(sim, str(server) + "-ctl")
 		server.controller = newReplicaController
 		servers.append(server)
-		loadBalancer.addBackend(server)
+		if autoScale:
+			pass
+		else:
+			loadBalancer.addBackend(server)
 	
 	def setRate(at, rate):
 		sim.add(at, lambda: openLoopClient.setRate(rate))
