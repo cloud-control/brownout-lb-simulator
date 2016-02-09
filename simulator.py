@@ -9,6 +9,7 @@ import argparse
 import os
 import sys
 
+from AutoScaler import *
 from Clients import *
 from LoadBalancer import *
 from Request import *
@@ -102,7 +103,8 @@ def main():
 	servers = []
 	clients = []
 	loadBalancer = LoadBalancer(sim, controlPeriod = 1.0)
-	openLoopClient = OpenLoopClient(sim, loadBalancer)
+	autoScaler = AutoScaler(sim, loadBalancer)
+	openLoopClient = OpenLoopClient(sim, autoScaler)
 
 	loadBalancer.algorithm = algorithm
 	loadBalancer.equal_theta_gain = args.equal_theta_gain
