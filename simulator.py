@@ -139,7 +139,7 @@ def main():
 		server.controller = newReplicaController
 		servers.append(server)
 		if autoScale:
-			pass
+			autoScaler.addBackend(server)
 		else:
 			loadBalancer.addBackend(server)
 	

@@ -3,13 +3,21 @@ from __future__ import division
 from Request import *
 from utils import *
 
+## Status of the replica, as seen by the auto-scaler
+class BackendStatus:
+	STOPPED=1
+	STARTING=2
+	STARTED=3
+	# time to stop a server considered negligible
+
 ## Simulates an auto-scaler.
 class AutoScaler:
 	## Constructor.
 	# @param sim Simulator to attach to
 	# @param loadBalancer loadBalancer to add/remove servers to
 	# @param controlInterval control interval in case periodic control is used
-	def __init__(self, sim, loadBalancer, controlInterval = 60):
+	# @param startupDelay time it takes for a replica to come online
+	def __init__(self, sim, loadBalancer, controlInterval = 60, startupDelay = 60):
 		## Simulator to which the autoscaler is attached
 		self.sim = sim
 		## Load-balancer to which the autoscaler is attached
@@ -20,6 +28,8 @@ class AutoScaler:
 		self.controlInterval = controlInterval
 		## count number of requests seen by the autoscaler
 		self.numRequests = 0
+		## startup delay
+		self.startupDelay = startupDelay
 
 		# Launch control loop
 		self.sim.add(0, self.runControlLoop)
@@ -27,6 +37,7 @@ class AutoScaler:
 	## Adds a new back-end server and initializes decision variables.
 	# @param backend the server to add
 	def addBackend(self, backend):
+		backend.autoScaleStatus = BackendStatus.STOPPED
 		self.backends.append(backend)
 
 	## Handles a request. The autoscaler typically only forwards requests without changing them.
@@ -50,10 +61,60 @@ class AutoScaler:
 	# Outputs CVS-formatted statistics through the Simulator's output routine.
 	def runControlLoop(self):		
 		# TODO: add periodic control, if desired
-		valuesToOutput = [ self.sim.now, self.numRequests ]
+
+		numBackends = len(self.backends)
+		numBackendsStarting = len([ backend for backend in self.backends
+				if backend.autoScaleStatus==BackendStatus.STARTING ])
+		numBackendsStarted = len([ backend for backend in self.backends
+				if backend.autoScaleStatus==BackendStatus.STARTED ])
+
+		valuesToOutput = [ self.sim.now,
+			self.numRequests,
+			numBackends,
+			numBackendsStarting,
+			numBackendsStarted
+		]
 		self.sim.output(self, ','.join(["{0:.5f}".format(value) \
 			for value in valuesToOutput]))
 		self.sim.add(self.controlInterval, self.runControlLoop)
+
+	## Scale up by one replica.
+	# Implemented in a FIFO-like manner, i.e., first backend added is first started.
+	def scaleUp(self):
+		# find first free replica
+		try:
+			backendToStart = [ backend for backend in self.backends
+				if backend.autoScaleStatus==BackendStatus.STOPPED ][0]
+		except IndexError:
+			# XXX: Controller told us to scale up, but there are no backends available.
+			# We decided to fail hard here, but another option would be to ignore the command
+			raise Exception("AutoScaler was asked to scale up, but no backends are available.")
+
+		backendToStart = backendToStart[0]
+		backendToStart.autoScaleStatus = BackendStatus.STARTING
+
+		def startupComplete():
+			backendToStart.autoScaleStatus = BackendStatus.STARTED
+			self.loadBalancer.addBackend(backendToStart)
+
+		self.sim.add(self.startupDelay, startupComplete)
+
+	## Scale down by one replica.
+	# Implemented in a LIFO-like manner, i.e., last backend started is first stopped.
+	def scaleDown(self):
+		# Find a suitable backend to stop.
+		try:
+			# TODO: What is a replica is STARTING?
+			backendToStop = [ backend for backend in self.backends
+				if backend.autoScaleStatus==BackendStatus.STARTED ][-1]
+		except IndexError:
+			# XXX: Controller told us to scale down, but there are no backend to stop..
+			# We decided to fail hard here, but another option would be to ignore the command
+			raise Exception("AutoScaler was asked to scale down, but no backends are started.")
+
+		backendToStop = backendToStop[-1]
+		backendToStop.autoScaleStatus = BackendStatus.STOPPED
+		self.loadBalancer.removeBackend(backendToStop)
 
 	## Pretty-print auto-scaler's name.
 	def __str__(self):
