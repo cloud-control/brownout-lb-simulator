@@ -545,7 +545,7 @@ class LoadBalancer:
 		self.sim.output(self, ','.join(["{0:.5f}".format(value) \
 			for value in valuesToOutput]))
 		
-		self.lastQueueLengths = self.queueLengths
+		self.lastQueueLengths = self.queueLengths[:]
 		self.lastLastThetas = self.lastThetas[:]
 		self.lastLastLatencies = self.lastLatencies
 		self.lastLatencies = [ [] for _ in self.backends ]
