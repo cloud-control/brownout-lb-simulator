@@ -1,2 +1,3 @@
 #!/bin/bash
-./simulator.py --algorithm SQF --scenario ./scenarios/autoscaling-support.py
+mkdir -p results/test-autoscaling-controller
+./simulator.py --algorithm SQF --scenario ./scenarios/autoscaling-support.py --outdir results/test-autoscaling-controller
