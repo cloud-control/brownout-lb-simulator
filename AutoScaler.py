@@ -67,6 +67,15 @@ class AutoScaler:
 				if backend.autoScaleStatus==BackendStatus.STARTING ])
 		numBackendsStarted = len([ backend for backend in self.backends
 				if backend.autoScaleStatus==BackendStatus.STARTED ])
+		numBackendsStopped = numBackends - numBackendsStarting - numBackendsStarted
+
+		# Wait for previous scaling action to complete
+		if numBackendsStarting == 0:
+			# XXX: Violates encapsulation of load-balancer
+			if avg(self.loadBalancer.lastThetas) < 0.5 and numBackendsStopped > 0:
+				self.scaleUp()
+			elif avg(self.loadBalancer.lastThetas) > 0.9 and numBackendsStarted > 1:
+				self.scaleDown()
 
 		valuesToOutput = [ self.sim.now,
 			self.numRequests,
