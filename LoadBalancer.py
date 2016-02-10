@@ -81,27 +81,28 @@ class LoadBalancer:
 	# @param backend the server to add
 	def addBackend(self, backend):
 		self.backends.append(backend)
-		self.resetDecisionVariables()
+		self._resetDecisionVariables()
 
 	## Reset the decision variables
-	def resetDecisionVariables(self):
+	def _resetDecisionVariables(self):
 		n = len(self.backends)
+
+		# DO NOT USE! `[ [] ] * n` as it leads to undesired behaviour.
 
 		self.lastThetaErrors = [ 0 ] * n
 		self.lastThetas = [ self.initialTheta ] * n # to be updated at onComplete
 		self.lastLastThetas = [ self.initialTheta ] * n # to be updated at onComplete
-		self.lastLatencies.append([]) # to be updated at onComplete
-		# LEFT HERE:
-		self.lastLastLatencies.append([])
-		self.queueLengths.append(0) # to be updated in request and onComplete
-		self.lastQueueLengths.append(0)
-		self.queueOffsets.append(0)
-		self.numRequestsPerReplica.append(0) # to be updated in request
-		self.numLastRequestsPerReplica.append(0) # to be updated in runControlLoop
-		self.ewmaResponseTime.append(0) # to be updated in onComplete
+		self.lastLatencies = [ [] for _ in range(n) ] # to be updated at onComplete
+		self.lastLastLatencies = [ [] for _ in range(n) ]
+		self.queueLengths = [ 0 ] * n # to be updated in request and onComplete
+		self.lastQueueLengths = [ 0 ] * n
+		self.queueOffsets = [ 0 ] * n
+		self.numRequestsPerReplica = [ 0 ] * n # to be updated in request
+		self.numLastRequestsPerReplica = [ 0 ] * n # to be updated in runControlLoop
+		self.ewmaResponseTime = [ 0 ] * n # to be updated in onComplete
 		## for ctl-simplify
-		self.ctlRlsP.append(1000)
-		self.ctlAlpha.append(1)
+		self.ctlRlsP = [ 1000 ] * n
+		self.ctlAlpha = [ 1 ] * n
 
 		self.weights = [ 1.0 / len(self.backends) ] * len(self.backends)
 
