@@ -70,6 +70,15 @@ class LoadBalancer:
 		self.ctlAlpha = []
 		## time when last event-driven control decision was taken
 		self.lastDecision = 0
+		## Request to backend mapping. Required to track requests belonging to backends that have
+		# since been removed.
+		self.requestToBackend = {}
+		## Backends that were removed. They are still tracked to ensure
+		# their request queue is properly drained. The keys are the removed
+		# backends, whereas the value is an object containing removal-relevant information,
+		# currently the number of request to wait for and the callbacks to call when the request
+		# queue is drained.
+		self.removedBackends = {}
 		
 		# suppress output of cvxopt solver
 		#solvers.options['show_progress'] = False
@@ -81,6 +90,19 @@ class LoadBalancer:
 	# @param backend the server to add
 	def addBackend(self, backend):
 		self.backends.append(backend)
+		self._resetDecisionVariables()
+
+	## Remove a backend
+	# @param backend backend server to remove
+	# @param onCompleted optional callback when backend removal is complete
+	def removeBackend(self, backend, onCompleted = None):
+		backendIndex = self.backends.index(backend)
+		removedBackendInfo = dict(
+			onCompleted = onCompleted,
+			queueLength = self.queueLengths[backendIndex]
+		)
+		self.removedBackends[backend] = removedBackendInfo
+		self.backends.remove(backend)
 		self._resetDecisionVariables()
 
 	## Reset the decision variables
@@ -290,6 +312,7 @@ class LoadBalancer:
 		else:
 			raise Exception("Unknown load-balancing algorithm " + self.algorithm)
 			
+		self.requestToBackend[request] = self.backends[request.chosenBackendIndex]
 		newRequest = Request()
 		newRequest.originalRequest = request
 		newRequest.onCompleted = lambda: self.onCompleted(newRequest)
@@ -314,14 +337,26 @@ class LoadBalancer:
 
 		# Store stats
 		request.completion = self.sim.now
-		self.lastThetas[request.chosenBackendIndex] = theta
-		self.lastLatencies[request.chosenBackendIndex].\
-			append(request.completion - request.arrival)
-		self.queueLengths[request.chosenBackendIndex] -= 1
-		ewmaAlpha = 2 / (self.ewmaNumSamples + 1)
-		self.ewmaResponseTime[request.chosenBackendIndex] = \
-			ewmaAlpha * (request.completion - request.arrival) + \
-			(1 - ewmaAlpha) * self.ewmaResponseTime[request.chosenBackendIndex]
+		backend = self.requestToBackend[request]
+		del self.requestToBackend[request]
+		if backend in self.removedBackends:
+			removedBackendInfo = self.removedBackends[backend]
+			removedBackendInfo['queueLength'] -= 1
+			assert removedBackendInfo['queueLength'] >= 0
+			if removedBackendInfo['queueLength'] == 0:
+				# request queue drained, ready to forget about this backend
+				onCompleted = self.removedBackends[backend]['onCompleted']
+				del self.removedBackends[backend]
+				onCompleted()
+		else:
+			self.lastThetas[request.chosenBackendIndex] = theta
+			self.lastLatencies[request.chosenBackendIndex].\
+				append(request.completion - request.arrival)
+			self.queueLengths[request.chosenBackendIndex] -= 1
+			ewmaAlpha = 2 / (self.ewmaNumSamples + 1)
+			self.ewmaResponseTime[request.chosenBackendIndex] = \
+				ewmaAlpha * (request.completion - request.arrival) + \
+				(1 - ewmaAlpha) * self.ewmaResponseTime[request.chosenBackendIndex]
 	
 		# Call original onCompleted
 		request.onCompleted()
