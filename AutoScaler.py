@@ -8,7 +8,8 @@ class BackendStatus:
 	STOPPED=1
 	STARTING=2
 	STARTED=3
-	# time to stop a server considered negligible
+	## server does not receive any requests but needs to drain its request queue
+	STOPPING=4
 
 ## Simulates an auto-scaler.
 class AutoScaler:
@@ -67,10 +68,15 @@ class AutoScaler:
 				if backend.autoScaleStatus==BackendStatus.STARTING ])
 		numBackendsStarted = len([ backend for backend in self.backends
 				if backend.autoScaleStatus==BackendStatus.STARTED ])
-		numBackendsStopped = numBackends - numBackendsStarting - numBackendsStarted
+		numBackendsStopped = len([ backend for backend in self.backends
+				if backend.autoScaleStatus==BackendStatus.STOPPED ])
+		numBackendsStopping = len([ backend for backend in self.backends
+				if backend.autoScaleStatus==BackendStatus.STOPPING ])
+		assert numBackends == numBackendsStarting + numBackendsStarted + \
+				numBackendsStopped + numBackendsStopping
 
 		# Wait for previous scaling action to complete
-		if numBackendsStarting == 0:
+		if numBackendsStarting == 0 and numBackendsStopping == 0:
 			# XXX: Violates encapsulation of load-balancer
 			if avg(self.loadBalancer.lastThetas) < 0.5 and numBackendsStopped > 0:
 				self.scaleUp()
@@ -101,11 +107,11 @@ class AutoScaler:
 
 		backendToStart.autoScaleStatus = BackendStatus.STARTING
 
-		def startupComplete():
+		def startupCompleted():
 			backendToStart.autoScaleStatus = BackendStatus.STARTED
 			self.loadBalancer.addBackend(backendToStart)
 
-		self.sim.add(self.startupDelay, startupComplete)
+		self.sim.add(self.startupDelay, startupCompleted)
 
 	## Scale down by one replica.
 	# Implemented in a LIFO-like manner, i.e., last backend started is first stopped.
@@ -120,8 +126,11 @@ class AutoScaler:
 			# We decided to fail hard here, but another option would be to ignore the command
 			raise Exception("AutoScaler was asked to scale down, but no backends are started.")
 
-		backendToStop.autoScaleStatus = BackendStatus.STOPPED
-		self.loadBalancer.removeBackend(backendToStop)
+		def shutdownCompleted():
+			backendToStop.autoScaleStatus = BackendStatus.STOPPED
+
+		backendToStop.autoScaleStatus = BackendStatus.STOPPING
+		self.loadBalancer.removeBackend(backendToStop, shutdownCompleted)
 
 	## Pretty-print auto-scaler's name.
 	def __str__(self):
