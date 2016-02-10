@@ -9,6 +9,7 @@ import argparse
 import os
 import sys
 
+from AutoScaler import *
 from Clients import *
 from LoadBalancer import *
 from Request import *
@@ -102,7 +103,8 @@ def main():
 	servers = []
 	clients = []
 	loadBalancer = LoadBalancer(sim, controlPeriod = 1.0)
-	openLoopClient = OpenLoopClient(sim, loadBalancer)
+	autoScaler = AutoScaler(sim, loadBalancer)
+	openLoopClient = OpenLoopClient(sim, autoScaler)
 
 	loadBalancer.algorithm = algorithm
 	loadBalancer.equal_theta_gain = args.equal_theta_gain
@@ -129,14 +131,17 @@ def main():
 			server.serviceTimeN = n
 		sim.add(at, changeServiceTimeHandler)
 		
-	def addServer(y, n):
+	def addServer(y, n, autoScale = False):
 		server = Server(sim, \
 			serviceTimeY = y, serviceTimeN = n, \
 			timeSlice = args.timeSlice)
 		newReplicaController = replicaControllerFactory.newInstance(sim, str(server) + "-ctl")
 		server.controller = newReplicaController
 		servers.append(server)
-		loadBalancer.addBackend(server)
+		if autoScale:
+			autoScaler.addBackend(server)
+		else:
+			loadBalancer.addBackend(server)
 	
 	def setRate(at, rate):
 		sim.add(at, lambda: openLoopClient.setRate(rate))
