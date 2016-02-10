@@ -83,6 +83,19 @@ class AutoScaler:
 			elif avg(self.loadBalancer.lastThetas) > 0.9 and numBackendsStarted > 1:
 				self.scaleDown()
 
+		# Update values after control action was taken
+		numBackends = len(self.backends)
+		numBackendsStarting = len([ backend for backend in self.backends
+				if backend.autoScaleStatus==BackendStatus.STARTING ])
+		numBackendsStarted = len([ backend for backend in self.backends
+				if backend.autoScaleStatus==BackendStatus.STARTED ])
+		numBackendsStopped = len([ backend for backend in self.backends
+				if backend.autoScaleStatus==BackendStatus.STOPPED ])
+		numBackendsStopping = len([ backend for backend in self.backends
+				if backend.autoScaleStatus==BackendStatus.STOPPING ])
+		assert numBackends == numBackendsStarting + numBackendsStarted + \
+				numBackendsStopped + numBackendsStopping
+
 		valuesToOutput = [ self.sim.now,
 			self.numRequests,
 			numBackends,
@@ -105,12 +118,13 @@ class AutoScaler:
 			# We decided to fail hard here, but another option would be to ignore the command
 			raise Exception("AutoScaler was asked to scale up, but no backends are available.")
 
-		backendToStart.autoScaleStatus = BackendStatus.STARTING
-
 		def startupCompleted():
 			backendToStart.autoScaleStatus = BackendStatus.STARTED
 			self.loadBalancer.addBackend(backendToStart)
+			self.sim.log(self, "{0} STARTED", backendToStart)
 
+		self.sim.log(self, "{0} STARTING", backendToStart)
+		backendToStart.autoScaleStatus = BackendStatus.STARTING
 		self.sim.add(self.startupDelay, startupCompleted)
 
 	## Scale down by one replica.
@@ -127,8 +141,10 @@ class AutoScaler:
 			raise Exception("AutoScaler was asked to scale down, but no backends are started.")
 
 		def shutdownCompleted():
+			self.sim.log(self, "{0} STOPPED", backendToStop)
 			backendToStop.autoScaleStatus = BackendStatus.STOPPED
 
+		self.sim.log(self, "{0} STOPPING", backendToStop)
 		backendToStop.autoScaleStatus = BackendStatus.STOPPING
 		self.loadBalancer.removeBackend(backendToStop, shutdownCompleted)
 
