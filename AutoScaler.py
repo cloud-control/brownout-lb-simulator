@@ -132,7 +132,6 @@ class AutoScaler:
 	def scaleDown(self):
 		# Find a suitable backend to stop.
 		try:
-			# TODO: What is a replica is STARTING?
 			backendToStop = [ backend for backend in self.backends
 				if backend.autoScaleStatus==BackendStatus.STARTED ][-1]
 		except IndexError:
