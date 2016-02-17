@@ -72,7 +72,7 @@ def test_closed_client():
     sim.run(until = 100)
 
     # TODO: Better statistical test
-    assert server.numSeenRequests >  80, server.numSeenRequests
+    assert server.numSeenRequests >  70, server.numSeenRequests
     assert server.numSeenRequests < 120, server.numSeenRequests
 
     assert client.numCompletedRequests == server.numSeenRequests
