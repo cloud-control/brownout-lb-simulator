@@ -21,7 +21,7 @@ def weightedChoice(choiceWeightPairs, rng):
 		if upto + weight > rnd:
 			return choice
 		upto += weight
-	assert False, "Shouldn't get here"
+	assert False, "Shouldn't get here" # pragma: no cover
 
 ## Computes average
 # @param numbers list of number to compute average for
