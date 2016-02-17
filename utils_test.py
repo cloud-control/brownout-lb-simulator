@@ -20,4 +20,4 @@ def normalize_test():
     assert normalize([]) == []
     assert normalize([1, 2, 3]) == [1.0/6, 2.0/6, 3.0/6]
     assert normalize([0.5]) == [1.0]
-    assert normalize([0, 0]) == [float('nan'), float('nan')]
+    assert math.isnan(normalize([0, 0])[0])
