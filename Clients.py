@@ -124,7 +124,7 @@ class ClosedLoopClient:
 		self.think()
 
 	def think(self):
-		thinkTime = random.expovariate(1.0 / self.averageThinkTime)
+		thinkTime = xxx_random.expovariate(1.0 / self.averageThinkTime)
 		self.sim.add(thinkTime, self.issueRequest)
 
 	## Deactive this client.
