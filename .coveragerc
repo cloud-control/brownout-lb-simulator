@@ -3,6 +3,7 @@ omit =
     *ctypes*
     *funcsigs*
     *mock*
+    *numbers.py*
     *numpy*
     *pbr*
     *six.py*
