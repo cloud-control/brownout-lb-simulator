@@ -1,5 +1,6 @@
 [report]
 omit =
+    *argparse.py*
     *ctypes*
     *funcsigs*
     *mock*
