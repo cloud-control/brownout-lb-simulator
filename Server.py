@@ -20,15 +20,12 @@ class Server:
 	# @param minimumServiceTime minimum service-time (despite variance)
 	# @param timeSlice time slice; a request longer that this will observe
 	# context-switching
-	# @param initialTheta initial dimmer value
-	# @param controlPeriod control period of brownout controller (0 = disabled)
 	# @note The constructor adds an event into the simulator
 	def __init__(self, sim, seed = 1,
 			timeSlice = 0.01, \
 			serviceTimeY = 0.07, serviceTimeN = 0.001, \
 			serviceTimeYVariance = 0.01, serviceTimeNVariance = 0.001, \
-			minimumServiceTime = 0.0001, \
-			controller = None):
+			minimumServiceTime = 0.0001):
 		## time slice for scheduling requests (server model parameter)
 		self.timeSlice = timeSlice
 		## service time with optional content (server model parameter)
@@ -48,7 +45,7 @@ class Server:
 		## latencies during the last report interval
 		self.latestLatencies = []
 		## reference to controller
-		self.controller = controller
+		self.controller = None
 
 		## The amount of time this server is active. Useful to compute utilization
 		# Since we are in a simulator, this value is hard to use correctly. Use getActiveTime() instead.
@@ -71,10 +68,6 @@ class Server:
 		## Random number generator
 		self.random = xxx_random.Random()
 		self.random.seed(seed)
-
-		# Initialize controller if present
-		if self.controller:
-			self.controller.runControlLoop()
 
 		# Initialize reporting
 		self.runReportLoop()

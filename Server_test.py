@@ -34,9 +34,8 @@ def test_with_controller_always_no():
     sim = SimulatorKernel()
     server = Server(sim,
             serviceTimeY = 10, serviceTimeYVariance = 0,
-            serviceTimeN =  1, serviceTimeNVariance = 0,
-            controller = controller)
-    controller.runControlLoop.assert_called_once_with()
+            serviceTimeN =  1, serviceTimeNVariance = 0)
+    server.controller = controller
 
     r = Request()
     r.onCompleted = lambda: completedRequests.append(r)
@@ -62,9 +61,8 @@ def test_with_controller_always_yes():
     sim = SimulatorKernel()
     server = Server(sim,
             serviceTimeY = 10, serviceTimeYVariance = 0,
-            serviceTimeN =  1, serviceTimeNVariance = 0,
-            controller = controller)
-    controller.runControlLoop.assert_called_once_with()
+            serviceTimeN =  1, serviceTimeNVariance = 0)
+    server.controller = controller
 
     r = Request()
     r.onCompleted = lambda: completedRequests.append(r)
