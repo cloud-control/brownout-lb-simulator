@@ -273,7 +273,7 @@ class Server:
 		activeRequest = self.activeRequests.popleft()
 		if activeRequest != request:
 			raise Exception("Weird! Expected request {0} but got {1} instead". \
-				format(request, activeRequest))
+					format(request, activeRequest)) # pragma: no cover
 
 		# And completed it
 		request.completion = self.sim.now
