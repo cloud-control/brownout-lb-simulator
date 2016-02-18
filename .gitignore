@@ -10,3 +10,9 @@ results
 
 
 plotscripts/data.mat
+
+# Coverage report
+.coverage
+
+# Vim swap files
+*.swp
