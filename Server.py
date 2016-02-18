@@ -224,6 +224,8 @@ class Server:
 
 				# print activeRequest.oracle_stuff[0]
 				activeRequest.remainingTime = activeRequest.oracle_stuff[0]
+				
+				activeRequest.arrival = self.sim.now
 
 			else:
 				# Pick whether to serve it with optional content or not
