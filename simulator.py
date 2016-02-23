@@ -16,6 +16,11 @@ from Request import *
 from Server import *
 from SimulatorKernel import *
 
+loadBalancingAlgorithms = ("weighted-RR theta-diff SQF SQF-plus FRF equal-thetas equal-thetas-SQF " + \
+		"FRF-EWMA predictive 2RC RR random theta-diff-plus ctl-simplify equal-thetas-fast theta-diff-plus-SQF " + \
+		"theta-diff-plus-fast SRTF equal-thetas-fast-mul").split()
+# TODO: "optimization optim-SQF oracle" commented out since they currently fail
+
 ## @package simulator Main simulator namespace
 
 ## Entry-point for simulator.
@@ -33,17 +38,13 @@ def main():
 		replicaControllerFactory = __import__(os.path.splitext(filename)[0])
 		replicaControllerFactories.append(replicaControllerFactory)
 
-	algorithms = ("weighted-RR theta-diff optimization SQF SQF-plus FRF equal-thetas equal-thetas-SQF " + \
-		"optim-SQF FRF-EWMA predictive 2RC RR random theta-diff-plus ctl-simplify equal-thetas-fast theta-diff-plus-SQF " + \
-		"theta-diff-plus-fast SRTF equal-thetas-fast-mul oracle").split()
-
 	# Parsing command line options to find out the algorithm
 	parser = argparse.ArgumentParser( \
 		description='Run brownout load balancer simulation.', \
 		formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 	parser.add_argument('--algorithm',
-		help = 'Load-balancer algorithm: ' + ' '.join(algorithms),
-		default = algorithms[0])
+		help = 'Load-balancer algorithm: ' + ' '.join(loadBalancingAlgorithms),
+		default = loadBalancingAlgorithms[0])
 	parser.add_argument('--outdir',
 		help = 'Destination folder for results and logs',
 		default = '.')
@@ -83,7 +84,7 @@ def main():
 
 	args = parser.parse_args()
 	algorithm = args.algorithm
-	if algorithm not in algorithms:
+	if algorithm not in loadBalancingAlgorithms:
 		print("Unsupported algorithm '{0}'".format(algorithm), file = sys.stderr)
 		parser.print_help()
 		quit()
