@@ -1,7 +1,5 @@
 from __future__ import division
 
-#from cvxopt import solvers, matrix, spdiag, log
-#import cvxopt
 import math
 import numpy as np
 import random as xxx_random # prevent accidental usage
@@ -133,7 +131,7 @@ class LoadBalancer:
 	def request(self, request):
 		#self.sim.log(self, "Got request {0}", request)
 		request.arrival = self.sim.now
-		if self.algorithm in [ 'weighted-RR', 'theta-diff', 'theta-diff-plus', 'equal-thetas', 'optimization', 'ctl-simplify' ]:
+		if self.algorithm in [ 'weighted-RR', 'theta-diff', 'theta-diff-plus', 'equal-thetas', 'ctl-simplify' ]:
 			request.chosenBackendIndex = \
 				weightedChoice(zip(range(0, len(self.backends)), self.weights), self.random)
 		elif self.algorithm == 'equal-thetas-SQF' or self.algorithm == 'equal-thetas-fast' or self.algorithm == 'equal-thetas-fast-mul':
@@ -176,10 +174,6 @@ class LoadBalancer:
 				min(range(0, len(self.queueLengths)), \
 				key = lambda i: self.queueLengths[i]-self.queueOffsets[i])
 			pass
-		elif self.algorithm == 'optim-SQF':
-			request.chosenBackendIndex = \
-				min(range(0, len(self.queueLengths)), \
-				key = lambda i: self.queueLengths[i]-self.queueOffsets[i])
 		elif self.algorithm == 'random':
 			# round robin
 			request.chosenBackendIndex = \
@@ -268,47 +262,6 @@ class LoadBalancer:
 				min(range(0, len(self.queueLengths)), \
 				key = lambda i: self.queueLengths[i]-self.queueOffsets[i])
 		
-		elif self.algorithm == 'oracle':
-			serviceTimes = []
-			canHandleY = []
-			canHandleN = []
-			
-			# Draw service times and check if servers can handle 'em without breaking setPoint
-			for serverId in xrange(len(self.backends)):
-				server = self.backends[serverId]
-				
-				serviceTimes.append([server.drawServiceTime(True), server.drawServiceTime(False)])
-				
-				if server.oracle_can_handle(serviceTimes[-1][0]):
-					canHandleY.append(serverId)
-				if server.oracle_can_handle(serviceTimes[-1][1]):
-					canHandleN.append(serverId)
-
-			# Any servers that can handle with optional?
-			if len(canHandleY) > 0:
-				chc = random.choice(canHandleY)
-				request.chosenBackendIndex = chc
-				withOptional = True
-			
-			# Any servers that can handle without optional?
-			elif len(canHandleN) > 0:
-				chc = random.choice(canHandleN)
-				request.chosenBackendIndex = chc
-				withOptional = False
-			
-			# We're screwed, just pick one!
-			else:
-				chc = random.choice(xrange(len(self.backends)))
-				request.chosenBackendIndex = chc
-				withOptional = False
-			
-			# Push back the unused service times.
-			for stindex in xrange(len(serviceTimes)):
-				if not (request.chosenBackendIndex == stindex and withOptional):
-					server.pushBackServiceTime(True, serviceTimes[stindex][0])
-				if not (request.chosenBackendIndex == stindex and not withOptional):
-					server.pushBackServiceTime(False, serviceTimes[stindex][1])
-
 		else:
 			raise Exception("Unknown load-balancing algorithm " + self.algorithm)
 			
@@ -319,9 +272,6 @@ class LoadBalancer:
 		#self.sim.log(self, "Directed request to {0}", request.chosenBackendIndex)
 		self.queueLengths[request.chosenBackendIndex] += 1
 		self.numRequestsPerReplica[request.chosenBackendIndex] += 1
-		if self.algorithm == 'oracle':
-			self.backends[request.chosenBackendIndex].oracle_request \
-					(newRequest, serviceTimes[request.chosenBackendIndex][0 if withOptional else 1], withOptional)
 		self.backends[request.chosenBackendIndex].request(newRequest)
 
 	## Handles request completion.
@@ -368,87 +318,6 @@ class LoadBalancer:
 		if self.algorithm == 'weighted-RR':
 			# Nothing to do here
 			pass
-		elif (self.algorithm == 'optimization' or self.algorithm == 'optim-SQF'):
-			setpoint = 1
-			arrivalRate = float(self.numRequests - self.lastNumRequests) / float(self.controlPeriod)
-			#arrivalRate = 50
-			#arrivalRate = 20
-			# TODO: we have to substitute these vectors (mu and M) 
-			# with estimations of their values
-			mutmp = matrix(np.zeros((len(self.weights), 1)))
-			Mtmp = matrix(np.zeros((len(self.weights), 1)))
-			for i in range(0, len(self.weights)):
-				mutmp[i] = self.backends[i].serviceTimeN
-				Mtmp[i] = self.backends[i].serviceTimeY
-			mu = cvxopt.div(1,mutmp)
-			M = cvxopt.div(1,Mtmp)
-			A = matrix(np.ones((1, len(self.weights)))) # A and b are constraints for the sum of weights to be 1.0
-			b = matrix(1.0, (1,1), 'd')
-			m, n = A.size
-			# intermediate quantities for optimization
-			intA = cvxopt.mul(M,mu)*setpoint - M
-			intB = M*arrivalRate*setpoint
-			intC = mu - M
-			intD = (mu - M)*arrivalRate*setpoint 
-			# inequality constraints
-			G = matrix(0.0, (3*len(self.weights), len(self.weights)), 'd')
-			for i in range(0, len(self.weights)):
-				G[i,i] = -1.0 # constraints for nonnegativity of weights
-				G[len(self.weights) + i, i] = 1.0 # constrain that lower bound on optimal dimmers is 0
-				G[2*len(self.weights) + i, i] = -1.0 # constrain that upper bound on optimal dimmers is 1
-			h = matrix(0.0, (3*len(self.weights), 1), 'd')
-			for i in range(0, len(self.weights)):
-				if intB[i] == 0: # avoid initial corner case
-					h[len(self.weights) + i, 0] = 1
-					h[2*len(self.weights) + i, 0] = 1
-				else:
-					h[len(self.weights) + i, 0] = intA[i] / intB[i] # for dimmers greater than 0
-					h[2*len(self.weights) + i, 0] = (intC[i] - intA[i]) / (intD[i] + intB[i]) # for dimmers lower than 1
-			def F(x=None, z=None):
-				if x is None: return 0, matrix(1.0, (n, 1))
-				if min(x) <= 0.0: return None
-				# function that we want to minimize
-				f = -sum(cvxopt.mul(x, cvxopt.div(intA-cvxopt.mul(intB,x), intC+cvxopt.mul(intD,x))))
-				Df = -(cvxopt.div((cvxopt.mul(intA,intC) -  \
-                                     2*cvxopt.mul(intB,cvxopt.mul(intC,x))-cvxopt.mul(intB,cvxopt.mul(intD,(x**2)))),\
-				     ((intC+cvxopt.mul(intD,x))**2))).T
-				if z is None: return f, Df
-				H = spdiag((
-					cvxopt.div(2*cvxopt.mul(intA,cvxopt.mul(intC,intD)), (intC+cvxopt.mul(intD,x))**3) + \
-					cvxopt.div(2*cvxopt.mul(intB,(intC**2)), (intC+cvxopt.mul(intD,x))**3)
-					))
-				return f, Df, H
-			#print(-h[2*len(self.weights):3*len(self.weights)])
-			lower_tmp = [i for i in -h[2*len(self.weights):3*len(self.weights)] if i > 0]
-			lower = sum(lower_tmp)
-			#print(lower)
-			if lower < 1.0: # if lower > 1 the servers are underloaded!
-				#print(self.sim.now, arrivalRate)
-				solution = solvers.cp(F, G, h, A=A, b=b)['x']
-				self.weights = list(solution)
-				#print(self.weights)
-			else:
-				rest = 1.0
-				weights_tmp = matrix(0.0, (len(self.weights),1),'d')
-				for i in range(0, len(self.weights)):
-					if -h[2*len(self.weights)+i] < rest:
-						weights_tmp[i,0] = -h[2*len(self.weights)+i]
-						rest = rest + h[2*len(self.weights)+i]
-						#print(rest)
-					else:
-						weights_tmp[i,0] = rest
-						break
-				#print(weights_tmp)
-				self.weights = list(weights_tmp)
-				#print(self.weights)
-			for i in range(0,len(self.backends)):
-				dim = min(1,(intA[i,0]-intB[i,0]*self.weights[i])/(intC[i,0]+intD[i,0]*self.weights[i]))
-				mueff = 1/(dim/M[i]+(1-dim)/mu[i])
-				self.queueOffsets[i] = arrivalRate*self.weights[i]/(mueff-arrivalRate*self.weights[i])
-				#print(self.queueOffsets[i])
-			x = matrix(self.weights)
-			self.sim.output('optimizer', ','.join(map(str, [ self.sim.now ] + \
-				list(cvxopt.div(intA-cvxopt.mul(intB,x), intC+cvxopt.mul(intD,x))))))
 		elif self.algorithm == 'theta-diff':
 			modifiedLastLastThetas = self.lastLastThetas # used to do the quick fix later
 			# (by Martina:) a quick and dirty fix for this behavior that when the dimmer

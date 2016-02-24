@@ -19,7 +19,6 @@ from SimulatorKernel import *
 loadBalancingAlgorithms = ("weighted-RR theta-diff SQF SQF-plus FRF equal-thetas equal-thetas-SQF " + \
 		"FRF-EWMA predictive 2RC RR random theta-diff-plus ctl-simplify equal-thetas-fast theta-diff-plus-SQF " + \
 		"theta-diff-plus-fast SRTF equal-thetas-fast-mul").split()
-# TODO: "optimization optim-SQF oracle" commented out since they currently fail
 
 ## @package simulator Main simulator namespace
 
