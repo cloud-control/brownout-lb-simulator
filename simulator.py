@@ -186,4 +186,4 @@ def main():
 	sim.output('final-results', ', '.join([v for k,v in toReport]))
 
 if __name__ == "__main__":
-	main()
+	main() # pragma: no cover
