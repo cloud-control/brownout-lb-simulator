@@ -146,14 +146,8 @@ def main():
 	def setRate(at, rate):
 		sim.add(at, lambda: openLoopClient.setRate(rate))
 	
-	def setQueueOffset(server, queueOffset):
-		loadBalancer.queueOffsets[server] = queueOffset
-
 	def endOfSimulation(at):
 		otherParams['simulateUntil'] = at
-
-	def setQueueOffset(server, queueOffset):
-		loadBalancer.queueOffsets[server] = queueOffset
 		
 	# Load scenario
 	otherParams = {}
