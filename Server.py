@@ -62,9 +62,6 @@ class Server:
 		## Reference to simulator
 		self.sim = sim
 		
-		self.savedServiceTimeY = None
-		self.savedServiceTimeN = None
-
 		## Random number generator
 		self.random = xxx_random.Random()
 		self.random.seed(seed)
@@ -131,59 +128,13 @@ class Server:
 			
 		#print "request() to %s at time %f"%(self.name, self.sim.now)
 
-	def oracle_request(self, request, serviceTime, withOptional):
-		request.theta = self.theta
-		request.arrival = self.sim.now
-		request.oracle_stuff = (serviceTime, withOptional)
-
-	def oracle_can_handle(self, serviceTime):
-		breaks = 0
-		totals = len(self.activeRequests) + 1
-		maxBreaks = np.ceil(0.05 * totals)
-		
-		# Can we handle the new request
-		if serviceTime * (len(self.activeRequests) + 1) > self.setPoint:
-			breaks += 1
-			if breaks > maxBreaks:
-				return False
-
-		# print "%s: %d"%(self.name, len(self.activeRequests))
-		# Can we handle all the old requests?
-		for request in self.activeRequests:
-			if hasattr(request, 'remainingTime'):
-				timeLeft = request.remainingTime
-			else:
-				timeLeft = request.oracle_stuff[0]
-				
-			if self.sim.now - request.arrival + timeLeft * (len(self.activeRequests) + 1) > self.setPoint:
-				breaks += 1
-				if breaks > maxBreaks:
-					return False
-				
-		return True
-
-	def pushBackServiceTime(self, withOptional, serviceTime):
-		if withOptional:
-			savedServiceTimeY = serviceTime
-		else:
-			savedServiceTimeN = serviceTime
-
 	def drawServiceTime(self, withOptional):
-		if (withOptional and self.savedServiceTimeY is None) or \
-				(not withOptional and self.savedServiceTimeN is None):
-			serviceTime, variance = (self.serviceTimeY, self.serviceTimeYVariance) \
-				if withOptional else \
-				(self.serviceTimeN, self.serviceTimeNVariance)
+		serviceTime, variance = (self.serviceTimeY, self.serviceTimeYVariance) \
+			if withOptional else \
+			(self.serviceTimeN, self.serviceTimeNVariance)
 
-			serviceTime = \
-				max(self.random.normalvariate(serviceTime, variance), self.minimumServiceTime)
-		else:
-			if withOptional:
-				serviceTime = self.savedServiceTimeY
-				self.savedServiceTimeY = None
-			else:
-				serviceTime = self.savedServiceTimeN
-				self.savedServiceTimeN = None
+		serviceTime = \
+			max(self.random.normalvariate(serviceTime, variance), self.minimumServiceTime)
 		
 		return serviceTime
 
@@ -211,25 +162,15 @@ class Server:
 		if not hasattr(activeRequest, 'remainingTime'):
 			#self.sim.log(self, "request {0} entered the system", activeRequest)
 			
-			if hasattr(activeRequest, 'oracle_stuff'):
-				# Oracle LB has already given the request all it needs
-				activeRequest.withOptional = activeRequest.oracle_stuff[1]
-
-				# print activeRequest.oracle_stuff[0]
-				activeRequest.remainingTime = activeRequest.oracle_stuff[0]
-				
-				activeRequest.arrival = self.sim.now
-
+			# Pick whether to serve it with optional content or not
+			if self.controller:
+				activeRequest.withOptional, activeRequest.theta = self.controller.withOptional()
 			else:
-				# Pick whether to serve it with optional content or not
-				if self.controller:
-					activeRequest.withOptional, activeRequest.theta = self.controller.withOptional()
-				else:
-					activeRequest.withOptional, activeRequest.theta = True, 1
+				activeRequest.withOptional, activeRequest.theta = True, 1
 
-				activeRequest.arrival = self.sim.now
+			activeRequest.arrival = self.sim.now
 
-				activeRequest.remainingTime = self.drawServiceTime(activeRequest.withOptional)
+			activeRequest.remainingTime = self.drawServiceTime(activeRequest.withOptional)
 
 		# Schedule it to run for a bit
 		timeToExecuteActiveRequest = min(self.timeSlice, activeRequest.remainingTime)
