@@ -11,6 +11,22 @@ class BackendStatus:
 	## server does not receive any requests but needs to drain its request queue
 	STOPPING=4
 
+## Abstract base class for all auto-scaler controllers.
+# Should call autoScaler.getStatus() for control input and
+# autoScaler.scaleUp()/scaleDown() for control output.
+class AbstractAutoScalerController():
+	def __init__(self, sim, autoScaler):
+		self.autoScaler = autoScaler # pragma: no cover
+
+	## Called when a new request arrives, before sending the request to the load-balancer.
+	def onRequest(self, request):
+		pass # pragma: no cover
+
+	## Called when a request completes, potentially with information
+	# piggy-backed from the load-balancer.
+	def onCompleted(self, request):
+		pass # pragma: no cover
+
 ## Simulates an auto-scaler.
 class AutoScaler:
 	## Constructor.
@@ -18,24 +34,27 @@ class AutoScaler:
 	# @param loadBalancer loadBalancer to add/remove servers to
 	# @param controlInterval control interval in case periodic control is used
 	# @param startupDelay time it takes for a replica to come online
-	def __init__(self, sim, loadBalancer, controlInterval = 60, startupDelay = 60):
+	# @param controller that decides when to scale up and when to scale down
+	def __init__(self, sim, loadBalancer, startupDelay = 60, controller = None):
 		## Simulator to which the autoscaler is attached
 		self.sim = sim
 		## Load-balancer to which the autoscaler is attached
 		self.loadBalancer = loadBalancer
 		## list of back-end servers to which are managed by the auto-scaler
 		self.backends = []
-		## control interval in case periodic control is used
-		self.controlInterval = controlInterval
 		## count number of requests seen by the autoscaler
 		self.numRequests = 0
 		## startup delay
 		self.startupDelay = startupDelay
 		## last theta piggy-backed by load-balancer
 		self.lastTheta = 1
+		## controller
+		self.controller = controller
+		## reporting interval
+		self.reportInterval = 1
 
-		# Launch control loop
-		self.sim.add(0, self.runControlLoop)
+		# start reporting
+		self.sim.add(self.reportInterval, self.runReportLoop)
 
 	## Adds a new back-end server and initializes decision variables.
 	# @param backend the server to add
@@ -46,67 +65,60 @@ class AutoScaler:
 	## Handles a request. The autoscaler typically only forwards requests without changing them.
 	# @param request the request to handle
 	def request(self, request):
-		# TODO: add event-driven control, if desired
 		newRequest = Request()
 		newRequest.originalRequest = request
 		newRequest.onCompleted = lambda: self.onCompleted(newRequest)
+		if self.controller:
+			self.controller.onRequest(newRequest)
 		self.loadBalancer.request(newRequest)
 
 	## Handles request completion.
 	# Calls orginator's onCompleted() 
 	def onCompleted(self, request):
-		self.lastTheta = request.theta
+		if self.controller:
+			self.controller.onCompleted(request)
 		self.numRequests += 1
 		originalRequest = request.originalRequest
 		originalRequest.withOptional = request.withOptional
 		originalRequest.onCompleted()
 
-	## Run control loop.
+	## Run report loop.
 	# Outputs CVS-formatted statistics through the Simulator's output routine.
-	def runControlLoop(self):		
-		# TODO: add periodic control, if desired
-
-		numBackends = len(self.backends)
-		numBackendsStarting = len([ backend for backend in self.backends
-				if backend.autoScaleStatus==BackendStatus.STARTING ])
-		numBackendsStarted = len([ backend for backend in self.backends
-				if backend.autoScaleStatus==BackendStatus.STARTED ])
-		numBackendsStopped = len([ backend for backend in self.backends
-				if backend.autoScaleStatus==BackendStatus.STOPPED ])
-		numBackendsStopping = len([ backend for backend in self.backends
-				if backend.autoScaleStatus==BackendStatus.STOPPING ])
-		assert numBackends == numBackendsStarting + numBackendsStarted + \
-				numBackendsStopped + numBackendsStopping
-
-		# Wait for previous scaling action to complete
-		if numBackendsStarting == 0 and numBackendsStopping == 0:
-			if self.lastTheta < 0.5 and numBackendsStopped > 0:
-				self.scaleUp()
-			elif self.lastTheta > 0.9 and numBackendsStarted > 1:
-				self.scaleDown()
-
-		# Update values after control action was taken
-		numBackends = len(self.backends)
-		numBackendsStarting = len([ backend for backend in self.backends
-				if backend.autoScaleStatus==BackendStatus.STARTING ])
-		numBackendsStarted = len([ backend for backend in self.backends
-				if backend.autoScaleStatus==BackendStatus.STARTED ])
-		numBackendsStopped = len([ backend for backend in self.backends
-				if backend.autoScaleStatus==BackendStatus.STOPPED ])
-		numBackendsStopping = len([ backend for backend in self.backends
-				if backend.autoScaleStatus==BackendStatus.STOPPING ])
-		assert numBackends == numBackendsStarting + numBackendsStarted + \
-				numBackendsStopped + numBackendsStopping
+	def runReportLoop(self):		
+		status = self.getStatus()
 
 		valuesToOutput = [ self.sim.now,
-			self.numRequests,
-			numBackends,
-			numBackendsStarting,
-			numBackendsStarted
+			status[BackendStatus.STOPPED],
+			status[BackendStatus.STARTING],
+			status[BackendStatus.STARTED],
+			status[BackendStatus.STOPPING],
 		]
 		self.sim.output(self, ','.join(["{0:.5f}".format(value) \
 			for value in valuesToOutput]))
-		self.sim.add(self.controlInterval, self.runControlLoop)
+		self.sim.add(self.reportInterval, self.runReportLoop)
+
+	## Get status of auto-scaler
+	# @return a dict with the number of backends in each state.
+	# E.g., { STOPPED: 3, STARTING: 1, STARTED: 2, STOPPING: 3 }
+	def getStatus(self):
+		numBackends = len(self.backends)
+		numStopped = len([ backend for backend in self.backends
+				if backend.autoScaleStatus==BackendStatus.STOPPED ])
+		numStarting = len([ backend for backend in self.backends
+				if backend.autoScaleStatus==BackendStatus.STARTING ])
+		numStarted = len([ backend for backend in self.backends
+				if backend.autoScaleStatus==BackendStatus.STARTED ])
+		numStopping = len([ backend for backend in self.backends
+				if backend.autoScaleStatus==BackendStatus.STOPPING ])
+		assert numBackends == numStarting + numStarted + \
+				numStopped + numStopping
+
+		return {
+				BackendStatus.STOPPED : numStopped,
+				BackendStatus.STARTING: numStarting,
+				BackendStatus.STARTED : numStarted,
+				BackendStatus.STOPPING: numStopping,
+			}
 
 	## Scale up by one replica.
 	# Implemented in a FIFO-like manner, i.e., first backend added is first started.
