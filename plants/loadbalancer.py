@@ -93,10 +93,10 @@ class LoadBalancer:
 	## Remove a backend
 	# @param backend backend server to remove
 	# @param onCompleted optional callback when backend removal is complete
-	def removeBackend(self, backend, onCompleted = None):
+	def removeBackend(self, backend, onShutdownCompleted = None):
 		backendIndex = self.backends.index(backend)
 		removedBackendInfo = dict(
-			onCompleted = onCompleted,
+			onShutdownCompleted = onShutdownCompleted,
 			queueLength = self.queueLengths[backendIndex]
 		)
 		self.removedBackends[backend] = removedBackendInfo
@@ -296,9 +296,9 @@ class LoadBalancer:
 			assert removedBackendInfo['queueLength'] >= 0
 			if removedBackendInfo['queueLength'] == 0:
 				# request queue drained, ready to forget about this backend
-				onCompleted = self.removedBackends[backend]['onCompleted']
+				onShutdownCompleted = self.removedBackends[backend]['onShutdownCompleted']
 				del self.removedBackends[backend]
-				onCompleted()
+				if onShutdownCompleted: onShutdownCompleted()
 		else:
 			self.lastThetas[request.chosenBackendIndex] = theta
 			self.lastLatencies[request.chosenBackendIndex].\
