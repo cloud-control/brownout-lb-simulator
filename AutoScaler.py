@@ -118,7 +118,7 @@ class AutoScaler:
 		except IndexError:
 			# XXX: Controller told us to scale up, but there are no backends available.
 			# We decided to fail hard here, but another option would be to ignore the command
-			raise Exception("AutoScaler was asked to scale up, but no backends are available.")
+			raise RuntimeError("AutoScaler was asked to scale up, but no backends are available.")
 
 		def startupCompleted():
 			backendToStart.autoScaleStatus = BackendStatus.STARTED
@@ -139,7 +139,7 @@ class AutoScaler:
 		except IndexError:
 			# XXX: Controller told us to scale down, but there are no backend to stop..
 			# We decided to fail hard here, but another option would be to ignore the command
-			raise Exception("AutoScaler was asked to scale down, but no backends are started.")
+			raise RuntimeError("AutoScaler was asked to scale down, but no backends are started.")
 
 		def shutdownCompleted():
 			self.sim.log(self, "{0} STOPPED", backendToStop)
