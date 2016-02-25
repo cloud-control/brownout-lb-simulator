@@ -9,7 +9,8 @@ eps = 10e-6
 def test_without_controller():
     completedRequests = []
 
-    sim = SimulatorKernel()
+    sim = SimulatorKernel(outputDirectory = None)
+
     server = Server(sim, serviceTimeY = 1, serviceTimeYVariance = 0)
 
     r = Request()
@@ -31,7 +32,7 @@ def test_with_controller_always_no():
     controller = Mock()
     controller.withOptional.return_value = False, 0
 
-    sim = SimulatorKernel()
+    sim = SimulatorKernel(outputDirectory = None)
     server = Server(sim,
             serviceTimeY = 10, serviceTimeYVariance = 0,
             serviceTimeN =  1, serviceTimeNVariance = 0)
@@ -58,7 +59,7 @@ def test_with_controller_always_yes():
     controller = Mock()
     controller.withOptional.return_value = True, 1
 
-    sim = SimulatorKernel()
+    sim = SimulatorKernel(outputDirectory = None)
     server = Server(sim,
             serviceTimeY = 10, serviceTimeYVariance = 0,
             serviceTimeN =  1, serviceTimeNVariance = 0)

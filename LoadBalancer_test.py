@@ -2,9 +2,9 @@ from mock import Mock
 
 from LoadBalancer import *
 from SimulatorKernel import *
-
+ 
 def test():
-    sim = SimulatorKernel()
+    sim = SimulatorKernel(outputDirectory = None)
 
     server1 = Mock()
     server2 = Mock()

@@ -1,15 +1,33 @@
 import mock
 from nose.tools import *
-import os
 
 from simulator import loadBalancingAlgorithms, main
 
-def test_main():
+@mock.patch('SimulatorKernel.SimulatorKernel.output')
+def test_main(_):
     for algorithm in loadBalancingAlgorithms:
-        with mock.patch('sys.argv', [os.getcwd() + '/simulator.py', '--algorithm', algorithm]):
+        with mock.patch('sys.argv', [
+                './simulator.py',
+                '--algorithm', algorithm,
+                ]):
             main()
 
+@mock.patch('SimulatorKernel.SimulatorKernel.output')
 @raises(SystemExit)
-def test_invalid_algorithm():
-    with mock.patch('sys.argv', [os.getcwd() + '/simulator.py', '--algorithm', 'non-existant']):
+def test_invalid_algorithm(_):
+    with mock.patch('sys.argv', [
+            './simulator.py',
+            '--algorithm',
+            'non-existant',
+            ]):
+        main()
+
+@mock.patch('SimulatorKernel.SimulatorKernel.output')
+def test_autoscaler(_):
+    with mock.patch('sys.argv', [
+            './simulator.py',
+            '--algorithm', 'SQF',
+            '--rc', 'mm_queueifac',
+            '--scenario', './scenarios/autoscaling-support.py',
+            ]):
         main()

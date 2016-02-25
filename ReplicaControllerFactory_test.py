@@ -29,7 +29,7 @@ def test_replica_controller_factories():
         args = parser.parse_args(args = [])
         replicaControllerFactory.parseCommandLine(args)
 
-        sim = SimulatorKernel()
+        sim = SimulatorKernel(outputDirectory = None)
         controller = replicaControllerFactory.newInstance(sim, "blah")
 
         # smoke test
