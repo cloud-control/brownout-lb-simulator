@@ -284,6 +284,7 @@ class LoadBalancer:
 		theta = request.theta
 		request.originalRequest.withOptional = request.withOptional
 		request = request.originalRequest
+		request.theta = theta
 
 		# Store stats
 		request.completion = self.sim.now

@@ -31,6 +31,8 @@ class AutoScaler:
 		self.numRequests = 0
 		## startup delay
 		self.startupDelay = startupDelay
+		## last theta piggy-backed by load-balancer
+		self.lastTheta = 1
 
 		# Launch control loop
 		self.sim.add(0, self.runControlLoop)
@@ -53,6 +55,7 @@ class AutoScaler:
 	## Handles request completion.
 	# Calls orginator's onCompleted() 
 	def onCompleted(self, request):
+		self.lastTheta = request.theta
 		self.numRequests += 1
 		originalRequest = request.originalRequest
 		originalRequest.withOptional = request.withOptional
@@ -77,10 +80,9 @@ class AutoScaler:
 
 		# Wait for previous scaling action to complete
 		if numBackendsStarting == 0 and numBackendsStopping == 0:
-			# XXX: Violates encapsulation of load-balancer
-			if avg(self.loadBalancer.lastThetas) < 0.5 and numBackendsStopped > 0:
+			if self.lastTheta < 0.5 and numBackendsStopped > 0:
 				self.scaleUp()
-			elif avg(self.loadBalancer.lastThetas) > 0.9 and numBackendsStarted > 1:
+			elif self.lastTheta > 0.9 and numBackendsStarted > 1:
 				self.scaleDown()
 
 		# Update values after control action was taken
