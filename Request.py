@@ -1,4 +1,3 @@
-
 ## Represents a request sent to an entity, waiting for a reply. This class has
 # little logic, its use is basically as a dictionary.
 # @note If a request needs to traverse an entity, a <b>new</b> request should be
