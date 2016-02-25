@@ -8,6 +8,7 @@ import sys
 # Implements an event-driven simulator
 class SimulatorKernel:
 	## Constructor
+	# @param outputDirectory folder where CSV files should be written to. None disables CSV files
 	def __init__(self, outputDirectory = '.'):
 		## events indexed by time
 		self.events = defaultdict(list)
@@ -90,6 +91,8 @@ class SimulatorKernel:
 	# @note outputLine is written verbatimly to the output file, plus a newline
 	# is added.
 	def output(self, issuer, outputLine):
+		if self.outputDirectory == None:
+			return
 		if issuer not in self.outputFiles:
 			outputFilename = 'sim-' + str(issuer) + '.csv'
 			outputFilename = os.path.join(self.outputDirectory, outputFilename)

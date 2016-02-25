@@ -1,5 +1,7 @@
 from __future__ import print_function
 
+import mock
+
 from SimulatorKernel import SimulatorKernel
 
 def assertShouldRunAt(sim, when, eventsExecuted):
@@ -70,3 +72,12 @@ def test_output():
 	os.remove(resultFileName)
 	
 	assert result == expected
+
+def test_no_output():
+	m = mock.mock_open()
+	with mock.patch('__builtin__.open', m, create=True):
+		sim = SimulatorKernel(outputDirectory = None)
+		sim.output('hello', 'world')
+
+	# No calls to output methods should have been made
+	assert not m.mock_calls, m.mock_calls
