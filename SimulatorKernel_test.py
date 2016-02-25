@@ -4,11 +4,14 @@ import mock
 
 from SimulatorKernel import SimulatorKernel
 
-def assertShouldRunAt(sim, when, eventsExecuted):
+def assertShouldRunAt(sim, when, eventsExecuted, mark = None):
 	"""
 	Helper method to assert that an event was executed at the right time.
 	"""
-	eventsExecuted.append(sim.now)
+	if mark is not None:
+		eventsExecuted.append(mark)
+	else:
+		eventsExecuted.append(sim.now)
 	assert sim.now == when
 
 def assertShouldRunPeriodically(sim, period, eventsExecuted):
@@ -29,6 +32,17 @@ def test_add_events():
 	sim.run()
 
 	assert eventsExecuted == [ 0, 100, 200 ], eventsExecuted
+
+def test_delta_cycle():
+	eventsExecuted = []
+
+	sim = SimulatorKernel()
+	sim.add(0, lambda: assertShouldRunAt(sim, 0, eventsExecuted, 'mark1'))
+	sim.add(0, lambda: assertShouldRunAt(sim, 0, eventsExecuted, 'mark2'))
+	sim.add(0, lambda: assertShouldRunAt(sim, 0, eventsExecuted, 'mark3'))
+	sim.run()
+
+	assert eventsExecuted == [ 'mark1', 'mark2', 'mark3' ], eventsExecuted
 
 def test_run_until():
 	def runPeriodically(sim, period, eventsExecuted):

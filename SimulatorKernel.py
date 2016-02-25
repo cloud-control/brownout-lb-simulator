@@ -58,7 +58,7 @@ class SimulatorKernel:
 			#if int(prevNow / 100) < int(self.now / 100):
 			#	self.log(self, "progressing, handled {0} events", numEvents)
 			events = self.events[self.now]
-			event = events.pop()
+			event = events.pop(0)
 			del self.whatToTime[event]
 			if len(events) == 0:
 				del self.events[self.now]
