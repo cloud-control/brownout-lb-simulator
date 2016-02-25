@@ -2,7 +2,7 @@ from __future__ import print_function
 
 import mock
 
-from SimulatorKernel import SimulatorKernel
+from kernel import SimulatorKernel
 
 def assertShouldRunAt(sim, when, eventsExecuted, mark = None):
 	"""

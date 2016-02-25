@@ -24,7 +24,6 @@ class Request(object):
 		## Original request creation time
 		self.createdAt = None
 
-
 	## Pretty-printer
 	def __str__(self):
 		return str(self.requestId)

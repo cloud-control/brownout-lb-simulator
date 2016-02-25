@@ -1,7 +1,6 @@
 from __future__ import division
 
-from Request import *
-from utils import *
+from base import Request
 
 ## Status of the replica, as seen by the auto-scaler
 class BackendStatus:

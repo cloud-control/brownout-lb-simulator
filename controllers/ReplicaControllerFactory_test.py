@@ -6,11 +6,11 @@ import sys
 
 from mock import Mock
 
-from SimulatorKernel import *
+from base import SimulatorKernel
 
 def test_replica_controller_factories():
     # Load all replica controller factories
-    for filename in os.listdir('.'):
+    for filename in os.listdir('controllers/server'):
         # Not a replica controller factory
         if filename[:4] != "rcf_": continue
         if filename[-3:] != ".py": continue
@@ -18,7 +18,8 @@ def test_replica_controller_factories():
         print("Loading and testing", filename)
 
         # Load Python module
-        replicaControllerFactory = __import__(os.path.splitext(filename)[0])
+        replicaControllerFactory = __import__('controllers.server.' + os.path.splitext(filename)[0],
+	    fromlist = ['addCommandLine', 'parseCommandLine', 'newInstance' ])
 
         parser = argparse.ArgumentParser()
         # TODO: avoid code duplication

@@ -2,7 +2,7 @@ from collections import defaultdict, deque
 import random as xxx_random # prevent accidental usage
 import numpy as np
 
-from utils import *
+from base.utils import *
 
 ## Represents a brownout compliant server.
 # Current implementation simulates processor-sharing with an infinite number of

@@ -1,6 +1,6 @@
 from __future__ import print_function
 
-from Request import *
+from request import Request
 
 def test():
     request = Request()

@@ -4,8 +4,8 @@ import math
 import numpy as np
 import random as xxx_random # prevent accidental usage
 
-from Request import *
-from utils import *
+from base import Request
+from base.utils import *
 
 ## Simulates a load-balancer.
 # The load-balancer is assumed to take zero time for its decisions.

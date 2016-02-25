@@ -1,5 +1,5 @@
-from Clients import *
-from SimulatorKernel import *
+from base import SimulatorKernel
+from clients import ClosedLoopClient, OpenLoopClient
 
 eps = 10e-6
 

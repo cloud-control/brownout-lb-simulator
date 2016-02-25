@@ -1,6 +1,6 @@
 import random as xxx_random # prevent accidental usage
 
-from Request import *
+from base import *
 
 ## Simulates an open-loop client.
 # The clients have an exponential arrival time.

@@ -1,9 +1,8 @@
 import mock
 from nose.tools import *
 
-from AutoScaler import AutoScaler, BackendStatus
-from SimulatorKernel import SimulatorKernel
-from Request import Request
+from autoscaler import AutoScaler, BackendStatus
+from base import SimulatorKernel, Request
 
 eps=10e-6
 

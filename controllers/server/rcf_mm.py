@@ -1,7 +1,7 @@
 import numpy as np
 import random as xxx_random # prevent accidental usage
 
-from utils import *
+from base.utils import *
 
 def addCommandLine(parser):
 	parser.add_argument('--rcMmInitialDimmer',

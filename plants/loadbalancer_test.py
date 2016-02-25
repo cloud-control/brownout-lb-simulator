@@ -1,7 +1,7 @@
 from mock import Mock
 
-from LoadBalancer import *
-from SimulatorKernel import *
+from loadbalancer import LoadBalancer
+from base import SimulatorKernel
  
 def test():
     sim = SimulatorKernel(outputDirectory = None)
@@ -16,3 +16,5 @@ def test():
     lb.removeBackend(server2)
 
     assert str(lb)
+
+    # TODO: Test for removal delay

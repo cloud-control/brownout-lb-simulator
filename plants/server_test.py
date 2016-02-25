@@ -1,8 +1,7 @@
 from mock import Mock
 
-from Request import *
-from Server import *
-from SimulatorKernel import *
+from server import Server
+from base import Request, SimulatorKernel
 
 eps = 10e-6
 
