@@ -55,7 +55,12 @@ def test_remove_while_request_in_progress():
     r1.onCompleted = Mock()
     sim.add(0, lambda: lb.request(r1))
     sim.add(1, lambda: remove_active_server())
+    sim.add(1, lambda: lb.request(Request()))
+    sim.add(2, lambda: lb.request(Request()))
+    sim.add(2, lambda: lb.request(Request()))
     sim.run()
 
-    r1.onCompleted.assert_called_with()
-    onShutdownCompleted.assert_called_with()
+    r1.onCompleted.assert_called_once_with()
+    onShutdownCompleted.assert_called_once_with()
+    assert server1.numSeenRequests == 1 or server2.numSeenRequests == 1
+    assert server1.numSeenRequests == 3 or server2.numSeenRequests == 3
