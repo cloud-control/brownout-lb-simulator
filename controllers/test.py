@@ -35,3 +35,27 @@ def check_replica_controller_factory(replicaControllerFactory):
     assert str(controller) == "blah"
     assert controller.withOptional()[0] in [ False, True ]
     assert 0 <= controller.withOptional()[1] <= 1
+
+def test_autoscaler_controller_factories():
+    for autoscalerControllerFactory in loadControllerFactories('autoscaler'):
+        assert autoscalerControllerFactory.getName()
+        check_autoscaler_controller_factory(autoscalerControllerFactory)
+
+def check_autoscaler_controller_factory(autoscalerControllerFactory):
+    parser = argparse.ArgumentParser()
+    autoscalerControllerFactory.addCommandLine(parser)
+	
+    args = parser.parse_args(args = [])
+    autoscalerControllerFactory.parseCommandLine(args)
+
+    sim = SimulatorKernel(outputDirectory = None)
+    controller = autoscalerControllerFactory.newInstance(sim, "blah")
+
+    # smoke test
+    controller.reportData(1, 10, 2, 2)
+
+    sim.run()
+
+    assert str(controller) == "blah"
+    assert controller.withOptional()[0] in [ False, True ]
+    assert 0 <= controller.withOptional()[1] <= 1

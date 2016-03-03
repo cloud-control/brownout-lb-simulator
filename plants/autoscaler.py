@@ -14,24 +14,43 @@ class BackendStatus:
 # Should call autoScaler.getStatus() for control input and
 # autoScaler.scaleUp()/scaleDown() for control output.
 class AbstractAutoScalerController():
-	def __init__(self, sim, autoScaler):
-		self.autoScaler = autoScaler # pragma: no cover
+	def __init__(self, controlInterval):
+		self.controlInterval = controlInterval
 
 	## Called when a new request arrives, before sending the request to the load-balancer.
-	def onRequest(self, request):
-		pass # pragma: no cover
+	# @param now simulator time when request was sent
+	# @param request request that arrived at the load-balancer
+	# @return 1 for scale up, 0 for do nothing, -1 for scale down
+	def onRequest(self, now, request):
+		return 0
 
 	## Called when a request completes, potentially with information
 	# piggy-backed from the load-balancer.
-	def onCompleted(self, request):
-		pass # pragma: no cover
+	# @param now simulator time when request was sent
+	# @param request request that arrived at the load-balancer
+	# @return 1 for scale up, 0 for do nothing, -1 for scale down
+	def onCompleted(self, now, request):
+		return 0
+
+	## Called when the status of the autoscaler changed
+	# @param now simulator time when request was sent
+	# @param status new status representing number of backends in different states,
+	#   e.g., { STOPPED: 1, STARTING: 1, STARTED: 2, STOPPING: 0 }
+	# @return 1 for scale up, 0 for do nothing, -1 for scale down
+	def onStatus(self, now, status):
+		return 0
+
+	## Called periodically, as requested by controller
+	# @param now simulator time when request was sent
+	# @return 1 for scale up, 0 for do nothing, -1 for scale down
+	def onControlPeriod(self, now):
+		return 0
 
 ## Simulates an auto-scaler.
 class AutoScaler:
 	## Constructor.
 	# @param sim Simulator to attach to
 	# @param loadBalancer loadBalancer to add/remove servers to
-	# @param controlInterval control interval in case periodic control is used
 	# @param startupDelay time it takes for a replica to come online
 	# @param controller that decides when to scale up and when to scale down
 	def __init__(self, sim, loadBalancer, startupDelay = 60, controller = None):
@@ -48,12 +67,18 @@ class AutoScaler:
 		## last theta piggy-backed by load-balancer
 		self.lastTheta = 1
 		## controller
-		self.controller = controller
+		if controller is not None:
+			self.controller = controller
+		else:
+			self.controller = AbstractAutoScalerController(controlInterval = 1)
 		## reporting interval
 		self.reportInterval = 1
 
 		# start reporting
 		self.sim.add(self.reportInterval, self.runReportLoop)
+
+		# start control
+		self.sim.add(self.controller.controlInterval, self.runControlLoop)
 
 	## Adds a new back-end server and initializes decision variables.
 	# @param backend the server to add
@@ -67,19 +92,21 @@ class AutoScaler:
 		newRequest = Request()
 		newRequest.originalRequest = request
 		newRequest.onCompleted = lambda: self.onCompleted(newRequest)
-		if self.controller:
-			self.controller.onRequest(newRequest)
 		self.loadBalancer.request(newRequest)
+
+		action = self.controller.onRequest(self.sim.now, newRequest)
+		self.actuate(action)
 
 	## Handles request completion.
 	# Calls orginator's onCompleted() 
 	def onCompleted(self, request):
-		if self.controller:
-			self.controller.onCompleted(request)
 		self.numRequests += 1
 		originalRequest = request.originalRequest
 		originalRequest.withOptional = request.withOptional
 		originalRequest.onCompleted()
+
+		action = self.controller.onCompleted(self.sim.now, request)
+		self.actuate(action)
 
 	## Run report loop.
 	# Outputs CVS-formatted statistics through the Simulator's output routine.
@@ -95,6 +122,24 @@ class AutoScaler:
 		self.sim.output(self, ','.join(["{0:.5f}".format(value) \
 			for value in valuesToOutput]))
 		self.sim.add(self.reportInterval, self.runReportLoop)
+
+	## Run control loop.
+	def runControlLoop(self):		
+		action = self.controller.onControlPeriod(self.sim.now)
+		self.actuate(action)
+		self.sim.add(self.controller.controlInterval, self.runControlLoop)
+
+	## Act on the control signal of the controller
+	# @param action 1 for scale up, 0 for do nothing, -1 for scale down
+	def actuate(self, action):
+		if action == 0:
+			return # no action
+		elif action == 1:
+			self.scaleUp()
+		elif action == -1:
+			self.scaleDown()
+		else:
+			raise RuntimeError('Invalid control action ' + str(action))
 
 	## Get status of auto-scaler
 	# @return a dict with the number of backends in each state.
@@ -136,9 +181,15 @@ class AutoScaler:
 			self.loadBalancer.addBackend(backendToStart)
 			self.sim.log(self, "{0} STARTED", backendToStart)
 
+			action = self.controller.onStatus(self.sim.now, self.getStatus())
+			self.actuate(action)
+
 		self.sim.log(self, "{0} STARTING", backendToStart)
 		backendToStart.autoScaleStatus = BackendStatus.STARTING
 		self.sim.add(self.startupDelay, startupCompleted)
+
+		action = self.controller.onStatus(self.sim.now, self.getStatus())
+		self.actuate(action)
 
 	## Scale down by one replica.
 	# Implemented in a LIFO-like manner, i.e., last backend started is first stopped.
@@ -156,9 +207,15 @@ class AutoScaler:
 			self.sim.log(self, "{0} STOPPED", backendToStop)
 			backendToStop.autoScaleStatus = BackendStatus.STOPPED
 
+			action = self.controller.onStatus(self.sim.now, self.getStatus())
+			self.actuate(action)
+
 		self.sim.log(self, "{0} STOPPING", backendToStop)
 		backendToStop.autoScaleStatus = BackendStatus.STOPPING
 		self.loadBalancer.removeBackend(backendToStop, shutdownCompleted)
+		
+		action = self.controller.onStatus(self.sim.now, self.getStatus())
+		self.actuate(action)
 
 	## Pretty-print auto-scaler's name.
 	def __str__(self):

@@ -12,6 +12,7 @@ class MockLoadBalancer:
         self.numSeenRequests = 0
         self.latency = latency
         self.lastRemovedBackend = None
+        self.addBackend = mock.Mock()
 
     def request(self, request):
         if self.numSeenRequests == 0:
@@ -20,8 +21,6 @@ class MockLoadBalancer:
             request.withOptional = False
         self.numSeenRequests += 1
         self.sim.add(self.latency, request.onCompleted)
-
-    addBackend = mock.Mock()
 
     def removeBackend(self, backend, onShutdown):
         self.sim.add(self.latency, onShutdown)
@@ -32,6 +31,12 @@ def test_request_hooks():
 
     loadBalancer = MockLoadBalancer(sim, latency = 1)
     autoScalerController = mock.Mock()
+    autoScalerController.controlInterval = 1
+    autoScalerController.onRequest = mock.Mock(return_value=0)
+    autoScalerController.onCompleted = mock.Mock(return_value=0)
+    autoScalerController.onControlPeriod = mock.Mock(return_value=0)
+    autoScalerController.onStatus = mock.Mock(return_value=0)
+
     autoScaler = AutoScaler(sim, loadBalancer, controller = autoScalerController)
     assert str(autoScaler)
 
@@ -42,17 +47,20 @@ def test_request_hooks():
 
     r = Request()
     autoScaler.request(r)
+    sim.add(100, lambda: autoScaler.scaleUp())
     sim.run()
+
+    # TODO: Check exact call parameters
     assert autoScalerController.onRequest.call_count == 1, autoScalerController.onRequest.call_count
     assert autoScalerController.onCompleted.call_count == 1, autoScalerController.onCompleted.call_count
+    assert autoScalerController.onStatus.call_count == 2, autoScalerController.onStatus.call_count
 
 @raises(RuntimeError)
 def test_scale_up_error():
     sim = SimulatorKernel(outputDirectory = None)
 
     loadBalancer = MockLoadBalancer(sim, latency = 1)
-    autoScalerController = mock.Mock()
-    autoScaler = AutoScaler(sim, loadBalancer, controller = autoScalerController, startupDelay = 60)
+    autoScaler = AutoScaler(sim, loadBalancer, startupDelay = 60)
     assert str(autoScaler)
 
     server1 = mock.Mock(name = 'server1')
@@ -65,8 +73,7 @@ def test_scale_down_error():
     sim = SimulatorKernel(outputDirectory = None)
 
     loadBalancer = MockLoadBalancer(sim, latency = 1)
-    autoScalerController = mock.Mock()
-    autoScaler = AutoScaler(sim, loadBalancer, controller = autoScalerController, startupDelay = 60)
+    autoScaler = AutoScaler(sim, loadBalancer, startupDelay = 60)
     assert str(autoScaler)
 
     server1 = mock.Mock(name = 'server1')
@@ -79,8 +86,7 @@ def test_scale_up_and_down():
     sim = SimulatorKernel(outputDirectory = None)
 
     loadBalancer = MockLoadBalancer(sim, latency = 1)
-    autoScalerController = mock.Mock()
-    autoScaler = AutoScaler(sim, loadBalancer, controller = autoScalerController, startupDelay = 60)
+    autoScaler = AutoScaler(sim, loadBalancer, startupDelay = 60)
     assert str(autoScaler)
 
     server1 = mock.Mock(name = 'server1')
@@ -123,3 +129,28 @@ def test_scale_up_and_down():
     sim.run()
 
     assert loadBalancer.lastRemovedBackend == server2
+
+@raises(RuntimeError)
+def test_invalid_action():
+    sim = SimulatorKernel(outputDirectory = None)
+
+    loadBalancer = MockLoadBalancer(sim, latency = 1)
+    autoScalerController = mock.Mock()
+    autoScalerController.controlInterval = 1
+    autoScalerController.onRequest = mock.Mock(return_value=-2)
+    autoScalerController.onCompleted = mock.Mock(return_value=0)
+    autoScalerController.onControlPeriod = mock.Mock(return_value=0)
+    autoScalerController.onStatus = mock.Mock(return_value=0)
+
+    autoScaler = AutoScaler(sim, loadBalancer, controller = autoScalerController)
+    assert str(autoScaler)
+
+    server1 = mock.Mock(name = 'server1')
+    server2 = mock.Mock(name = 'server2')
+    autoScaler.addBackend(server1)
+    autoScaler.addBackend(server2)
+
+    r = Request()
+    autoScaler.request(r)
+    sim.add(100, lambda: autoScaler.scaleUp())
+    sim.run()
