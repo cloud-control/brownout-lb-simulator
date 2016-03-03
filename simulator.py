@@ -24,7 +24,8 @@ loadBalancingAlgorithms = ("weighted-RR theta-diff SQF SQF-plus FRF equal-thetas
 ## Entry-point for simulator.
 # Setups up all entities, then runs simulation.
 def main():
-	# Load all replica controller factories
+	# Load all controller factories
+	autoScalerControllerFactories = loadControllerFactories('autoscaler')
 	replicaControllerFactories = loadControllerFactories('server')
 
 	# Parsing command line options to find out the algorithm
@@ -53,6 +54,16 @@ def main():
 		help = 'Specify a scenario in which to test the system',
 		default = os.path.join(os.path.dirname(sys.argv[0]), 'scenarios', 'replica-steady-1.py'))
 
+	group = parser.add_argument_group('ac', 'General autoscaler controller options')
+	group.add_argument('--ac',
+		help = 'Autoscaler controller: ' + ' '.join([ acf.getName() for acf in autoScalerControllerFactories ]),
+		default = 'trivial')
+
+	# Add autoscaler controller factories specific command-line arguments
+	for acf in autoScalerControllerFactories:
+		group = parser.add_argument_group("Options for '{0}' autoscaler controller".format(acf.getName()))
+		acf.addCommandLine(group)
+
 	group = parser.add_argument_group('rc', 'General replica controller options')
 	group.add_argument('--rc',
 		help = 'Replica controller: ' + ' '.join([ rcf.getName() for rcf in replicaControllerFactories ]),
@@ -78,6 +89,14 @@ def main():
 		parser.print_help()
 		quit()
 
+	# Find autoscaler controller factory
+	try:
+		autoScalerControllerFactory = filter(lambda ac: ac.getName() == args.ac, autoScalerControllerFactories)[0]
+	except IndexError:
+		print("Unsupported autoscaler controller '{0}'".format(args.ac), file = sys.stderr)
+		parser.print_help()
+		quit()
+
 	# Find replica controller factory
 	try:
 		replicaControllerFactory = filter(lambda rc: rc.getName() == args.rc, replicaControllerFactories)[0]
@@ -86,14 +105,16 @@ def main():
 		parser.print_help()
 		quit()
 
-	# Allow replica controller factory to analyse command-line
+	# Allow controller factories to analyse command-line
+	autoScalerControllerFactory.parseCommandLine(args)
 	replicaControllerFactory.parseCommandLine(args)
 
 	sim = SimulatorKernel(outputDirectory = args.outdir)
 	servers = []
 	clients = []
 	loadBalancer = LoadBalancer(sim, controlPeriod = 1.0)
-	autoScaler = AutoScaler(sim, loadBalancer)
+	autoScaler = AutoScaler(sim, loadBalancer,
+				autoScalerControllerFactory.newInstance(sim, 'as-ctr'))
 	openLoopClient = OpenLoopClient(sim, autoScaler)
 
 	loadBalancer.algorithm = algorithm
