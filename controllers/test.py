@@ -51,11 +51,9 @@ def check_autoscaler_controller_factory(autoscalerControllerFactory):
     sim = SimulatorKernel(outputDirectory = None)
     controller = autoscalerControllerFactory.newInstance(sim, "blah")
 
-    # smoke test
-    controller.reportData(1, 10, 2, 2)
+    # TODO: smoke test
+
 
     sim.run()
 
     assert str(controller) == "blah"
-    assert controller.withOptional()[0] in [ False, True ]
-    assert 0 <= controller.withOptional()[1] <= 1
