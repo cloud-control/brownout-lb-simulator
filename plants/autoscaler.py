@@ -74,6 +74,7 @@ class AutoScaler:
 		self.sim.add(self.reportInterval, self.runReportLoop)
 
 		# start control
+		self.sim.add(0, lambda: self.controller.onStatus(self.getStatus()))
 		self.sim.add(self.controller.controlInterval, self.runControlLoop)
 
 	## Adds a new back-end server and initializes decision variables.

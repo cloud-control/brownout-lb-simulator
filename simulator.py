@@ -114,7 +114,7 @@ def main():
 	clients = []
 	loadBalancer = LoadBalancer(sim, controlPeriod = 1.0)
 	autoScaler = AutoScaler(sim, loadBalancer,
-				autoScalerControllerFactory.newInstance(sim, 'as-ctr'))
+				controller = autoScalerControllerFactory.newInstance(sim, 'as-ctr'))
 	openLoopClient = OpenLoopClient(sim, autoScaler)
 
 	loadBalancer.algorithm = algorithm
