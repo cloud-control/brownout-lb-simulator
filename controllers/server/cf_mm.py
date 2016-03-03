@@ -3,6 +3,9 @@ import random as xxx_random # prevent accidental usage
 
 from base.utils import *
 
+def getName():
+	return 'mm'
+
 def addCommandLine(parser):
 	parser.add_argument('--rcMmInitialDimmer',
 		type = float,

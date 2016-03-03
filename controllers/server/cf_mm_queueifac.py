@@ -4,6 +4,9 @@ import math
 
 from base.utils import *
 
+def getName():
+	return 'mm_queueifac'
+
 def addCommandLine(parser):
 	parser.add_argument('--rcMmQueueInitialDimmer',
 		type = float,

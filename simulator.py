@@ -13,6 +13,7 @@ import sys
 from plants import AutoScaler, ClosedLoopClient, OpenLoopClient, LoadBalancer, Server
 from base import Request, SimulatorKernel
 from base.utils import *
+from controllers import loadControllerFactories
 
 loadBalancingAlgorithms = ("weighted-RR theta-diff SQF SQF-plus FRF equal-thetas equal-thetas-SQF " + \
 		"FRF-EWMA predictive 2RC RR random theta-diff-plus ctl-simplify equal-thetas-fast theta-diff-plus-SQF " + \
@@ -24,17 +25,7 @@ loadBalancingAlgorithms = ("weighted-RR theta-diff SQF SQF-plus FRF equal-thetas
 # Setups up all entities, then runs simulation.
 def main():
 	# Load all replica controller factories
-	replicaControllerFactories = []
-	replicaControllerFactoriesDir = os.path.join(os.path.dirname(sys.argv[0]), 'controllers/server')
-	for filename in os.listdir(replicaControllerFactoriesDir):
-		# Not a replica controller factory
-		if filename[:4] != "rcf_": continue
-		if filename[-3:] != ".py": continue
-
-		# Load Python module
-		replicaControllerFactory = __import__('controllers.server.' + os.path.splitext(filename)[0],
-			fromlist = ['addCommandLine', 'parseCommandLine', 'newInstance' ])
-		replicaControllerFactories.append(replicaControllerFactory)
+	replicaControllerFactories = loadControllerFactories('server')
 
 	# Parsing command line options to find out the algorithm
 	parser = argparse.ArgumentParser( \
@@ -64,7 +55,7 @@ def main():
 
 	group = parser.add_argument_group('rc', 'General replica controller options')
 	group.add_argument('--rc',
-		help = 'Replica controller: ' + ' '.join([ rcf.__name__[4:] for rcf in replicaControllerFactories ]),
+		help = 'Replica controller: ' + ' '.join([ rcf.getName() for rcf in replicaControllerFactories ]),
 		default = 'static')
 	group.add_argument('--rcSetpoint',
 		type = float,
@@ -77,7 +68,7 @@ def main():
 
 	# Add replica controller factories specific command-line arguments
 	for rcf in replicaControllerFactories:
-		group = parser.add_argument_group('Options for ' + rcf.__name__.split('.')[-1][4:] + ' replica controller')
+		group = parser.add_argument_group("Options for '{0}' replica controller".format(rcf.getName()))
 		rcf.addCommandLine(group)
 
 	args = parser.parse_args()
@@ -89,7 +80,7 @@ def main():
 
 	# Find replica controller factory
 	try:
-		replicaControllerFactory = filter(lambda rc: rc.__name__.split('.')[-1][4:] == args.rc, replicaControllerFactories)[0]
+		replicaControllerFactory = filter(lambda rc: rc.getName() == args.rc, replicaControllerFactories)[0]
 	except IndexError:
 		print("Unsupported replica controller '{0}'".format(args.rc), file = sys.stderr)
 		parser.print_help()

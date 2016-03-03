@@ -1,5 +1,8 @@
 import random as xxx_random # prevent accidental usage
 
+def getName():
+	return 'static'
+
 def addCommandLine(parser):
 	parser.add_argument('--rcStaticDimmer',
 		type = float,
