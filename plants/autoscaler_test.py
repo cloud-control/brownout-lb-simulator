@@ -48,12 +48,13 @@ def test_request_hooks():
     r = Request()
     autoScaler.request(r)
     sim.add(100, lambda: autoScaler.scaleUp())
-    sim.run()
+    sim.run(until = 1000)
 
     # TODO: Check exact call parameters
     assert autoScalerController.onRequest.call_count == 1, autoScalerController.onRequest.call_count
     assert autoScalerController.onCompleted.call_count == 1, autoScalerController.onCompleted.call_count
     assert autoScalerController.onStatus.call_count == 2, autoScalerController.onStatus.call_count
+    assert autoScalerController.onControlPeriod.call_count == 1000, autoScalerController.onControlPeriod.call_count
 
 @raises(RuntimeError)
 def test_scale_up_error():
