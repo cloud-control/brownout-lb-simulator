@@ -159,7 +159,7 @@ def main():
 
 	toReport = []
 	toReport.append(( "loadBalancingAlgorithm", algorithm.ljust(20) ))
-	toReport.append(( "replicaAlgorithm", replicaControllerFactory.__name__[4:].ljust(20) ))
+	toReport.append(( "replicaAlgorithm", replicaControllerFactory.getName().ljust(20) ))
 	toReport.append(( "numRequests", str(len(responseTimes)).rjust(7) ))
 	toReport.append(( "numRequestsWithOptional", str(numRequestsWithOptional).rjust(7) ))
 	toReport.append(( "optionalRatio", "{:.3f}".format(numRequestsWithOptional / len(responseTimes)) ))
