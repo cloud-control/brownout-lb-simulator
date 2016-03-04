@@ -53,7 +53,7 @@ def test_request_hooks():
     # TODO: Check exact call parameters
     assert autoScalerController.onRequest.call_count == 1, autoScalerController.onRequest.call_count
     assert autoScalerController.onCompleted.call_count == 1, autoScalerController.onCompleted.call_count
-    assert autoScalerController.onStatus.call_count == 2, autoScalerController.onStatus.call_count
+    assert autoScalerController.onStatus.call_count == 3, autoScalerController.onStatus.call_count
     assert autoScalerController.onControlPeriod.call_count == 1000, autoScalerController.onControlPeriod.call_count
 
 @raises(RuntimeError)
