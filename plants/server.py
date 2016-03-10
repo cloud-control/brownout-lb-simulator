@@ -168,9 +168,10 @@ class Server:
 			else:
 				activeRequest.withOptional, activeRequest.theta = True, 1
 
-			activeRequest.arrival = self.sim.now
-
 			activeRequest.remainingTime = self.drawServiceTime(activeRequest.withOptional)
+		
+		if not hasattr(activeRequest, 'arrival'):
+			activeRequest.arrival = self.sim.now
 
 		# Schedule it to run for a bit
 		timeToExecuteActiveRequest = min(self.timeSlice, activeRequest.remainingTime)
