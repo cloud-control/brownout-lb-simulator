@@ -3,7 +3,9 @@ omit =
     *argparse.py*
     *ctypes*
     *funcsigs*
+    *hmac*
     *mock*
+    *multiprocesing*
     *numbers.py*
     *numpy*
     *pbr*
