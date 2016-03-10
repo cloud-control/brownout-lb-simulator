@@ -17,12 +17,12 @@ def addCommandLine(parser):
 	parser.add_argument('--acPIIntegralGain',
 		type = float,
 		help = 'Specify the gain of the integral controller part',
-		default = 1750.0,
+		default = 500.0,
 	)
 	parser.add_argument('--acPIControlInterval',
 		type = float,
 		help = 'Specify the control interval for the PI controller',
-		default = 150, # 300 --> 5 minutes, 600 --> 10 minutes
+		default = 300, # 300 --> 5 minutes, 600 --> 10 minutes
 	)
 	parser.add_argument('--acPIResetTime',
 		type = float,
@@ -105,10 +105,12 @@ class AutoScalerController(AbstractAutoScalerController):
 					# check that we have the backends available
 					if desiredControl > 0:
 						self.controlValue = min(self.status[BackendStatus.STOPPED], desiredControl)
+						self.integralPart = 0.0 # brutal hack: resetting integral part
 					elif desiredControl < 0:
 						self.controlValue = -min(self.status[BackendStatus.STARTED], abs(desiredControl))
+						self.integralPart = 0.0 # brutal hack: resetting integral part
 					action = self.controlValue
-					
+										
 					# update
 					self.integralPart = self.integralPart + error * \
 						(self.proportionalGain * self.controlInterval / self.integralGain) + \
