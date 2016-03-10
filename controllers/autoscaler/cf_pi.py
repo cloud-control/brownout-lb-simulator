@@ -12,22 +12,27 @@ def addCommandLine(parser):
 	parser.add_argument('--acPIProportionalGain',
 		type = float,
 		help = 'Specify the gain of the proportional controller part',
-		default = 0.8,
+		default = 2.5,
 	)
 	parser.add_argument('--acPIIntegralGain',
 		type = float,
 		help = 'Specify the gain of the integral controller part',
-		default = 0.6,
+		default = 750.0,
 	)
 	parser.add_argument('--acPIControlInterval',
 		type = float,
 		help = 'Specify the control interval for the PI controller',
-		default = 300, # 300 --> 5 minutes, 600 --> 10 minutes
+		default = 150, # 300 --> 5 minutes, 600 --> 10 minutes
+	)
+	parser.add_argument('--acPIResetTime',
+		type = float,
+		help = 'Specify the reset time for the antiwindup',
+		default = 20.0,
 	)
 	parser.add_argument('--acPISetpoint',
 		type = float,
 		help = 'Specify the Setpoint for the PI controller',
-		default = 0.45,
+		default = 0.9,
 	)
 
 def parseCommandLine(_args):
@@ -39,10 +44,11 @@ def newInstance(sim, name):
 		args.acPIProportionalGain,
 		args.acPIIntegralGain,
 		args.acPIControlInterval,
+		args.acPIResetTime,
 		args.acPISetpoint)
 
 class AutoScalerController(AbstractAutoScalerController):
-	def __init__(self, sim, name, proportionalGain, integralGain, controlInterval, setpoint):
+	def __init__(self, sim, name, proportionalGain, integralGain, controlInterval, resetTime, setpoint):
 		## Simulator kernel
 		self.sim = sim
 
@@ -53,6 +59,7 @@ class AutoScalerController(AbstractAutoScalerController):
 		self.controlInterval = controlInterval # read from the autoscaler
 		self.proportionalGain = proportionalGain # read from command line
 		self.integralGain = integralGain # read from command line
+		self.resetTime = resetTime # read from command line
 		self.setpoint = setpoint # read from command line
 
 		self.lastTheta = {} # dictionary containing all the dimmers of the replicas
@@ -73,6 +80,8 @@ class AutoScalerController(AbstractAutoScalerController):
 
 	def onControlPeriod(self):
 		action = 0
+		nonquantizedControl = 0
+		desiredControl = 0
 
 		# do something only if the previous action has been completed
 		if \
@@ -87,19 +96,32 @@ class AutoScalerController(AbstractAutoScalerController):
 					error = self.setpoint - self.average_dimmer
 					self.proportionalPart = self.proportionalGain * error
 					nonquantizedControl = self.proportionalPart + self.integralPart
-					self.controlValue = round(nonquantizedControl)
+					desiredControl = round(nonquantizedControl) # before architecture availability
 					
 					# control value application
+					# remove the following line to support multiple backend add/remove
+					desiredControl = np.sign(desiredControl)
+					self.controlValue = desiredControl
+					# check that we have the backends available
+					if desiredControl > 0:
+						self.controlValue = min(self.status[BackendStatus.STOPPED], desiredControl)
+					elif desiredControl < 0:
+						self.controlValue = -min(self.status[BackendStatus.STARTED], abs(desiredControl))
 					action = self.controlValue
 					
 					# update
-					self.integralPart = self.integralPart + self.integralGain * error
+					self.integralPart = self.integralPart + error * \
+						(self.proportionalGain * self.controlInterval / self.integralGain) + \
+						(self.controlInterval / self.resetTime) * (action - desiredControl)
 
 		# Report
 		valuesToOutput = [
-			self.sim.now,
-			self.average_dimmer,
-			action,
+			self.sim.now, # time
+			self.average_dimmer, # average dimmer value
+			nonquantizedControl, # the computed signal
+			round(nonquantizedControl), # the signal that one would want to apply
+			desiredControl, # the signal that may limit action (no +2/-2)
+			action, # the effective action depends on infrastructure availability
 		]
 		self.sim.output(self, ','.join(["{0:.5f}".format(value) \
 			for value in valuesToOutput]))
