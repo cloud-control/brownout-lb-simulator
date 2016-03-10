@@ -95,13 +95,18 @@ class LoadBalancer:
 	# @param onCompleted optional callback when backend removal is complete
 	def removeBackend(self, backend, onShutdownCompleted = None):
 		backendIndex = self.backends.index(backend)
-		removedBackendInfo = dict(
-			onShutdownCompleted = onShutdownCompleted,
-			queueLength = self.queueLengths[backendIndex]
-		)
-		self.removedBackends[backend] = removedBackendInfo
+		queueLength = self.queueLengths[backendIndex]
 		self.backends.remove(backend)
 		self._resetDecisionVariables()
+
+		if queueLength > 0:
+			removedBackendInfo = dict(
+				onShutdownCompleted = onShutdownCompleted,
+				queueLength = queueLength
+			)
+			self.removedBackends[backend] = removedBackendInfo
+		else:
+			if onShutdownCompleted:	onShutdownCompleted()
 
 	## Reset the decision variables
 	def _resetDecisionVariables(self):

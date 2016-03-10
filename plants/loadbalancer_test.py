@@ -64,3 +64,35 @@ def test_remove_while_request_in_progress():
     onShutdownCompleted.assert_called_once_with()
     assert server1.numSeenRequests == 1 or server2.numSeenRequests == 1
     assert server1.numSeenRequests == 3 or server2.numSeenRequests == 3
+
+def test_remove_while_request_not_in_progress():
+    sim = SimulatorKernel(outputDirectory = None)
+
+    server1 = MockServer(sim, latency = 0.1)
+    server2 = MockServer(sim, latency = 0.1)
+
+    lb = LoadBalancer(sim)
+    lb.addBackend(server1)
+    lb.addBackend(server2)
+
+    onShutdownCompleted = Mock()
+
+    def remove_active_server():
+        if server1.numSeenRequests:
+            lb.removeBackend(server1, onShutdownCompleted)
+        else:
+            lb.removeBackend(server2, onShutdownCompleted)
+
+    r1 = Request()
+    r1.onCompleted = Mock()
+    sim.add(0, lambda: lb.request(r1))
+    sim.add(1, lambda: remove_active_server())
+    sim.add(1, lambda: lb.request(Request()))
+    sim.add(2, lambda: lb.request(Request()))
+    sim.add(2, lambda: lb.request(Request()))
+    sim.run()
+
+    r1.onCompleted.assert_called_once_with()
+    onShutdownCompleted.assert_called_once_with()
+    assert server1.numSeenRequests == 1 or server2.numSeenRequests == 1
+    assert server1.numSeenRequests == 3 or server2.numSeenRequests == 3
