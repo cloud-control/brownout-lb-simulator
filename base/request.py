@@ -9,7 +9,7 @@ class Request(object):
 	lastRequestId = 1
 	## List of allowed attributes (improves performance and reduces errors)
 	__slots__ = ('requestId', 'arrival', 'completion', 'onCompleted', \
-		'originalRequest', 'theta', 'withOptional', 'chosenBackendIndex',
+		'originalRequest', 'theta', 'withOptional', 'chosenBackend',
 		'remainingTime', 'createdAt')
 	
 	## Constructor

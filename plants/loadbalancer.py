@@ -68,9 +68,6 @@ class LoadBalancer:
 		self.ctlAlpha = []
 		## time when last event-driven control decision was taken
 		self.lastDecision = 0
-		## Request to backend mapping. Required to track requests belonging to backends that have
-		# since been removed.
-		self.requestToBackend = {}
 		## Backends that were removed. They are still tracked to ensure
 		# their request queue is properly drained. The keys are the removed
 		# backends, whereas the value is an object containing removal-relevant information,
@@ -88,6 +85,7 @@ class LoadBalancer:
 	# @param backend the server to add
 	def addBackend(self, backend):
 		self.backends.append(backend)
+		self.queueLengths.append(0)
 		self._resetDecisionVariables()
 
 	## Remove a backend
@@ -96,7 +94,8 @@ class LoadBalancer:
 	def removeBackend(self, backend, onShutdownCompleted = None):
 		backendIndex = self.backends.index(backend)
 		queueLength = self.queueLengths[backendIndex]
-		self.backends.remove(backend)
+		del self.backends[backendIndex]
+		del self.queueLengths[backendIndex]
 		self._resetDecisionVariables()
 
 		if queueLength > 0:
@@ -119,8 +118,8 @@ class LoadBalancer:
 		self.lastLastThetas = [ self.initialTheta ] * n # to be updated at onComplete
 		self.lastLatencies = [ [] for _ in range(n) ] # to be updated at onComplete
 		self.lastLastLatencies = [ [] for _ in range(n) ]
-		self.queueLengths = [ 0 ] * n # to be updated in request and onComplete
 		self.lastQueueLengths = [ 0 ] * n
+		assert len(self.queueLengths) == n
 		self.queueOffsets = [ 0 ] * n
 		self.numRequestsPerReplica = [ 0 ] * n # to be updated in request
 		self.numLastRequestsPerReplica = [ 0 ] * n # to be updated in runControlLoop
@@ -137,7 +136,7 @@ class LoadBalancer:
 		#self.sim.log(self, "Got request {0}", request)
 		request.arrival = self.sim.now
 		if self.algorithm in [ 'weighted-RR', 'theta-diff', 'theta-diff-plus', 'equal-thetas', 'ctl-simplify' ]:
-			request.chosenBackendIndex = \
+			chosenBackendIndex = \
 				weightedChoice(zip(range(0, len(self.backends)), self.weights), self.random)
 		elif self.algorithm == 'equal-thetas-SQF' or self.algorithm == 'equal-thetas-fast' or self.algorithm == 'equal-thetas-fast-mul':
 			# Update controller in the -fast version
@@ -160,68 +159,68 @@ class LoadBalancer:
 				if self.queueLengths[i] == 0]
 			
 			if empty_servers:
-				request.chosenBackendIndex = self.random.choice(empty_servers)
+				chosenBackendIndex = self.random.choice(empty_servers)
 			else:
 				if self.algorithm == 'equal-thetas-fast-mul':
 					# ...or choose replica with shortest (queue * 2 ** queueOffset)
-					request.chosenBackendIndex = \
+					chosenBackendIndex = \
 						min(range(0, len(self.queueLengths)), \
 						key = lambda i: self.queueLengths[i] * (2 ** (-self.queueOffsets[i])))
 				else:
 					# ...or choose replica with shortest (queue + queueOffset)
-					request.chosenBackendIndex = \
+					chosenBackendIndex = \
 						min(range(0, len(self.queueLengths)), \
 						key = lambda i: self.queueLengths[i]-self.queueOffsets[i])
 
 		elif self.algorithm == 'theta-diff-plus-SQF':
 			# choose replica with shortest (queue + queueOffset)
-			request.chosenBackendIndex = \
+			chosenBackendIndex = \
 				min(range(0, len(self.queueLengths)), \
 				key = lambda i: self.queueLengths[i]-self.queueOffsets[i])
 			pass
 		elif self.algorithm == 'random':
 			# round robin
-			request.chosenBackendIndex = \
+			chosenBackendIndex = \
 				self.random.choice(range(0, len(self.backends)))
 		elif self.algorithm == 'RR':
 			# round robin
-			request.chosenBackendIndex = \
+			chosenBackendIndex = \
 				(self.numRequests % len(self.backends)) - 1
 		elif self.algorithm == 'SQF':
 			# choose replica with shortest queue
-			request.chosenBackendIndex = \
+			chosenBackendIndex = \
 				min(range(0, len(self.queueLengths)), \
 				key = lambda i: self.queueLengths[i])
 		elif self.algorithm == 'SQF-plus':
 			# choose replica with shortest queue
 			minIndices = [i for i, x in enumerate(self.queueLengths) if x == min(self.queueLengths)]
 			if len(minIndices) == 1:
-				request.chosenBackendIndex = minIndices[0]
+				chosenBackendIndex = minIndices[0]
 			else:
 				dimmers = [self.lastThetas[i] for i in minIndices]
 				maxDimmerIndex = dimmers.index(max(dimmers))
-				request.chosenBackendIndex = minIndices[maxDimmerIndex]
+				chosenBackendIndex = minIndices[maxDimmerIndex]
 		elif self.algorithm == '2RC':
 			maxlat = [max(x) if x else 0 for x in self.lastLatencies]
 			if len(self.backends) == 1:
-				request.chosenBackendIndex = 0
+				chosenBackendIndex = 0
 			# randomly select two backends and send it to the one with lowest latency
 			else:
 				backends = set(range(0, len(self.backends)))
 				randomlychosen = self.random.sample(backends, 2)
 				if maxlat[randomlychosen[0]] > maxlat[randomlychosen[1]]:
-					request.chosenBackendIndex = randomlychosen[1]
+					chosenBackendIndex = randomlychosen[1]
 				else:
-					request.chosenBackendIndex = randomlychosen[0]
+					chosenBackendIndex = randomlychosen[0]
 		elif self.algorithm == 'FRF':
 			# choose replica with minimum latency
 			maxlat = [max(x) if x else 0 for x in self.lastLatencies]
-			request.chosenBackendIndex = \
+			chosenBackendIndex = \
 				maxlat.index(min(maxlat))
 		elif self.algorithm == 'FRF-EWMA':
 			# choose replica with minimum EWMA latency
 			#self.sim.log(self, "EWMA RT {0}", self.ewmaResponseTime)
-			request.chosenBackendIndex = \
+			chosenBackendIndex = \
 				min(range(0, len(self.backends)), \
 				key = lambda i: self.ewmaResponseTime[i])
 		elif self.algorithm == 'predictive':
@@ -231,15 +230,15 @@ class LoadBalancer:
 			wqueue = 0.8
 			points = wlat*(maxlat - maxlatLast) + wqueue*(np.array(self.queueLengths) - np.array(self.lastQueueLengths))
 			# choose replica with shortest queue
-			request.chosenBackendIndex = \
+			chosenBackendIndex = \
 				min(range(0, len(points)), \
 				key = lambda i: points[i])
 		elif self.algorithm == "SRTF":
 			# choose replica with shortest "time" queue
-			#request.chosenBackendIndex = \
+			#chosenBackendIndex = \
 			#	min(range(0, len(self.backends)), \
 			#	key = lambda i: sum([r.remainingTime if hasattr(r, 'remainingTime') else 0 for r in self.backends[i].activeRequests]))
-			request.chosenBackendIndex = \
+			chosenBackendIndex = \
 				min(range(0, len(self.queueLengths)), \
 				key = lambda i: self.queueLengths[i] * (self.backends[i].serviceTimeY * self.lastThetas[i] + self.backends[i].serviceTimeN * (1 - self.lastThetas[i])))
 		elif self.algorithm == 'theta-diff-plus-fast':
@@ -263,21 +262,21 @@ class LoadBalancer:
 			self.lastDecision = self.sim.now
 			
 			# choose replica with shortest (queue + queueOffset)
-			request.chosenBackendIndex = \
+			chosenBackendIndex = \
 				min(range(0, len(self.queueLengths)), \
 				key = lambda i: self.queueLengths[i]-self.queueOffsets[i])
 		
 		else:
 			raise Exception("Unknown load-balancing algorithm " + self.algorithm)
 			
-		self.requestToBackend[request] = self.backends[request.chosenBackendIndex]
+		request.chosenBackend = self.backends[chosenBackendIndex]
 		newRequest = Request()
 		newRequest.originalRequest = request
 		newRequest.onCompleted = lambda: self.onCompleted(newRequest)
-		#self.sim.log(self, "Directed request to {0}", request.chosenBackendIndex)
-		self.queueLengths[request.chosenBackendIndex] += 1
-		self.numRequestsPerReplica[request.chosenBackendIndex] += 1
-		self.backends[request.chosenBackendIndex].request(newRequest)
+		#self.sim.log(self, "Directed request to {0}", chosenBackendIndex)
+		self.queueLengths[chosenBackendIndex] += 1
+		self.numRequestsPerReplica[chosenBackendIndex] += 1
+		self.backends[chosenBackendIndex].request(newRequest)
 
 	## Handles request completion.
 	# Stores piggybacked dimmer values and calls orginator's onCompleted() 
@@ -293,26 +292,25 @@ class LoadBalancer:
 
 		# Store stats
 		request.completion = self.sim.now
-		backend = self.requestToBackend[request]
-		del self.requestToBackend[request]
-		if backend in self.removedBackends:
-			removedBackendInfo = self.removedBackends[backend]
+		if request.chosenBackend in self.removedBackends:
+			removedBackendInfo = self.removedBackends[request.chosenBackend]
 			removedBackendInfo['queueLength'] -= 1
 			assert removedBackendInfo['queueLength'] >= 0
 			if removedBackendInfo['queueLength'] == 0:
 				# request queue drained, ready to forget about this backend
-				onShutdownCompleted = self.removedBackends[backend]['onShutdownCompleted']
-				del self.removedBackends[backend]
+				onShutdownCompleted = self.removedBackends[request.chosenBackend]['onShutdownCompleted']
+				del self.removedBackends[request.chosenBackend]
 				if onShutdownCompleted: onShutdownCompleted()
 		else:
-			self.lastThetas[request.chosenBackendIndex] = theta
-			self.lastLatencies[request.chosenBackendIndex].\
+			chosenBackendIndex = self.backends.index(request.chosenBackend)
+			self.lastThetas[chosenBackendIndex] = theta
+			self.lastLatencies[chosenBackendIndex].\
 				append(request.completion - request.arrival)
-			self.queueLengths[request.chosenBackendIndex] -= 1
+			self.queueLengths[chosenBackendIndex] -= 1
 			ewmaAlpha = 2 / (self.ewmaNumSamples + 1)
-			self.ewmaResponseTime[request.chosenBackendIndex] = \
+			self.ewmaResponseTime[chosenBackendIndex] = \
 				ewmaAlpha * (request.completion - request.arrival) + \
-				(1 - ewmaAlpha) * self.ewmaResponseTime[request.chosenBackendIndex]
+				(1 - ewmaAlpha) * self.ewmaResponseTime[chosenBackendIndex]
 	
 		# Call original onCompleted
 		request.onCompleted()

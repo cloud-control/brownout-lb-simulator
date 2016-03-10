@@ -71,7 +71,7 @@ class AutoScalerController(AbstractAutoScalerController):
 		self.integralPart = 0.0 # initialization for the integral part
 
 	def onCompleted(self, request):
-		self.lastTheta[request.chosenBackendIndex] = request.theta
+		self.lastTheta[request.chosenBackend] = request.theta
 		return 0
 
 	def onStatus(self, status):
