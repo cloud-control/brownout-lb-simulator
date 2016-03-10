@@ -2,15 +2,19 @@
 
 # TODO: Consider adding heterogenity to servers to highlight the strenghts of
 # brownout-aware load-balancing algorithms.
-addServer(y = 0.07, n = 0.001, autoScale = False) # ensure at least one server is connected
+addServer(y = 0.7, n = 0.1, autoScale = False) # ensure at least one server is connected
+addServer(y = 0.07, n = 0.001, autoScale = True )
+addServer(y = 0.07, n = 0.001, autoScale = True )
+addServer(y = 0.07, n = 0.001, autoScale = True )
+addServer(y = 0.07, n = 0.001, autoScale = True )
 addServer(y = 0.07, n = 0.001, autoScale = True )
 addServer(y = 0.07, n = 0.001, autoScale = True )
 addServer(y = 0.07, n = 0.001, autoScale = True )
 addServer(y = 0.07, n = 0.001, autoScale = True )
 
-setRate(at =    0, rate = 10)
-setRate(at = 1000, rate = 20)
-setRate(at = 2000, rate = 40)
-setRate(at = 4000, rate = 10)
+setRate(at =    0, rate = 20)
+setRate(at = 1000, rate = 60)
+setRate(at = 2000, rate = 10)
+setRate(at = 3000, rate = 30)
 
 endOfSimulation(at = 5000)
