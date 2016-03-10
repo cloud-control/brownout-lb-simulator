@@ -1,4 +1,5 @@
 from mock import Mock
+from nose.tools import nottest
 
 from server import Server
 from base import Request, SimulatorKernel
@@ -24,6 +25,33 @@ def test_without_controller():
 
     assert set(completedRequests) == set([ r, r2 ])
     assert server.getActiveTime() == 2.0, server.getActiveTime()
+
+@nottest
+def test_without_controller_processor_sharing():
+    """
+    We do not seem to implement processor sharing quite correctly.
+    This test serves to prove it. Enable it after the server is fixed.
+    """
+    completedRequests = []
+
+    sim = SimulatorKernel(outputDirectory = None)
+
+    server = Server(sim, timeSlice = 100)
+
+    r = Request()
+    r.remainingTime = 250
+    r.onCompleted = lambda: completedRequests.append(r)
+    sim.add(0, lambda: server.request(r))
+    
+    r2 = Request()
+    r2.remainingTime = 100
+    r2.onCompleted = lambda: completedRequests.append(r2)
+    sim.add(50, lambda: server.request(r2))
+
+    sim.run()
+
+    assert r.completion  == 350, r.completion
+    assert r2.completion == 200, r2.completion
 
 def test_with_controller_always_no():
     completedRequests = []
