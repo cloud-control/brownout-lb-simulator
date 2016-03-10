@@ -88,7 +88,6 @@ class AutoScalerController(AbstractAutoScalerController):
 					self.proportionalPart = self.proportionalGain * error
 					nonquantizedControl = self.proportionalPart + self.integralPart
 					self.controlValue = round(nonquantizedControl)
-					print (error, nonquantizedControl, self.controlValue)
 					
 					# control value application
 					action = self.controlValue
