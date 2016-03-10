@@ -64,7 +64,7 @@ class AutoScalerController(AbstractAutoScalerController):
 		action = 0
 
 		if \
-				self.status[BackendStatus.STOPPING] == 0 or \
+				self.status[BackendStatus.STOPPING] == 0 and \
 				self.status[BackendStatus.STARTING] == 0:
 					if self.lastTheta > self.scaleDownThreshold:
 						if self.status[BackendStatus.STARTED] > 0:
