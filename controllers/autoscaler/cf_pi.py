@@ -22,7 +22,7 @@ def addCommandLine(parser):
 	parser.add_argument('--acPIControlInterval',
 		type = float,
 		help = 'Specify the control interval for the PI controller',
-		default = 300, # 300 --> 5 minutes, 600 --> 10 minutes
+		default = 150, # 300 --> 5 minutes, 600 --> 10 minutes
 	)
 	parser.add_argument('--acPIResetTime',
 		type = float,
@@ -85,6 +85,7 @@ class AutoScalerController(AbstractAutoScalerController):
 
 		# do something only if the previous action has been completed
 		if \
+				len(self.lastTheta) > 0 and \
 				self.status[BackendStatus.STOPPING] == 0 and \
 				self.status[BackendStatus.STARTING] == 0:
 					# compute the average of dimmer values (maybe we will use the min?)
@@ -105,11 +106,13 @@ class AutoScalerController(AbstractAutoScalerController):
 					# check that we have the backends available
 					if desiredControl > 0:
 						self.controlValue = min(self.status[BackendStatus.STOPPED], desiredControl)
-						self.integralPart = 0.0 # brutal hack: resetting integral part
 					elif desiredControl < 0:
 						self.controlValue = -min(self.status[BackendStatus.STARTED], abs(desiredControl))
-						self.integralPart = 0.0 # brutal hack: resetting integral part
 					action = self.controlValue
+					
+					if action != 0:
+						self.integralPart = 0.0 # brutal hack: resetting integral part
+						self.lastTheta = {} # reinitialize dimmers, replica vector changed
 										
 					# update
 					self.integralPart = self.integralPart + error * \
