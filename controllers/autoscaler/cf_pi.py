@@ -12,12 +12,12 @@ def addCommandLine(parser):
 	parser.add_argument('--acPIProportionalGain',
 		type = float,
 		help = 'Specify the gain of the proportional controller part',
-		default = 2.5,
+		default = 1.5,
 	)
 	parser.add_argument('--acPIIntegralGain',
 		type = float,
 		help = 'Specify the gain of the integral controller part',
-		default = 500.0,
+		default = 750.0,
 	)
 	parser.add_argument('--acPIControlInterval',
 		type = float,
