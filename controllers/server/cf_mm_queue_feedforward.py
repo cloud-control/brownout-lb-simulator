@@ -71,6 +71,9 @@ class MMQueueFeedforwardReplicaController:
 	# Basically retrieves self.lastestLatencies and computes a new self.dimmer.
 	# Ask Martina for details. :P
 	def runControlLoop(self):
+	
+		output_dimmer = float('nan')
+	
 		if self.latestLatencies:
 			# Possible choices: max or avg latency control
 			serviceTime = np.percentile(self.latestLatencies, self.percentile)
@@ -84,6 +87,8 @@ class MMQueueFeedforwardReplicaController:
 
 			# saturation, it's a probability
 			self.dimmer = min(max(serviceLevel, 0.0), 1.0)
+			
+			output_dimmer = self.dimmer # replica is active, save correct value
 		
 		# Report
 		valuesToOutput = [ \
@@ -91,6 +96,7 @@ class MMQueueFeedforwardReplicaController:
 			avg(self.latestLatencies), \
 			maxOrNan(self.latestLatencies), \
 			self.dimmer, \
+			output_dimmer, \
 		]
 		self.sim.output(self, ','.join(["{0:.5f}".format(value) \
 			for value in valuesToOutput]))

@@ -65,6 +65,7 @@ class AutoScalerController(AbstractAutoScalerController):
 		self.lastTheta = {} # dictionary containing all the dimmers of the replicas
 		self.status = {}
 		self.average_dimmer = 0.0 # for logging and control purposes
+		self.minimum_dimmer = 0.0
 		self.controlValue = 0 # increment/decrement replica numbers
 		
 		self.proportionalPart = 0.0 # initialization for the proportional part
@@ -92,6 +93,7 @@ class AutoScalerController(AbstractAutoScalerController):
 					sum_dimmers = sum(self.lastTheta.values())
 					num_dimmers = len(self.lastTheta.values())
 					self.average_dimmer = sum_dimmers / num_dimmers
+					self.minimum_dimmer = min(self.lastTheta.values())
 					
 					# control value computation
 					error = self.setpoint - self.average_dimmer
@@ -111,7 +113,7 @@ class AutoScalerController(AbstractAutoScalerController):
 					action = self.controlValue
 					
 					if action != 0:
-						self.integralPart = 0.0 # brutal hack: resetting integral part
+						#self.integralPart = 0.0 # brutal hack: resetting integral part
 						self.lastTheta = {} # reinitialize dimmers, replica vector changed
 										
 					# update
@@ -123,6 +125,7 @@ class AutoScalerController(AbstractAutoScalerController):
 		valuesToOutput = [
 			self.sim.now, # time
 			self.average_dimmer, # average dimmer value
+			self.minimum_dimmer, # average dimmer value
 			nonquantizedControl, # the computed signal
 			round(nonquantizedControl), # the signal that one would want to apply
 			desiredControl, # the signal that may limit action (no +2/-2)
