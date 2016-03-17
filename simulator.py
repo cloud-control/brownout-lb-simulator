@@ -90,35 +90,43 @@ def main():
 		quit()
 
 	# Find autoscaler controller factory
-	try:
-		autoScalerControllerFactory = filter(lambda ac: ac.getName() == args.ac, autoScalerControllerFactories)[0]
-	except IndexError:
+	autoScalerControllerFactories = filter(lambda ac: args.ac == 'ALL' or ac.getName() == args.ac, autoScalerControllerFactories)
+	if not autoScalerControllerFactories:
 		print("Unsupported autoscaler controller '{0}'".format(args.ac), file = sys.stderr)
 		parser.print_help()
 		quit()
 
 	# Find replica controller factory
-	try:
-		replicaControllerFactory = filter(lambda rc: rc.getName() == args.rc, replicaControllerFactories)[0]
-	except IndexError:
+	replicaControllerFactories = filter(lambda rc: args.rc == 'ALL' or rc.getName() == args.rc, replicaControllerFactories)
+	if not replicaControllerFactories:
 		print("Unsupported replica controller '{0}'".format(args.rc), file = sys.stderr)
 		parser.print_help()
 		quit()
 
 	# Allow controller factories to analyse command-line
-	autoScalerControllerFactory.parseCommandLine(args)
-	replicaControllerFactory.parseCommandLine(args)
+	for autoScalerControllerFactory in autoScalerControllerFactories:
+		autoScalerControllerFactory.parseCommandLine(args)
+	for replicaControllerFactory in replicaControllerFactories:
+		replicaControllerFactory.parseCommandLine(args)
 
-	runSingleSimulation(
-			outdir = args.outdir,
-			autoScalerControllerFactory = autoScalerControllerFactory,
-			replicaControllerFactory = replicaControllerFactory,
-			scenario = args.scenario,
-			timeSlice = args.timeSlice,
-			algorithm = args.algorithm,
-			equal_theta_gain = args.equal_theta_gain,
-			equal_thetas_fast_gain = args.equal_thetas_fast_gain
-	)
+	for autoScalerControllerFactory in autoScalerControllerFactories:
+		for replicaControllerFactory in replicaControllerFactories:
+			outdir = os.path.join(args.outdir, autoScalerControllerFactory.getName(), replicaControllerFactory.getName())
+			if not os.path.exists(outdir): # Not cool, Python!
+				os.makedirs(outdir)
+			try:
+				runSingleSimulation(
+					outdir = outdir,
+					autoScalerControllerFactory = autoScalerControllerFactory,
+					replicaControllerFactory = replicaControllerFactory,
+					scenario = args.scenario,
+					timeSlice = args.timeSlice,
+					algorithm = args.algorithm,
+					equal_theta_gain = args.equal_theta_gain,
+					equal_thetas_fast_gain = args.equal_thetas_fast_gain
+				)
+			except Exception as e:
+				print("Caught exception with {0} and {1}: {2}", autoScalerControllerFactory, replicaControllerFactory, e)
 
 ## Runs a single simulation
 # @param outdir folder in which results should be written
