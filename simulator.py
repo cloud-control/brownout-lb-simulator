@@ -22,7 +22,7 @@ loadBalancingAlgorithms = ("weighted-RR theta-diff SQF SQF-plus FRF equal-thetas
 ## @package simulator Main simulator namespace
 
 ## Entry-point for simulator.
-# Setups up all entities, then runs simulation.
+# Setups up all entities, then runs simulation(s).
 def main():
 	# Load all controller factories
 	autoScalerControllerFactories = loadControllerFactories('autoscaler')
@@ -109,7 +109,29 @@ def main():
 	autoScalerControllerFactory.parseCommandLine(args)
 	replicaControllerFactory.parseCommandLine(args)
 
-	sim = SimulatorKernel(outputDirectory = args.outdir)
+	runSingleSimulation(
+			outdir = args.outdir,
+			autoScalerControllerFactory = autoScalerControllerFactory,
+			replicaControllerFactory = replicaControllerFactory,
+			scenario = args.scenario,
+			timeSlice = args.timeSlice,
+			algorithm = args.algorithm,
+			equal_theta_gain = args.equal_theta_gain,
+			equal_thetas_fast_gain = args.equal_thetas_fast_gain
+	)
+
+## Runs a single simulation
+# @param outdir folder in which results should be written
+# @param autoScalerControllerFactory factory for the auto-scaler controller
+# @param replicaControllerFactory factory for the replica controller
+# @param scenario file containing the scenario
+# @param timeSlice time-slice for the server processor-sharing model
+# @param algorithm load-balancing algorithm name (TODO: move to loadBalancerControllerFactory)
+# @param equal_theta_gain parameter for load-balancing algorithm (TODO: move to loadBalancerControllerFactory)
+# @param equal_thetas_fast_gain paramater for load-balancing algorithm (TODO: move to loadBalancerControllerFactory)
+def runSingleSimulation(outdir, autoScalerControllerFactory, replicaControllerFactory, scenario, timeSlice,
+		algorithm, equal_theta_gain, equal_thetas_fast_gain):
+	sim = SimulatorKernel(outputDirectory = outdir)
 	servers = []
 	clients = []
 	loadBalancer = LoadBalancer(sim, controlPeriod = 1.0)
@@ -118,8 +140,8 @@ def main():
 	openLoopClient = OpenLoopClient(sim, autoScaler)
 
 	loadBalancer.algorithm = algorithm
-	loadBalancer.equal_theta_gain = args.equal_theta_gain
-	loadBalancer.equal_thetas_fast_gain = args.equal_thetas_fast_gain
+	loadBalancer.equal_theta_gain = equal_theta_gain
+	loadBalancer.equal_thetas_fast_gain = equal_thetas_fast_gain
 
 	# Define verbs for scenarios
 	def addClients(at, n):
@@ -145,7 +167,7 @@ def main():
 	def addServer(y, n, autoScale = False):
 		server = Server(sim, \
 			serviceTimeY = y, serviceTimeN = n, \
-			timeSlice = args.timeSlice)
+			timeSlice = timeSlice)
 		newReplicaController = replicaControllerFactory.newInstance(sim, str(server) + "-ctl")
 		server.controller = newReplicaController
 		servers.append(server)
@@ -162,7 +184,7 @@ def main():
 		
 	# Load scenario
 	otherParams = {}
-	execfile(args.scenario)
+	execfile(scenario)
 
 	# For weighted-RR algorithm set the weights
 	if algorithm == 'weighted-RR':
