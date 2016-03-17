@@ -37,7 +37,7 @@ def main():
 		default = loadBalancingAlgorithms[0])
 	parser.add_argument('--outdir',
 		help = 'Destination folder for results and logs',
-		default = '.')
+		default = 'results')
 	parser.add_argument('--timeSlice',
 		type = float,
 		help = 'Time-slice of server scheduler',
