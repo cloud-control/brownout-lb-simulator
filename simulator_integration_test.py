@@ -1,4 +1,9 @@
+from __future__ import print_function
+
 import mock
+import shutil
+import sys
+import tempfile
 from nose.tools import *
 
 from simulator import loadBalancingAlgorithms, main
@@ -31,3 +36,16 @@ def test_autoscaler(_):
             '--scenario', './scenarios/autoscaling-support.py',
             ]):
         main()
+
+def test_all():
+    outdir = tempfile.mkdtemp()
+    print('Using:', outdir, file = sys.stderr)
+    with mock.patch('sys.argv', [
+            './simulator.py',
+            '--ac', 'ALL',
+            '--rc', 'ALL',
+            '--scenario', './scenarios/autoscaling-support.py',
+            '--outdir', outdir
+            ]):
+        main()
+    shutil.rmtree(outdir)
