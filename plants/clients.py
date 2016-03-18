@@ -78,7 +78,7 @@ class ClosedLoopClient:
 	# @param sim Simulator to attach client to
 	# @param server server-like entity to which requests are sent
 	# @param thinkTime average think-time between issuing consecutive requests
-	def __init__(self, sim, server, thinkTime = 1):
+	def __init__(self, sim, server, thinkTime = 1, seed = 1):
 		## average think-time (model parameter)
 		self.averageThinkTime = thinkTime
 		## ID of this client used for pretty-printing
@@ -100,6 +100,9 @@ class ClosedLoopClient:
 		self.responseTimes = []
 		## Variable used to deactive the client
 		self.active = True
+		## separate random number generator
+		self.random = xxx_random.Random()
+		self.random.seed(seed)
 		
 		# Launch client in the thinking phase
 		self.sim.add(0, self.think)
@@ -124,7 +127,7 @@ class ClosedLoopClient:
 		self.think()
 
 	def think(self):
-		thinkTime = xxx_random.expovariate(1.0 / self.averageThinkTime)
+		thinkTime = self.random.expovariate(1.0 / self.averageThinkTime)
 		self.sim.add(thinkTime, self.issueRequest)
 
 	## Deactive this client.
