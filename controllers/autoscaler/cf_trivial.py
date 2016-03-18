@@ -49,7 +49,7 @@ class AutoScalerController(AbstractAutoScalerController):
 		## control interval (read by autoscaler)
 		self.controlInterval = controlInterval
 
-		self.lastTheta = None
+		self.lastTheta = float('nan')
 		self.status = {}
 
 	def onCompleted(self, request):
