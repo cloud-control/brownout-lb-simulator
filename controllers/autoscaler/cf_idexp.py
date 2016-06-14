@@ -34,8 +34,6 @@ class AutoScalerController(AbstractAutoScalerController):
 		self.lastTheta = {} # dictionary containing all the dimmers of the replicas
 		self.status = {}
 		
-		# have I already applied the step
-		self.done = False
 		self.impulseTime = impulseTime
 		self.controlInterval = impulseTime
 
@@ -48,15 +46,14 @@ class AutoScalerController(AbstractAutoScalerController):
 		return 0
 
 	def onControlPeriod(self):
-		action = 0
+		numReplicas = float('nan') # no action
 		sum_dimmers = sum(self.lastTheta.values())
 		num_dimmers = len(self.lastTheta.values())
 		average_dimmer = sum_dimmers / num_dimmers
 		minimum_dimmer = min(self.lastTheta.values())
 		
-		if self.sim.now >= self.impulseTime and not self.done:
-			action = 1
-			self.done = True
+		if self.sim.now >= self.impulseTime:
+			numReplicas = 1
 				
 		# Report
 		valuesToOutput = [
@@ -66,13 +63,13 @@ class AutoScalerController(AbstractAutoScalerController):
 			float('nan'),
 			float('nan'),
 			float('nan'),
-			action, # the effective action depends on infrastructure availability
+			numReplicas, # the effective action depends on infrastructure availability
 		]
 		self.sim.output(self, ','.join(["{0:.5f}".format(value) \
 			for value in valuesToOutput]))
 			
 		self.lastTheta = {}
-		return action
+		return numReplicas
 	
 	def __str__(self):
 		return self.name

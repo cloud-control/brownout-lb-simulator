@@ -126,7 +126,8 @@ def main():
 					equal_thetas_fast_gain = args.equal_thetas_fast_gain
 				)
 			except Exception as e:
-				print("Caught exception with {0} and {1}: {2}", autoScalerControllerFactory, replicaControllerFactory, e)
+				print("Caught exception with {0} and {1}: {2}".
+					format(autoScalerControllerFactory, replicaControllerFactory, e))
 
 ## Runs a single simulation
 # @param outdir folder in which results should be written

@@ -19,28 +19,28 @@ class AbstractAutoScalerController():
 
 	## Called when a new request arrives, before sending the request to the load-balancer.
 	# @param request request that arrived at the load-balancer
-	# @return 1 for scale up, 0 for do nothing, -1 for scale down
+	# @return number of replicas to scale to, None or NaN for no action.
 	def onRequest(self, request):
-		return 0
+		return
 
 	## Called when a request completes, potentially with information
 	# piggy-backed from the load-balancer.
 	# @param request request that arrived at the load-balancer
-	# @return 1 for scale up, 0 for do nothing, -1 for scale down
+	# @return number of replicas to scale to, None or NaN for no action.
 	def onCompleted(self, request):
-		return 0
+		return
 
 	## Called when the status of the autoscaler changed
 	# @param status new status representing number of backends in different states,
 	#   e.g., { STOPPED: 1, STARTING: 1, STARTED: 2, STOPPING: 0 }
-	# @return 1 for scale up, 0 for do nothing, -1 for scale down
+	# @return number of replicas to scale to, None or NaN for no action.
 	def onStatus(self, status):
-		return 0
+		return
 
 	## Called periodically, as requested by controller
-	# @return 1 for scale up, 0 for do nothing, -1 for scale down
+	# @return number of replicas to scale to, None or NaN for no action.
 	def onControlPeriod(self):
-		return 0
+		return
 
 ## Simulates an auto-scaler.
 class AutoScaler:
@@ -91,8 +91,8 @@ class AutoScaler:
 		newRequest.onCompleted = lambda: self.onCompleted(newRequest)
 		self.loadBalancer.request(newRequest)
 
-		action = self.controller.onRequest(newRequest)
-		self.actuate(action)
+		numReplicas = self.controller.onRequest(newRequest)
+		self.scaleTo(numReplicas)
 
 	## Handles request completion.
 	# Calls orginator's onCompleted() 
@@ -102,8 +102,8 @@ class AutoScaler:
 		originalRequest.withOptional = request.withOptional
 		originalRequest.onCompleted()
 
-		action = self.controller.onCompleted(request)
-		self.actuate(action)
+		numReplicas = self.controller.onCompleted(request)
+		self.scaleTo(numReplicas)
 
 	## Run report loop.
 	# Outputs CVS-formatted statistics through the Simulator's output routine.
@@ -122,21 +122,9 @@ class AutoScaler:
 
 	## Run control loop.
 	def runControlLoop(self):		
-		action = self.controller.onControlPeriod()
-		self.actuate(action)
+		numReplicas = self.controller.onControlPeriod()
+		self.scaleTo(numReplicas)
 		self.sim.add(self.controller.controlInterval, self.runControlLoop)
-
-	## Act on the control signal of the controller
-	# @param action 1 for scale up, 0 for do nothing, -1 for scale down
-	def actuate(self, action):
-		if action == 0:
-			return # no action
-		elif action == 1:
-			self.scaleUp()
-		elif action == -1:
-			self.scaleDown()
-		else:
-			raise RuntimeError('Invalid control action ' + str(action))
 
 	## Get status of auto-scaler
 	# @return a dict with the number of backends in each state.
@@ -163,7 +151,18 @@ class AutoScaler:
 
 	## Scale to a given number of replicas
 	# Implemented in a FIFO-like manner, i.e., first backend added is first started.
+	# @param numReplicas number of replicas that should eventually be started;
+	# None for no action.
 	def scaleTo(self, numReplicas):
+		# Note: second expression tests for NaN, which compare different event
+		# to itself.
+		if numReplicas == None or numReplicas != numReplicas:
+			return
+		elif numReplicas < 0:
+			raise RuntimeError(
+				'Scaling to a negative number of replicas does not make sense: {0}'.
+					format(numReplicas))
+
 		while True:
 			status = self.getStatus()
 			numReplicasThatWillBeStarted = \
@@ -194,15 +193,15 @@ class AutoScaler:
 			self.loadBalancer.addBackend(backendToStart)
 			self.sim.log(self, "{0} STARTED", backendToStart)
 
-			action = self.controller.onStatus(self.getStatus())
-			self.actuate(action)
+			numReplicas = self.controller.onStatus(self.getStatus())
+			self.scaleTo(numReplicas)
 
 		self.sim.log(self, "{0} STARTING", backendToStart)
 		backendToStart.autoScaleStatus = BackendStatus.STARTING
 		self.sim.add(self.startupDelay, startupCompleted)
 
-		action = self.controller.onStatus(self.getStatus())
-		self.actuate(action)
+		numReplicas = self.controller.onStatus(self.getStatus())
+		self.scaleTo(numReplicas)
 
 	## Scale down by one replica.
 	# Implemented in a LIFO-like manner, i.e., last backend started is first stopped.
@@ -220,15 +219,15 @@ class AutoScaler:
 			self.sim.log(self, "{0} STOPPED", backendToStop)
 			backendToStop.autoScaleStatus = BackendStatus.STOPPED
 
-			action = self.controller.onStatus(self.getStatus())
-			self.actuate(action)
+			numReplicas = self.controller.onStatus(self.getStatus())
+			self.scaleTo(numReplicas)
 
 		self.sim.log(self, "{0} STOPPING", backendToStop)
 		backendToStop.autoScaleStatus = BackendStatus.STOPPING
 		self.loadBalancer.removeBackend(backendToStop, shutdownCompleted)
 		
-		action = self.controller.onStatus(self.getStatus())
-		self.actuate(action)
+		numReplicas = self.controller.onStatus(self.getStatus())
+		self.scaleTo(numReplicas)
 
 	## Pretty-print auto-scaler's name.
 	def __str__(self):
