@@ -6,6 +6,16 @@ from base import SimulatorKernel, Request
 
 eps=10e-6
 
+def assert_autoscaler_status_is(autoScaler, stopped, starting, started, stopping):
+    status = autoScaler.getStatus()
+
+    expected = (stopped, starting, started, stopping)
+    actual = (status[BackendStatus.STOPPED], status[BackendStatus.STARTING],
+            status[BackendStatus.STARTED], status[BackendStatus.STOPPING])
+    assert expected == actual, \
+        "AutoScaler status is incorrect: expected {0}, actual {1}".\
+            format(expected, actual)
+
 class MockLoadBalancer:
     def __init__(self, sim, latency = 0):
         self.sim = sim
@@ -95,37 +105,30 @@ def test_scale_up_and_down():
     autoScaler.addBackend(server1)
     autoScaler.addBackend(server2)
 
-    def assert_autoscaler_status_is(stopped, starting, started, stopping):
-        status = autoScaler.getStatus()
-        assert status[BackendStatus.STOPPED ] == stopped , stopped
-        assert status[BackendStatus.STARTING] == starting, starting
-        assert status[BackendStatus.STARTED ] == started , started
-        assert status[BackendStatus.STOPPING] == stopping, stopping
-
-    sim.add(0, lambda: assert_autoscaler_status_is(2, 0, 0, 0))
+    sim.add(0, lambda: assert_autoscaler_status_is(autoScaler, 2, 0, 0, 0))
 
     sim.add(10, lambda: autoScaler.scaleUp())
-    sim.add(10, lambda: assert_autoscaler_status_is(1, 1, 0, 0))
+    sim.add(10, lambda: assert_autoscaler_status_is(autoScaler, 1, 1, 0, 0))
 
     sim.add(10+59, lambda: loadBalancer.addBackend.assert_not_called()) # startup delay
-    sim.add(10+59, lambda: assert_autoscaler_status_is(1, 1, 0, 0))
+    sim.add(10+59, lambda: assert_autoscaler_status_is(autoScaler, 1, 1, 0, 0))
 
-    sim.add(10+60+eps, lambda: assert_autoscaler_status_is(1, 0, 1, 0))
+    sim.add(10+60+eps, lambda: assert_autoscaler_status_is(autoScaler, 1, 0, 1, 0))
     sim.add(10+60+eps, lambda: loadBalancer.addBackend.assert_called_with(server1))
 
     sim.add(100, lambda: autoScaler.scaleUp())
-    sim.add(100, lambda: assert_autoscaler_status_is(0, 1, 1, 0))
+    sim.add(100, lambda: assert_autoscaler_status_is(autoScaler, 0, 1, 1, 0))
 
-    sim.add(100+59, lambda: assert_autoscaler_status_is(0, 1, 1, 0))
+    sim.add(100+59, lambda: assert_autoscaler_status_is(autoScaler, 0, 1, 1, 0))
 
-    sim.add(100+60+eps, lambda: assert_autoscaler_status_is(0, 0, 2, 0))
+    sim.add(100+60+eps, lambda: assert_autoscaler_status_is(autoScaler, 0, 0, 2, 0))
     sim.add(100+60+eps, lambda: loadBalancer.addBackend.assert_called_with(server2))
 
     sim.add(200, lambda: autoScaler.scaleDown())
-    sim.add(200, lambda: assert_autoscaler_status_is(0, 0, 1, 1))
+    sim.add(200, lambda: assert_autoscaler_status_is(autoScaler, 0, 0, 1, 1))
 
-    sim.add(200+1-eps, lambda: assert_autoscaler_status_is(0, 0, 1, 1))
-    sim.add(200+1+eps, lambda: assert_autoscaler_status_is(1, 0, 1, 0))
+    sim.add(200+1-eps, lambda: assert_autoscaler_status_is(autoScaler, 0, 0, 1, 1))
+    sim.add(200+1+eps, lambda: assert_autoscaler_status_is(autoScaler, 1, 0, 1, 0))
 
     sim.run()
 
@@ -147,39 +150,32 @@ def test_scale_up_and_down_multiple():
     autoScaler.addBackend(server3)
     autoScaler.addBackend(server4)
 
-    def assert_autoscaler_status_is(stopped, starting, started, stopping):
-        status = autoScaler.getStatus()
-        assert status[BackendStatus.STOPPED ] == stopped , stopped
-        assert status[BackendStatus.STARTING] == starting, starting
-        assert status[BackendStatus.STARTED ] == started , started
-        assert status[BackendStatus.STOPPING] == stopping, stopping
-
-    sim.add(0, lambda: assert_autoscaler_status_is(4, 0, 0, 0))
+    sim.add(0, lambda: assert_autoscaler_status_is(autoScaler, 4, 0, 0, 0))
 
     sim.add(10, lambda: autoScaler.scaleTo(2))
-    sim.add(10, lambda: assert_autoscaler_status_is(2, 2, 0, 0))
+    sim.add(10, lambda: assert_autoscaler_status_is(autoScaler, 2, 2, 0, 0))
 
     sim.add(10+59, lambda: loadBalancer.addBackend.assert_not_called()) # startup delay
-    sim.add(10+59, lambda: assert_autoscaler_status_is(2, 2, 0, 0))
+    sim.add(10+59, lambda: assert_autoscaler_status_is(autoScaler, 2, 2, 0, 0))
 
-    sim.add(10+60+eps, lambda: assert_autoscaler_status_is(2, 0, 2, 0))
+    sim.add(10+60+eps, lambda: assert_autoscaler_status_is(autoScaler, 2, 0, 2, 0))
     calls1 = [mock.call(server1), mock.call(server2)]
     sim.add(10+60+eps, lambda: loadBalancer.addBackend.assert_has_calls(calls1))
 
     sim.add(100, lambda: autoScaler.scaleTo(4))
-    sim.add(100, lambda: assert_autoscaler_status_is(0, 2, 2, 0))
+    sim.add(100, lambda: assert_autoscaler_status_is(autoScaler, 0, 2, 2, 0))
 
-    sim.add(100+59, lambda: assert_autoscaler_status_is(0, 2, 2, 0))
+    sim.add(100+59, lambda: assert_autoscaler_status_is(autoScaler, 0, 2, 2, 0))
 
-    sim.add(100+60+eps, lambda: assert_autoscaler_status_is(0, 0, 4, 0))
+    sim.add(100+60+eps, lambda: assert_autoscaler_status_is(autoScaler, 0, 0, 4, 0))
     calls2 = [mock.call(server3), mock.call(server4)]
     sim.add(100+60+eps, lambda: loadBalancer.addBackend.assert_has_calls(calls2))
 
     sim.add(200, lambda: autoScaler.scaleTo(1))
-    sim.add(200, lambda: assert_autoscaler_status_is(0, 0, 1, 3))
+    sim.add(200, lambda: assert_autoscaler_status_is(autoScaler, 0, 0, 1, 3))
 
-    sim.add(200+1-eps, lambda: assert_autoscaler_status_is(0, 0, 1, 3))
-    sim.add(200+1+eps, lambda: assert_autoscaler_status_is(3, 0, 1, 0))
+    sim.add(200+1-eps, lambda: assert_autoscaler_status_is(autoScaler, 0, 0, 1, 3))
+    sim.add(200+1+eps, lambda: assert_autoscaler_status_is(autoScaler, 3, 0, 1, 0))
 
     sim.run()
 
