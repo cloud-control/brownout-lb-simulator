@@ -61,27 +61,29 @@ class AutoScalerController(AbstractAutoScalerController):
 		return 0
 
 	def onControlPeriod(self):
-		action = 0
-
 		if \
-				self.status[BackendStatus.STOPPING] == 0 and \
-				self.status[BackendStatus.STARTING] == 0:
-					if self.lastTheta > self.scaleDownThreshold:
-						if self.status[BackendStatus.STARTED] > 0:
-							action = -1
-					elif self.lastTheta < self.scaleUpThreshold:
-						if self.status[BackendStatus.STOPPED] > 0:
-							action = +1
+				self.status[BackendStatus.STOPPING] != 0 or \
+				self.status[BackendStatus.STARTING] != 0:
+			return
+
+		numStartedReplicas = self.status[BackendStatus.STARTED]
+		numStoppedReplicas = self.status[BackendStatus.STOPPED]
+
+		numReplicas = float('nan') # by default, no change
+		if self.lastTheta > self.scaleDownThreshold:
+			numReplicas = max(numStartedReplicas-1, 0)
+		elif self.lastTheta < self.scaleUpThreshold:
+			numReplicas = max(numStartedReplicas+1, 0)
 
 		# Report
 		valuesToOutput = [
 			self.sim.now,
 			self.lastTheta,
-			action,
+			numReplicas,
 		]
 		self.sim.output(self, ','.join(["{0:.5f}".format(value) \
 			for value in valuesToOutput]))
-		return action
+		return numReplicas
 	
 	def __str__(self):
 		return self.name
