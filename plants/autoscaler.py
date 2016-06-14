@@ -161,6 +161,22 @@ class AutoScaler:
 				BackendStatus.STOPPING: numStopping,
 			}
 
+	## Scale to a given number of replicas
+	# Implemented in a FIFO-like manner, i.e., first backend added is first started.
+	def scaleTo(self, numReplicas):
+		while True:
+			status = self.getStatus()
+			numReplicasThatWillBeStarted = \
+				+ status[BackendStatus.STARTING] \
+				+ status[BackendStatus.STARTED]
+
+			if numReplicas > numReplicasThatWillBeStarted:
+				self.scaleUp()
+			elif numReplicas < numReplicasThatWillBeStarted:
+				self.scaleDown()
+			else:
+				break
+
 	## Scale up by one replica.
 	# Implemented in a FIFO-like manner, i.e., first backend added is first started.
 	def scaleUp(self):
