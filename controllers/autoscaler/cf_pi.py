@@ -83,6 +83,7 @@ class AutoScalerController(AbstractAutoScalerController):
 		action = 0
 		nonquantizedControl = 0
 		desiredControl = 0
+		numStartedReplicas = self.status[BackendStatus.STARTED]
 
 		# do something only if the previous action has been completed
 		if \
@@ -121,6 +122,7 @@ class AutoScalerController(AbstractAutoScalerController):
 						(self.proportionalGain * self.controlInterval / self.integralGain) + \
 						(self.controlInterval / self.resetTime) * (action - desiredControl)
 
+		final_replica_number = max(numStartedReplicas+action, 0)
 		# Report
 		valuesToOutput = [
 			self.sim.now, # time
@@ -130,10 +132,11 @@ class AutoScalerController(AbstractAutoScalerController):
 			round(nonquantizedControl), # the signal that one would want to apply
 			desiredControl, # the signal that may limit action (no +2/-2)
 			action, # the effective action depends on infrastructure availability
+			final_replica_number,
 		]
 		self.sim.output(self, ','.join(["{0:.5f}".format(value) \
 			for value in valuesToOutput]))
-		return action
+		return final_replica_number
 	
 	def __str__(self):
 		return self.name
