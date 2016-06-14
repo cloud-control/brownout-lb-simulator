@@ -1,4 +1,5 @@
 import mock
+import random
 from nose.tools import *
 
 from .autoscaler import AutoScaler, BackendStatus
@@ -205,3 +206,40 @@ def test_invalid_action():
     autoScaler.request(r)
     sim.add(100, lambda: autoScaler.scaleUp())
     sim.run()
+
+def test_random_startup_delay(average=60, variance=10, values_to_test=10):
+    rng = random.Random()
+    startupDelayFunc = lambda: rng.normalvariate(average, variance)
+
+    # "predict" future random delays by resetting the PRNG's seed
+    random_delays = []
+    rng.seed(1)
+    for _ in range(values_to_test):
+        random_delays.append(startupDelayFunc())
+    rng.seed(1)
+
+    sim = SimulatorKernel(outputDirectory = None)
+
+    loadBalancer = MockLoadBalancer(sim, latency = 1)
+    autoScaler = AutoScaler(sim, loadBalancer, startupDelay = startupDelayFunc)
+    assert str(autoScaler)
+
+    for i in range(values_to_test):
+        server = mock.Mock(name = 'server' + str(i))
+        autoScaler.addBackend(server)
+
+    # NOTE: `lambda i=i` is required to capture the current value of `i` inside
+    # the lambda.
+    currentTime = 0
+    for i in range(values_to_test):
+        currentTime += 1
+        sim.add(currentTime, lambda i=i: autoScaler.scaleTo(i+1))
+        currentTime += random_delays[i]
+        sim.add(currentTime-eps, lambda i=i:
+                assert_autoscaler_status_is(autoScaler, values_to_test-i-1, 1, i, 0))
+        sim.add(currentTime+eps, lambda i=i:
+                assert_autoscaler_status_is(autoScaler, values_to_test-i-1, 0, i+1, 0))
+    
+    sim.run()
+
+    assert_autoscaler_status_is(autoScaler, 0, 0, values_to_test, 0)

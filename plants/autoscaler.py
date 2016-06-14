@@ -47,7 +47,8 @@ class AutoScaler:
 	## Constructor.
 	# @param sim Simulator to attach to
 	# @param loadBalancer loadBalancer to add/remove servers to
-	# @param startupDelay time it takes for a replica to come online
+	# @param startupDelay time it takes for a replica to come online; may be a
+	# callable
 	# @param controller that decides when to scale up and when to scale down
 	def __init__(self, sim, loadBalancer, startupDelay = 60, controller = None):
 		## Simulator to which the autoscaler is attached
@@ -198,7 +199,11 @@ class AutoScaler:
 
 		self.sim.log(self, "{0} STARTING", backendToStart)
 		backendToStart.autoScaleStatus = BackendStatus.STARTING
-		self.sim.add(self.startupDelay, startupCompleted)
+		if callable(self.startupDelay):
+			startupDelay = self.startupDelay()
+		else:
+			startupDelay = self.startupDelay
+		self.sim.add(startupDelay, startupCompleted)
 
 		numReplicas = self.controller.onStatus(self.getStatus())
 		self.scaleTo(numReplicas)
