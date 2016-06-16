@@ -43,10 +43,10 @@ def test_request_hooks():
     loadBalancer = MockLoadBalancer(sim, latency = 1)
     autoScalerController = mock.Mock()
     autoScalerController.controlInterval = 1
-    autoScalerController.onRequest = mock.Mock(return_value=None)
-    autoScalerController.onCompleted = mock.Mock(return_value=None)
-    autoScalerController.onControlPeriod = mock.Mock(return_value=None)
-    autoScalerController.onStatus = mock.Mock(return_value=None)
+    autoScalerController.onRequest = mock.Mock(return_value=0)
+    autoScalerController.onCompleted = mock.Mock(return_value=0)
+    autoScalerController.onControlPeriod = mock.Mock(return_value=0)
+    autoScalerController.onStatus = mock.Mock(return_value=0)
 
     autoScaler = AutoScaler(sim, loadBalancer, controller = autoScalerController)
     assert str(autoScaler)
@@ -237,9 +237,9 @@ def test_invalid_action():
     autoScalerController = mock.Mock()
     autoScalerController.controlInterval = 1
     autoScalerController.onRequest = mock.Mock(return_value=-2)
-    autoScalerController.onCompleted = mock.Mock(return_value=None)
-    autoScalerController.onControlPeriod = mock.Mock(return_value=None)
-    autoScalerController.onStatus = mock.Mock(return_value=None)
+    autoScalerController.onCompleted = mock.Mock(return_value=0)
+    autoScalerController.onControlPeriod = mock.Mock(return_value=0)
+    autoScalerController.onStatus = mock.Mock(return_value=0)
 
     autoScaler = AutoScaler(sim, loadBalancer, controller = autoScalerController)
     assert str(autoScaler)
