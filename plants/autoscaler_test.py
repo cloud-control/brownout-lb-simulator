@@ -182,6 +182,53 @@ def test_scale_up_and_down_multiple():
 
     assert loadBalancer.lastRemovedBackend == server2
 
+def test_scale_by():
+    sim = SimulatorKernel(outputDirectory = None)
+
+    loadBalancer = MockLoadBalancer(sim, latency = 1)
+    autoScaler = AutoScaler(sim, loadBalancer, startupDelay = 60)
+    assert str(autoScaler)
+
+    server1 = mock.Mock(name = 'server1')
+    server2 = mock.Mock(name = 'server2')
+    server3 = mock.Mock(name = 'server3')
+    server4 = mock.Mock(name = 'server4')
+    autoScaler.addBackend(server1)
+    autoScaler.addBackend(server2)
+    autoScaler.addBackend(server3)
+    autoScaler.addBackend(server4)
+
+    sim.add(0, lambda: assert_autoscaler_status_is(autoScaler, 4, 0, 0, 0))
+
+    sim.add(10, lambda: autoScaler.scaleBy(2))
+    sim.add(10, lambda: assert_autoscaler_status_is(autoScaler, 2, 2, 0, 0))
+
+    sim.add(10+59, lambda: loadBalancer.addBackend.assert_not_called()) # startup delay
+    sim.add(10+59, lambda: assert_autoscaler_status_is(autoScaler, 2, 2, 0, 0))
+
+    sim.add(10+60+eps, lambda: assert_autoscaler_status_is(autoScaler, 2, 0, 2, 0))
+    calls1 = [mock.call(server1), mock.call(server2)]
+    sim.add(10+60+eps, lambda: loadBalancer.addBackend.assert_has_calls(calls1))
+
+    sim.add(100, lambda: autoScaler.scaleBy(2))
+    sim.add(100, lambda: assert_autoscaler_status_is(autoScaler, 0, 2, 2, 0))
+
+    sim.add(100+59, lambda: assert_autoscaler_status_is(autoScaler, 0, 2, 2, 0))
+
+    sim.add(100+60+eps, lambda: assert_autoscaler_status_is(autoScaler, 0, 0, 4, 0))
+    calls2 = [mock.call(server3), mock.call(server4)]
+    sim.add(100+60+eps, lambda: loadBalancer.addBackend.assert_has_calls(calls2))
+
+    sim.add(200, lambda: autoScaler.scaleBy(-3))
+    sim.add(200, lambda: assert_autoscaler_status_is(autoScaler, 0, 0, 1, 3))
+
+    sim.add(200+1-eps, lambda: assert_autoscaler_status_is(autoScaler, 0, 0, 1, 3))
+    sim.add(200+1+eps, lambda: assert_autoscaler_status_is(autoScaler, 3, 0, 1, 0))
+
+    sim.run()
+
+    assert loadBalancer.lastRemovedBackend == server2
+
 @raises(RuntimeError)
 def test_invalid_action():
     sim = SimulatorKernel(outputDirectory = None)

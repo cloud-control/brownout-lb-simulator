@@ -150,6 +150,23 @@ class AutoScaler:
 				BackendStatus.STOPPING: numStopping,
 			}
 
+	## Scale by a given number of replicas
+	# Implemented in a FIFO-like manner, i.e., first backend added is first started.
+	# @param by number of replicas to add or remove; 0 means no action
+	def scaleBy(self, by):
+		# Note: second expression tests for NaN, which compare different event
+		# to itself.
+		if by == 0:
+			return
+
+		while by>0:
+			self.scaleUp()
+			by -= 1
+
+		while by<0:
+			self.scaleDown()
+			by += 1
+
 	## Scale to a given number of replicas
 	# Implemented in a FIFO-like manner, i.e., first backend added is first started.
 	# @param numReplicas number of replicas that should eventually be started;
