@@ -69,21 +69,21 @@ class AutoScalerController(AbstractAutoScalerController):
 		numStartedReplicas = self.status[BackendStatus.STARTED]
 		numStoppedReplicas = self.status[BackendStatus.STOPPED]
 
-		numReplicas = float('nan') # by default, no change
+		action = 0 # by default, no change
 		if self.lastTheta > self.scaleDownThreshold:
-			numReplicas = max(numStartedReplicas-1, 0)
+			action = +1
 		elif self.lastTheta < self.scaleUpThreshold:
-			numReplicas = max(numStartedReplicas+1, 0)
+			action = -1
 
 		# Report
 		valuesToOutput = [
 			self.sim.now,
 			self.lastTheta,
-			numReplicas,
+			action,
 		]
 		self.sim.output(self, ','.join(["{0:.5f}".format(value) \
 			for value in valuesToOutput]))
-		return numReplicas
+		return action
 	
 	def __str__(self):
 		return self.name

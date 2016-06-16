@@ -19,28 +19,32 @@ class AbstractAutoScalerController():
 
 	## Called when a new request arrives, before sending the request to the load-balancer.
 	# @param request request that arrived at the load-balancer
-	# @return number of replicas to scale to, None or NaN for no action.
+	# @return number of replicas to add (positive integer) or remove (negative
+	# integer), or 0 no action.
 	def onRequest(self, request):
-		return
+		return 0
 
 	## Called when a request completes, potentially with information
 	# piggy-backed from the load-balancer.
 	# @param request request that arrived at the load-balancer
-	# @return number of replicas to scale to, None or NaN for no action.
+	# @return number of replicas to add (positive integer) or remove (negative
+	# integer), or 0 no action.
 	def onCompleted(self, request):
-		return
+		return 0
 
 	## Called when the status of the autoscaler changed
 	# @param status new status representing number of backends in different states,
 	#   e.g., { STOPPED: 1, STARTING: 1, STARTED: 2, STOPPING: 0 }
-	# @return number of replicas to scale to, None or NaN for no action.
+	# @return number of replicas to add (positive integer) or remove (negative
+	# integer), or 0 no action.
 	def onStatus(self, status):
-		return
+		return 0
 
 	## Called periodically, as requested by controller
-	# @return number of replicas to scale to, None or NaN for no action.
+	# @return number of replicas to add (positive integer) or remove (negative
+	# integer), or 0 no action.
 	def onControlPeriod(self):
-		return
+		return 0
 
 ## Simulates an auto-scaler.
 class AutoScaler:
@@ -92,8 +96,8 @@ class AutoScaler:
 		newRequest.onCompleted = lambda: self.onCompleted(newRequest)
 		self.loadBalancer.request(newRequest)
 
-		numReplicas = self.controller.onRequest(newRequest)
-		self.scaleTo(numReplicas)
+		action = self.controller.onRequest(newRequest)
+		self.scaleBy(action)
 
 	## Handles request completion.
 	# Calls orginator's onCompleted() 
@@ -103,8 +107,8 @@ class AutoScaler:
 		originalRequest.withOptional = request.withOptional
 		originalRequest.onCompleted()
 
-		numReplicas = self.controller.onCompleted(request)
-		self.scaleTo(numReplicas)
+		action = self.controller.onCompleted(request)
+		self.scaleBy(action)
 
 	## Run report loop.
 	# Outputs CVS-formatted statistics through the Simulator's output routine.
@@ -123,8 +127,8 @@ class AutoScaler:
 
 	## Run control loop.
 	def runControlLoop(self):		
-		numReplicas = self.controller.onControlPeriod()
-		self.scaleTo(numReplicas)
+		action = self.controller.onControlPeriod()
+		self.scaleBy(action)
 		self.sim.add(self.controller.controlInterval, self.runControlLoop)
 
 	## Get status of auto-scaler
@@ -211,8 +215,8 @@ class AutoScaler:
 			self.loadBalancer.addBackend(backendToStart)
 			self.sim.log(self, "{0} STARTED", backendToStart)
 
-			numReplicas = self.controller.onStatus(self.getStatus())
-			self.scaleTo(numReplicas)
+			action = self.controller.onStatus(self.getStatus())
+			self.scaleBy(action)
 
 		self.sim.log(self, "{0} STARTING", backendToStart)
 		backendToStart.autoScaleStatus = BackendStatus.STARTING
@@ -222,8 +226,8 @@ class AutoScaler:
 			startupDelay = self.startupDelay
 		self.sim.add(startupDelay, startupCompleted)
 
-		numReplicas = self.controller.onStatus(self.getStatus())
-		self.scaleTo(numReplicas)
+		action = self.controller.onStatus(self.getStatus())
+		self.scaleBy(action)
 
 	## Scale down by one replica.
 	# Implemented in a LIFO-like manner, i.e., last backend started is first stopped.
@@ -241,15 +245,15 @@ class AutoScaler:
 			self.sim.log(self, "{0} STOPPED", backendToStop)
 			backendToStop.autoScaleStatus = BackendStatus.STOPPED
 
-			numReplicas = self.controller.onStatus(self.getStatus())
-			self.scaleTo(numReplicas)
+			action = self.controller.onStatus(self.getStatus())
+			self.scaleBy(action)
 
 		self.sim.log(self, "{0} STOPPING", backendToStop)
 		backendToStop.autoScaleStatus = BackendStatus.STOPPING
 		self.loadBalancer.removeBackend(backendToStop, shutdownCompleted)
 		
-		numReplicas = self.controller.onStatus(self.getStatus())
-		self.scaleTo(numReplicas)
+		action = self.controller.onStatus(self.getStatus())
+		self.scaleBy(action)
 
 	## Pretty-print auto-scaler's name.
 	def __str__(self):
