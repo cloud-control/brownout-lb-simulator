@@ -7,6 +7,7 @@ from __future__ import division, print_function
 
 import argparse
 import numpy as np
+import random
 import os
 import sys
 
@@ -18,6 +19,25 @@ from controllers import loadControllerFactories
 loadBalancingAlgorithms = ("weighted-RR theta-diff SQF SQF-plus FRF equal-thetas equal-thetas-SQF " + \
 		"FRF-EWMA predictive 2RC RR random theta-diff-plus ctl-simplify equal-thetas-fast theta-diff-plus-SQF " + \
 		"theta-diff-plus-fast SRTF equal-thetas-fast-mul").split()
+
+## Custom type for argparse to represent a random distribution
+def distribution(s):
+	parts = s.split(',')
+	if parts[0] == 'normalvariate':
+		try:
+			return parts[0], float(parts[1]), float(parts[2])
+		except:
+			raise argparse.ArgumentTypeError(
+				'Distribution must be normalvariate,average,variance')
+	elif parts[0] == 'expovariate':
+		try:
+			return parts[0], float(parts[1])
+		except:
+			raise argparse.ArgumentTypeError(
+				'Distribution must be expovariate,average')
+	else:
+		raise argparse.ArgumentTypeError(
+			'Unknown distribution; choose normalvariate or expovariate')
 
 ## @package simulator Main simulator namespace
 
@@ -58,6 +78,10 @@ def main():
 	group.add_argument('--ac',
 		help = 'Autoscaler controller: ' + ' '.join([ acf.getName() for acf in autoScalerControllerFactories ]),
 		default = 'trivial')
+	group.add_argument('--startupDelay',
+		help = 'Set the distribution of the startup delay of a new replica',
+		type = distribution,
+		default = ('normalvariate', 60, 0))
 
 	# Add autoscaler controller factories specific command-line arguments
 	for acf in autoScalerControllerFactories:
@@ -123,7 +147,8 @@ def main():
 					timeSlice = args.timeSlice,
 					algorithm = args.algorithm,
 					equal_theta_gain = args.equal_theta_gain,
-					equal_thetas_fast_gain = args.equal_thetas_fast_gain
+					equal_thetas_fast_gain = args.equal_thetas_fast_gain,
+					startupDelay = args.startupDelay,
 				)
 			except Exception as e:
 				print("Caught exception with {0} and {1}: {2}".
@@ -138,15 +163,24 @@ def main():
 # @param algorithm load-balancing algorithm name (TODO: move to loadBalancerControllerFactory)
 # @param equal_theta_gain parameter for load-balancing algorithm (TODO: move to loadBalancerControllerFactory)
 # @param equal_thetas_fast_gain paramater for load-balancing algorithm (TODO: move to loadBalancerControllerFactory)
+# @param startupDelay a tuple of the form (distribution, param1, param2)
 def runSingleSimulation(outdir, autoScalerControllerFactory, replicaControllerFactory, scenario, timeSlice,
-		algorithm, equal_theta_gain, equal_thetas_fast_gain):
+		algorithm, equal_theta_gain, equal_thetas_fast_gain, startupDelay):
+	startupDelayRng = random.Random()
+	startupDelayFunc = lambda: \
+		getattr(startupDelayRng, startupDelay[0])(*startupDelay[1:])
+	assert startupDelayFunc() # ensure the PRNG works
+	startupDelayRng.seed(1)
+
 	sim = SimulatorKernel(outputDirectory = outdir)
 	servers = []
 	clients = []
 	loadBalancer = LoadBalancer(sim, controlPeriod = 1.0)
 	autoScaler = AutoScaler(sim, loadBalancer,
-				controller = autoScalerControllerFactory.newInstance(sim, 'as-ctr'))
+				controller = autoScalerControllerFactory.newInstance(sim,
+					'as-ctr'), startupDelay = startupDelayFunc)
 	openLoopClient = OpenLoopClient(sim, autoScaler)
+
 
 	loadBalancer.algorithm = algorithm
 	loadBalancer.equal_theta_gain = equal_theta_gain

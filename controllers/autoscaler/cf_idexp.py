@@ -46,14 +46,15 @@ class AutoScalerController(AbstractAutoScalerController):
 		return 0
 
 	def onControlPeriod(self):
-		numReplicas = float('nan') # no action
 		sum_dimmers = sum(self.lastTheta.values())
 		num_dimmers = len(self.lastTheta.values())
 		average_dimmer = sum_dimmers / num_dimmers
 		minimum_dimmer = min(self.lastTheta.values())
 		
+		action = 0 # no action
 		if self.sim.now >= self.impulseTime:
-			numReplicas = 1
+			action = +1
+			self.impulseTime = float('inf') # only apply impulse once
 				
 		# Report
 		valuesToOutput = [
@@ -63,13 +64,13 @@ class AutoScalerController(AbstractAutoScalerController):
 			float('nan'),
 			float('nan'),
 			float('nan'),
-			numReplicas, # the effective action depends on infrastructure availability
+			action, # the effective action depends on infrastructure availability
 		]
 		self.sim.output(self, ','.join(["{0:.5f}".format(value) \
 			for value in valuesToOutput]))
 			
 		self.lastTheta = {}
-		return numReplicas
+		return action
 	
 	def __str__(self):
 		return self.name
