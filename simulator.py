@@ -16,10 +16,6 @@ from base import Request, SimulatorKernel
 from base.utils import *
 from controllers import loadControllerFactories
 
-loadBalancingAlgorithms = ("weighted-RR theta-diff SQF SQF-plus FRF equal-thetas equal-thetas-SQF " + \
-		"FRF-EWMA predictive 2RC RR random theta-diff-plus ctl-simplify equal-thetas-fast theta-diff-plus-SQF " + \
-		"theta-diff-plus-fast SRTF equal-thetas-fast-mul").split()
-
 ## Custom type for argparse to represent a random distribution
 def distribution(s):
 	parts = s.split(',')
@@ -52,9 +48,6 @@ def main():
 	parser = argparse.ArgumentParser( \
 		description='Run brownout load balancer simulation.', \
 		formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-	parser.add_argument('--algorithm',
-		help = 'Load-balancer algorithm: ' + ' '.join(loadBalancingAlgorithms),
-		default = loadBalancingAlgorithms[0])
 	parser.add_argument('--outdir',
 		help = 'Destination folder for results and logs',
 		default = 'results')
@@ -62,14 +55,6 @@ def main():
 		type = float,
 		help = 'Time-slice of server scheduler',
 		default = 0.01)
-	parser.add_argument('--equal-theta-gain',
-		type = float,
-		help = 'Gain in the equal-theta algorithm',
-		default = 0.025) #0.117)
-	parser.add_argument('--equal-thetas-fast-gain',
-		type = float,
-		help = 'Gain in the equal-thetas-fast algorithm',
-		default = 2.0) #0.117)
 	parser.add_argument('--scenario',
 		help = 'Specify a scenario in which to test the system',
 		default = os.path.join(os.path.dirname(sys.argv[0]), 'scenarios', 'replica-steady-1.py'))
@@ -101,22 +86,41 @@ def main():
 		help = 'What percentile reponse time to drive to target',
 		default = 95)
 
+	# Add load-balancer specific command-line arguments
+	group = parser.add_argument_group('lb', 'Load-balancer options')
+	group.add_argument('--lb',
+		help = 'Load-balancer algorithm or ALL: ' + ' '.join(LoadBalancer.ALGORITHMS),
+		default = 'ALL')
+	group.add_argument('--equal-theta-gain',
+		type = float,
+		help = 'Gain in the equal-theta algorithm',
+		default = 0.025) #0.117)
+	group.add_argument('--equal-thetas-fast-gain',
+		type = float,
+		help = 'Gain in the equal-thetas-fast algorithm',
+		default = 2.0) #0.117)
+
 	# Add replica controller factories specific command-line arguments
 	for rcf in replicaControllerFactories:
 		group = parser.add_argument_group("Options for '{0}' replica controller".format(rcf.getName()))
 		rcf.addCommandLine(group)
 
 	args = parser.parse_args()
-	algorithm = args.algorithm
-	if algorithm not in loadBalancingAlgorithms:
-		print("Unsupported algorithm '{0}'".format(algorithm), file = sys.stderr)
-		parser.print_help()
-		quit()
 
 	# Find autoscaler controller factory
 	autoScalerControllerFactories = filter(lambda ac: args.ac == 'ALL' or ac.getName() == args.ac, autoScalerControllerFactories)
 	if not autoScalerControllerFactories:
 		print("Unsupported autoscaler controller '{0}'".format(args.ac), file = sys.stderr)
+		parser.print_help()
+		quit()
+
+	# Find load-balancing algorithm
+	if args.lb == 'ALL':
+		loadBalancingAlgorithms = LoadBalancer.ALGORITHMS
+	elif args.lb in loadBalancingAlgorithms:
+		loadBalancingAlgorithms = [args.lb]
+	else:
+		print("Unsupported algorithm '{0}'".format(args.lb), file = sys.stderr)
 		parser.print_help()
 		quit()
 
@@ -134,25 +138,26 @@ def main():
 		replicaControllerFactory.parseCommandLine(args)
 
 	for autoScalerControllerFactory in autoScalerControllerFactories:
-		for replicaControllerFactory in replicaControllerFactories:
-			outdir = os.path.join(args.outdir, autoScalerControllerFactory.getName(), replicaControllerFactory.getName())
-			if not os.path.exists(outdir): # Not cool, Python!
-				os.makedirs(outdir)
-			try:
-				runSingleSimulation(
-					outdir = outdir,
-					autoScalerControllerFactory = autoScalerControllerFactory,
-					replicaControllerFactory = replicaControllerFactory,
-					scenario = args.scenario,
-					timeSlice = args.timeSlice,
-					algorithm = args.algorithm,
-					equal_theta_gain = args.equal_theta_gain,
-					equal_thetas_fast_gain = args.equal_thetas_fast_gain,
-					startupDelay = args.startupDelay,
-				)
-			except Exception as e:
-				print("Caught exception with {0} and {1}: {2}".
-					format(autoScalerControllerFactory, replicaControllerFactory, e))
+		for loadBalancingAlgorithm in loadBalancingAlgorithms:
+			for replicaControllerFactory in replicaControllerFactories:
+				outdir = os.path.join(args.outdir, autoScalerControllerFactory.getName(), replicaControllerFactory.getName())
+				if not os.path.exists(outdir): # Not cool, Python!
+					os.makedirs(outdir)
+				try:
+					runSingleSimulation(
+						outdir = outdir,
+						autoScalerControllerFactory = autoScalerControllerFactory,
+						replicaControllerFactory = replicaControllerFactory,
+						scenario = args.scenario,
+						timeSlice = args.timeSlice,
+						loadBalancingAlgorithm = loadBalancingAlgorithm,
+						equal_theta_gain = args.equal_theta_gain,
+						equal_thetas_fast_gain = args.equal_thetas_fast_gain,
+						startupDelay = args.startupDelay,
+					)
+				except Exception as e:
+					print("Caught exception with {0} and {1}: {2}".
+						format(autoScalerControllerFactory, replicaControllerFactory, e))
 
 ## Runs a single simulation
 # @param outdir folder in which results should be written
@@ -160,12 +165,12 @@ def main():
 # @param replicaControllerFactory factory for the replica controller
 # @param scenario file containing the scenario
 # @param timeSlice time-slice for the server processor-sharing model
-# @param algorithm load-balancing algorithm name (TODO: move to loadBalancerControllerFactory)
-# @param equal_theta_gain parameter for load-balancing algorithm (TODO: move to loadBalancerControllerFactory)
-# @param equal_thetas_fast_gain paramater for load-balancing algorithm (TODO: move to loadBalancerControllerFactory)
+# @param loadBalancingAlgorithm load-balancing algorithm name
+# @param equal_theta_gain parameter for load-balancing algorithm (TODO: move into LoadBalancingAlgorithm)
+# @param equal_thetas_fast_gain paramater for load-balancing algorithm (TODO: move into LoadBalancingAlgorithm)
 # @param startupDelay a tuple of the form (distribution, param1, param2)
 def runSingleSimulation(outdir, autoScalerControllerFactory, replicaControllerFactory, scenario, timeSlice,
-		algorithm, equal_theta_gain, equal_thetas_fast_gain, startupDelay):
+		loadBalancingAlgorithm, equal_theta_gain, equal_thetas_fast_gain, startupDelay):
 	startupDelayRng = random.Random()
 	startupDelayFunc = lambda: \
 		getattr(startupDelayRng, startupDelay[0])(*startupDelay[1:])
@@ -182,7 +187,7 @@ def runSingleSimulation(outdir, autoScalerControllerFactory, replicaControllerFa
 	openLoopClient = OpenLoopClient(sim, autoScaler)
 
 
-	loadBalancer.algorithm = algorithm
+	loadBalancer.algorithm = loadBalancingAlgorithm
 	loadBalancer.equal_theta_gain = equal_theta_gain
 	loadBalancer.equal_thetas_fast_gain = equal_thetas_fast_gain
 
@@ -230,7 +235,7 @@ def runSingleSimulation(outdir, autoScalerControllerFactory, replicaControllerFa
 	execfile(scenario)
 
 	# For weighted-RR algorithm set the weights
-	if algorithm == 'weighted-RR':
+	if loadBalancingAlgorithm == 'weighted-RR':
 		serviceRates = np.array([ 1.0/x.serviceTimeY for x in servers ])
 		sumServiceRates = sum(serviceRates)
 		loadBalancer.weights = list(np.array(serviceRates / sumServiceRates))
@@ -244,7 +249,7 @@ def runSingleSimulation(outdir, autoScalerControllerFactory, replicaControllerFa
 	numRequestsWithOptional = sum([client.numCompletedRequestsWithOptional for client in clients]) + openLoopClient.numCompletedRequestsWithOptional
 
 	toReport = []
-	toReport.append(( "loadBalancingAlgorithm", algorithm.ljust(20) ))
+	toReport.append(( "loadBalancingAlgorithm", loadBalancingAlgorithm.ljust(20) ))
 	toReport.append(( "replicaAlgorithm", replicaControllerFactory.getName().ljust(20) ))
 	toReport.append(( "numRequests", str(len(responseTimes)).rjust(7) ))
 	toReport.append(( "numRequestsWithOptional", str(numRequestsWithOptional).rjust(7) ))
