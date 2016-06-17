@@ -249,6 +249,7 @@ def runSingleSimulation(outdir, autoScalerControllerFactory, replicaControllerFa
 	numRequestsWithOptional = sum([client.numCompletedRequestsWithOptional for client in clients]) + openLoopClient.numCompletedRequestsWithOptional
 
 	toReport = []
+	toReport.append(( "autoScalerAlgorithm", autoScalerControllerFactory.getName().ljust(20) ))
 	toReport.append(( "loadBalancingAlgorithm", loadBalancingAlgorithm.ljust(20) ))
 	toReport.append(( "replicaAlgorithm", replicaControllerFactory.getName().ljust(20) ))
 	toReport.append(( "numRequests", str(len(responseTimes)).rjust(7) ))
