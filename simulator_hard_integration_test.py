@@ -41,8 +41,7 @@ def check_residue(lbAlgorithm, output):
         ]):
         main()
 
-    print output.mock_calls[-1]
-    output.assert_called_with(*RESIDUE_TABLE[algorithm])
+    output.assert_called_with(*RESIDUE_TABLE[lbAlgorithm])
 
 def test_residue():
     for algorithm in LoadBalancer.ALGORITHMS:
