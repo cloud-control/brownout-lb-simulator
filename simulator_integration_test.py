@@ -36,6 +36,7 @@ def test_autoscaler(_):
             ]):
         main()
 
+@nottest
 def test_all():
     outdir = tempfile.mkdtemp()
     print('Using:', outdir, file = sys.stderr)
