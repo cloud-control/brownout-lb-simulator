@@ -117,7 +117,7 @@ def main():
 	# Find load-balancing algorithm
 	if args.lb == 'ALL':
 		loadBalancingAlgorithms = LoadBalancer.ALGORITHMS
-	elif args.lb in loadBalancingAlgorithms:
+	elif args.lb in LoadBalancer.ALGORITHMS:
 		loadBalancingAlgorithms = [args.lb]
 	else:
 		print("Unsupported algorithm '{0}'".format(args.lb), file = sys.stderr)

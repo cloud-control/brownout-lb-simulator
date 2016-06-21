@@ -1,7 +1,8 @@
 import mock
 from nose.tools import *
 
-from simulator import loadBalancingAlgorithms, main
+from simulator import main
+from plants import LoadBalancer
 
 _multiprocess_can_split_ = True
 
@@ -28,14 +29,14 @@ RESIDUE_TABLE={
 }
 
 @mock.patch('base.SimulatorKernel.output')
-def check_residue(algorithm, output):
+def check_residue(lbAlgorithm, output):
     """
     Ensure the algorithm behaves exactly the same as it used to, in preparation for some intrusive refactoring.
     """
     with mock.patch('sys.argv', [
             './simulator.py',
             '--rc', 'mm_queueifac',
-            '--algorithm', algorithm,
+            '--lb', lbAlgorithm,
             '--scenario', 'scenarios/static_basic.py',
         ]):
         main()
@@ -44,5 +45,5 @@ def check_residue(algorithm, output):
     output.assert_called_with(*RESIDUE_TABLE[algorithm])
 
 def test_residue():
-    for algorithm in loadBalancingAlgorithms:
-            yield check_residue, algorithm
+    for algorithm in LoadBalancer.ALGORITHMS:
+        yield check_residue, algorithm
