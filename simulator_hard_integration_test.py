@@ -43,6 +43,7 @@ def check_residue(lbAlgorithm, output):
 
     output.assert_called_with(*RESIDUE_TABLE[lbAlgorithm])
 
+@nottest
 def test_residue():
     for algorithm in LoadBalancer.ALGORITHMS:
         yield check_residue, algorithm
