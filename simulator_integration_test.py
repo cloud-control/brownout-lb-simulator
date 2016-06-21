@@ -12,7 +12,7 @@ from simulator import main
 def test_main(_):
     with mock.patch('sys.argv', [
             './simulator.py',
-            '--lb', 'ALL',
+            '--lb', 'SQF',
             ]):
         main()
 
