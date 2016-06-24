@@ -6,23 +6,22 @@ import sys
 import tempfile
 from nose.tools import *
 
-from simulator import loadBalancingAlgorithms, main
+from simulator import main
 
 @mock.patch('base.SimulatorKernel.output')
 def test_main(_):
-    for algorithm in loadBalancingAlgorithms:
-        with mock.patch('sys.argv', [
-                './simulator.py',
-                '--algorithm', algorithm,
-                ]):
-            main()
+    with mock.patch('sys.argv', [
+            './simulator.py',
+            '--lb', 'SQF',
+            ]):
+        main()
 
 @mock.patch('base.SimulatorKernel.output')
 @raises(SystemExit)
 def test_invalid_algorithm(_):
     with mock.patch('sys.argv', [
             './simulator.py',
-            '--algorithm',
+            '--lb',
             'non-existant',
             ]):
         main()
@@ -31,12 +30,13 @@ def test_invalid_algorithm(_):
 def test_autoscaler(_):
     with mock.patch('sys.argv', [
             './simulator.py',
-            '--algorithm', 'SQF',
+            '--lb', 'SQF',
             '--rc', 'mm_queueifac',
             '--scenario', './scenarios/autoscaling-support.py',
             ]):
         main()
 
+@nottest
 def test_all():
     outdir = tempfile.mkdtemp()
     print('Using:', outdir, file = sys.stderr)
