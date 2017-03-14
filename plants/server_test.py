@@ -104,3 +104,32 @@ def test_without_controller_fifo():
     assert set(completedRequests) == set([ r, r2 ])
     assert endTimes == [1, 2], endTimes
     assert server.getActiveTime() == 2.0, server.getActiveTime()
+
+def test_without_controller_fifo_multiple_cores():
+    completedRequests = []
+    endTimes = []
+    sim = SimulatorKernel(outputDirectory = None)
+
+    server = Server(sim, serviceTimeY = 1, serviceTimeYVariance = 0,
+                    timeSlice = 100, numCores = 2)
+
+    def onCompleted(r):
+        completedRequests.append(r)
+        endTimes.append(sim.now)
+
+    r = Request()
+    r.onCompleted = lambda: onCompleted(r)
+    sim.add(0, lambda: server.request(r))
+    
+    r2 = Request()
+    r2.onCompleted = lambda: onCompleted(r2)
+    sim.add(0, lambda: server.request(r2))
+
+    r3 = Request()
+    r3.onCompleted = lambda: onCompleted(r3)
+    sim.add(0, lambda: server.request(r3))
+
+    sim.run()
+
+    assert endTimes == [1, 1, 2], endTimes
+    assert server.getActiveTime() == 3.0, server.getActiveTime()

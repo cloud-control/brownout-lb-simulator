@@ -20,12 +20,14 @@ class Server:
 	# @param minimumServiceTime minimum service-time (despite variance)
 	# @param timeSlice time slice; a request longer that this will observe
 	# context-switching
+	# @param numCores number of cores to simulate (M/M/c queue is assumed)
 	# @note The constructor adds an event into the simulator
 	def __init__(self, sim, seed = 1,
 			timeSlice = 0.01, \
 			serviceTimeY = 0.07, serviceTimeN = 0.001, \
 			serviceTimeYVariance = 0.01, serviceTimeNVariance = 0.001, \
-			minimumServiceTime = 0.0001):
+			minimumServiceTime = 0.0001,
+			numCores = 1):
 		## time slice for scheduling requests (server model parameter)
 		self.timeSlice = timeSlice
 		## service time with optional content (server model parameter)
@@ -46,6 +48,8 @@ class Server:
 		self.latestLatencies = []
 		## reference to controller
 		self.controller = None
+		## number of cores
+		self.numCores = numCores
 
 		## The amount of time this server is active. Useful to compute utilization
 		# Since we are in a simulator, this value is hard to use correctly. Use getActiveTime() instead.
