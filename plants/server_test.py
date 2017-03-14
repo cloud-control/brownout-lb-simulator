@@ -78,3 +78,29 @@ def test_with_controller_always_yes():
 
     assert set(completedRequests) == set([ r, r2 ])
     assert abs(server.getActiveTime() - 20.0) < eps, server.getActiveTime()
+
+def test_without_controller_fifo():
+    completedRequests = []
+    endTimes = []
+    sim = SimulatorKernel(outputDirectory = None)
+
+    server = Server(sim, serviceTimeY = 1, serviceTimeYVariance = 0,
+                    timeSlice = 100)
+
+    def onCompleted(r):
+        completedRequests.append(r)
+        endTimes.append(sim.now)
+
+    r = Request()
+    r.onCompleted = lambda: onCompleted(r)
+    sim.add(0, lambda: server.request(r))
+    
+    r2 = Request()
+    r2.onCompleted = lambda: onCompleted(r2)
+    sim.add(0, lambda: server.request(r2))
+
+    sim.run()
+
+    assert set(completedRequests) == set([ r, r2 ])
+    assert endTimes == [1, 2], endTimes
+    assert server.getActiveTime() == 2.0, server.getActiveTime()
