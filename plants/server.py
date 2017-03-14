@@ -179,6 +179,8 @@ class Server:
 		# Schedule it to run for a bit
 		timeToExecuteActiveRequest = min(self.timeSlice, activeRequest.remainingTime)
 		activeRequest.remainingTime -= timeToExecuteActiveRequest
+		# XXX: Below is a very crude multi-core model. Should work for PS.
+		timeToExecuteActiveRequest /= self.numCores
 
 		# Will it finish?
 		if activeRequest.remainingTime == 0:
@@ -206,7 +208,8 @@ class Server:
 	# @param request request that has received enough service time
 	def onCompleted(self, request):
 		# Track utilization
-		self.__activeTime += self.sim.now - self.__activeTimeStarted
+		self.__activeTime += (self.sim.now - self.__activeTimeStarted) \
+			* self.numCores
 		self.__activeTimeStarted = None
 
 		# Remove request from active list

@@ -1,9 +1,22 @@
+from math import fabs
 from mock import Mock
 
 from server import Server
 from base import Request, SimulatorKernel
 
 eps = 10e-6
+
+def almostEqual(a, b):
+    if type(a) == list and type(b) == list:
+        if len(a) != len(b):
+            return False
+
+        for i in range(len(a)):
+            if fabs(a[i]-b[i]) > eps:
+                return False
+        return True
+    else:
+        return fabs(a-b) < eps
 
 def test_without_controller():
     completedRequests = []
@@ -105,13 +118,13 @@ def test_without_controller_fifo():
     assert endTimes == [1, 2], endTimes
     assert server.getActiveTime() == 2.0, server.getActiveTime()
 
-def test_without_controller_fifo_multiple_cores():
+def test_without_controller_ps_multiple_cores():
     completedRequests = []
     endTimes = []
     sim = SimulatorKernel(outputDirectory = None)
 
     server = Server(sim, serviceTimeY = 1, serviceTimeYVariance = 0,
-                    timeSlice = 100, numCores = 2)
+                    numCores = 2)
 
     def onCompleted(r):
         completedRequests.append(r)
@@ -125,11 +138,7 @@ def test_without_controller_fifo_multiple_cores():
     r2.onCompleted = lambda: onCompleted(r2)
     sim.add(0, lambda: server.request(r2))
 
-    r3 = Request()
-    r3.onCompleted = lambda: onCompleted(r3)
-    sim.add(0, lambda: server.request(r3))
-
     sim.run()
 
-    assert endTimes == [1, 1, 2], endTimes
-    assert server.getActiveTime() == 3.0, server.getActiveTime()
+    assert almostEqual(endTimes, [0.995, 1]), endTimes
+    assert almostEqual(server.getActiveTime(), 2), server.getActiveTime()
