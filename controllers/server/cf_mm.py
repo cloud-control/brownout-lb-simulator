@@ -124,7 +124,7 @@ class MMReplicaController:
 		self.latestLatencies = []
 		self.sim.add(self.controlPeriod, self.runControlLoop)
 
-	def withOptional(self):
+	def withOptional(self, currentQueueLength):
 		return self.random.random() <= self.dimmer, self.dimmer
 
 	def reportData(self, responseTime, queueLenght, timeY, timeN):

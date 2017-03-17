@@ -27,7 +27,8 @@ class Server:
 			serviceTimeYVariance = 0.01, serviceTimeNVariance = 0.001, \
 			minimumServiceTime = 0.0001):
 		## time slice for scheduling requests (server model parameter)
-		self.timeSlice = timeSlice
+		#self.timeSlice = timeSlice
+		self.timeSlice = 0.0001
 		## service time with optional content (server model parameter)
 		self.serviceTimeY = serviceTimeY
 		## service time without optional content (server model parameter)
@@ -40,6 +41,10 @@ class Server:
 		self.minimumServiceTime = minimumServiceTime
 		## list of active requests (server model variable)
 		self.activeRequests = deque()
+		## max number of active jobs
+		self.maxActiveJobs = 10
+		## list of request waiting to access server
+		self.waitingRequests = []
 		## how often to report metrics
 		self.reportPeriod = 1
 		## latencies during the last report interval
@@ -115,13 +120,20 @@ class Server:
 		# Activate scheduler, if its not active
 		if len(self.activeRequests) == 0:
 			self.sim.add(0, self.onScheduleRequests)
-		# Add request to list of active requests
-		self.activeRequests.append(request)
+		
+		request.arrival = self.sim.now
+		self.controller.reportData(True, 0, 0, 0, 0, 0)
+		
+		# Add request to list of active requests if possible
+		if len(self.activeRequests) < self.maxActiveJobs:
+			self.activeRequests.append(request)
+		else:
+			self.waitingRequests.append(request)
 
 		# Report queue length
 		valuesToOutput = [ \
 			self.sim.now, \
-			len(self.activeRequests), \
+			self.getTotalQueueLength(), \
 		]
 		self.sim.output(str(self) + '-arl', ','.join(["{0:.5f}".format(value) \
 			for value in valuesToOutput]))
@@ -132,6 +144,9 @@ class Server:
 		serviceTime, variance = (self.serviceTimeY, self.serviceTimeYVariance) \
 			if withOptional else \
 			(self.serviceTimeN, self.serviceTimeNVariance)
+			
+		if (self.sim.now > 1000.0):
+			serviceTime = serviceTime*1.5
 
 		serviceTime = \
 			max(self.random.normalvariate(serviceTime, variance), self.minimumServiceTime)
@@ -153,7 +168,6 @@ class Server:
 		#self.sim.log(self, "scheduling")
 		# Select next active request
 		activeRequest = self.activeRequests.popleft()
-		
 		# Track utilization
 		if self.__activeTimeStarted is None:
 			self.__activeTimeStarted = self.sim.now
@@ -164,11 +178,9 @@ class Server:
 			
 			# Pick whether to serve it with optional content or not
 			if self.controller:
-				activeRequest.withOptional, activeRequest.theta = self.controller.withOptional()
+				activeRequest.withOptional, activeRequest.theta = self.controller.withOptional(self.getTotalQueueLength())
 			else:
 				activeRequest.withOptional, activeRequest.theta = True, 1
-
-			activeRequest.arrival = self.sim.now
 
 			activeRequest.remainingTime = self.drawServiceTime(activeRequest.withOptional)
 
@@ -215,9 +227,14 @@ class Server:
 		request.completion = self.sim.now
 		self.latestLatencies.append(request.completion - request.arrival)
 		if self.controller:
-			self.controller.reportData(request.completion - request.arrival,
-			  len(self.activeRequests), self.serviceTimeY, self.serviceTimeN)
+			self.controller.reportData(False, request.completion - request.arrival,
+			  self.getTotalQueueLength(), self.serviceTimeY, self.serviceTimeN, request.withOptional)
 		request.onCompleted()
+		
+		# Append the next request waiting to run (if there is one)
+		if len(self.waitingRequests) > 0:
+			waitingRequest = self.waitingRequests.pop(0)
+			self.activeRequests.append(waitingRequest)
 
 		# Report
 		valuesToOutput = [ \
@@ -231,7 +248,7 @@ class Server:
 		# Report queue length
 		valuesToOutput = [ \
 			self.sim.now, \
-			len(self.activeRequests), \
+			self.getTotalQueueLength(), \
 		]
 		self.sim.output(str(self) + '-arl', ','.join(["{0:.5f}".format(value) \
 			for value in valuesToOutput]))
@@ -239,7 +256,13 @@ class Server:
 		# Continue with scheduler
 		if len(self.activeRequests) > 0:
 			self.sim.add(0, self.onScheduleRequests)
-
+	
+	
+	## Returns the total queue length (active + waiting requests)		
+	def getTotalQueueLength(self):
+		totalQueue = len(self.activeRequests) + len(self.waitingRequests)
+		return totalQueue
+	
 	## Pretty-print server's ID
 	def __str__(self):
 		return str(self.name)
