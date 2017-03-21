@@ -15,12 +15,12 @@ def addCommandLine(parser):
 	parser.add_argument('--CCOuterK',
 		type = float,
 		help = 'Specify the outer proportional gain of the controller',
-		default = 3.0,
+		default = 4.0,
 	)
 	parser.add_argument('--CCOuterTi',
 		type = float,
 		help = 'Specify the integral time constant',
-		default = 0.5,
+		default = 0.56,
 	)
 	
 	parser.add_argument('--CCShouldRunFF',
@@ -90,9 +90,11 @@ class MMReplicaController:
 		self.maxQueues = 0
 		self.dimmerTuples = []
 		self.expdimmers = 0.0
-		self.estimatedArrivalRate = 0.0
+		self.estimatedArrivalRate = 25.0
 		self.alpha = 1.0
 		self.gihat = 1.0
+		self.estimatedProcessGain = 0.05
+		self.nominalProcessGain = 0.05
 
 	## Runs the outer periodical control loop that sets queue length setpoint
 	def runControlLoop(self):
@@ -107,12 +109,16 @@ class MMReplicaController:
 				#self.responseTime = max(self.latestLatencies) # max of all latencies
 				self.error = self.setpoint - self.responseTime
 				
-				# Outer loop PI controller		
-				proportionalPart = self.outerK * self.error
-				prelFeedback = proportionalPart + self.integralPart
-				
 				# Update parameter estimates			
 				self.updateOuterLoopEstimates()
+				
+				# Outer loop PI controller						
+				factory = self.nominalProcessGain/self.estimatedProcessGain
+					
+				proportionalPart = factory*self.outerK * self.error
+				prelFeedback = proportionalPart + self.integralPart
+				
+
 				
 				# Calculate feedforward if activated
 				if self.shouldRunFF == 1:
@@ -126,14 +132,12 @@ class MMReplicaController:
 				
 				# Calculate control signal
 				self.queueLengthSetpoint = self.feedback + self.feedforward
-				
 							
-				# Update controller integral state
+				#Update controller integral state
 				self.integralPart = self.integralPart + self.error * \
-						(self.outerK * self.controlPeriod / self.outerTi) + \
+						(factory*self.outerK * self.controlPeriod / self.outerTi) + \
 						(self.controlPeriod / self.outerTr) * (self.feedback - prelFeedback)
 					
-		
 		
 		if len(self.latestLongLatencies) == 0:
 			self.latestLongLatencies.append(0.0)
@@ -172,6 +176,7 @@ class MMReplicaController:
 			self.feedback, \
 			self.feedforward, \
 			self.alpha, \
+			self.estimatedProcessGain, \
 		]
 		
 		self.sim.output(self, ','.join(["{0:.5f}".format(value) \
@@ -196,7 +201,10 @@ class MMReplicaController:
 		self.estimatedArrivalRate = 0.5*self.estimatedArrivalRate + 0.5*self.nbrLatestArrivals/self.controlPeriod
 		
 		self.alpha = 0.99*self.alpha + 0.01*self.responseTime * self.estimatedArrivalRate / self.avgQueues
-
+		
+		if (self.queueLengthSetpoint > 0.0):
+			self.estimatedProcessGain = 0.90*self.estimatedProcessGain + 0.10*self.responseTime / self.queueLengthSetpoint
+	
 	
 	## Inner loop control algorithm deciding execution of optional content	
 	def withOptional(self, currentQueueLength):
@@ -217,10 +225,17 @@ class MMReplicaController:
 	def reportData(self, newArrival, responseTime, queueLength, timeY, timeN, optional):
 		if newArrival:
 			self.nbrLatestArrivals = self.nbrLatestArrivals + 1
-		else:
+		else:	
 			self.latestLatencies.append(responseTime)
 			if (optional):
 				self.latestLongLatencies.append(responseTime)
+				
+				valuesToOutput = [ \
+					responseTime, \
+				]
+				self.sim.output(str(self) + '-tommi', ','.join(["{0:.5f}".format(value) \
+			for value in valuesToOutput]))
+			
 			else:
 				self.latestShortLatencies.append(responseTime)
 			self.queueLength = queueLength

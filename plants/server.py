@@ -144,9 +144,6 @@ class Server:
 		serviceTime, variance = (self.serviceTimeY, self.serviceTimeYVariance) \
 			if withOptional else \
 			(self.serviceTimeN, self.serviceTimeNVariance)
-			
-		if (self.sim.now > 1000.0):
-			serviceTime = serviceTime*1.5
 
 		serviceTime = \
 			max(self.random.normalvariate(serviceTime, variance), self.minimumServiceTime)
