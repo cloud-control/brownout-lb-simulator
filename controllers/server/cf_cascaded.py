@@ -212,14 +212,17 @@ class MMReplicaController:
 		self.updateQueueMeasures(currentQueueLength)
 		
 		# Determine if optional content should be served
-		if currentQueueLength > self.queueLengthSetpoint:
+		if currentQueueLength == 1:
+			# Always serve optional content if queue is at minimum length
+			dimmer = 1.0
+		elif currentQueueLength > self.queueLengthSetpoint:
 			dimmer = 0.0
 		else:
 			dimmer = 1.0
 		
 		self.updateDimmerMeasures(dimmer)
 		
-		return self.random.random() <= dimmer, dimmer
+		return self.random.random() <= dimmer, self.expdimmers
 
 
 	def reportData(self, newArrival, responseTime, queueLength, timeY, timeN, optional):

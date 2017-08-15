@@ -163,6 +163,9 @@ class Server:
 	# </ul>
 	def onScheduleRequests(self):
 		#self.sim.log(self, "scheduling")
+		
+		# Measure current queue length first
+		currentQueueLength = self.getTotalQueueLength()
 		# Select next active request
 		activeRequest = self.activeRequests.popleft()
 		# Track utilization
@@ -175,7 +178,7 @@ class Server:
 			
 			# Pick whether to serve it with optional content or not
 			if self.controller:
-				activeRequest.withOptional, activeRequest.theta = self.controller.withOptional(self.getTotalQueueLength())
+				activeRequest.withOptional, activeRequest.theta = self.controller.withOptional(currentQueueLength)
 			else:
 				activeRequest.withOptional, activeRequest.theta = True, 1
 
