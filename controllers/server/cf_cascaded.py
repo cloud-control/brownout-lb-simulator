@@ -51,7 +51,7 @@ class MMReplicaController:
 		self.outerK = outerK
 		self.outerTi = outerTi
 		self.integralPart = 0.0
-		self.outerTr = 15.0
+		self.outerTr = 1.0
 		self.feedback = 0.0
 		self.feedforward = 0.0
 		self.shouldRunFF = shouldRunFF
@@ -121,7 +121,6 @@ class MMReplicaController:
 				proportionalPart = factory*self.outerK * self.error
 				prelFeedback = proportionalPart + self.integralPart
 				
-
 				
 				# Calculate feedforward if activated
 				if self.shouldRunFF == 1:
@@ -131,15 +130,16 @@ class MMReplicaController:
 		
 				# Saturate control signal
 				feedbackMin = -1.0*self.feedforward
-				self.feedback = max(prelFeedback, feedbackMin)
+				feedbackMax = self.estimatedArrivalRate - self.feedforward
+				self.feedback = min(max(prelFeedback, feedbackMin), feedbackMax)
 				
 				# Calculate control signal
 				self.queueLengthSetpoint = self.feedback + self.feedforward
-							
-				#Update controller integral state
-				self.integralPart = self.integralPart + self.error * \
-						(factory*self.outerK * self.controlPeriod / self.outerTi) + \
-						(self.controlPeriod / self.outerTr) * (self.feedback - prelFeedback)
+						
+				# Update outer controller integral state
+				self.updateOuterState(factory, self.feedback, prelFeedback)
+				
+				
 					
 		
 		if len(self.latestLongLatencies) == 0:
@@ -190,6 +190,12 @@ class MMReplicaController:
 		self.sim.add(self.controlPeriod, self.runControlLoop)
 		
 
+	## Updates outer controller integral state (includes anti-windup)
+	def updateOuterState(self, gain, u, v):
+		self.integralPart = self.integralPart + self.error * \
+						(gain*self.outerK * self.controlPeriod / self.outerTi) + \
+						(self.controlPeriod / self.outerTr) * (u - v)
+	
 	## Periodical estimations
 	def updateOuterLoopEstimates(self):
 		
@@ -283,7 +289,7 @@ class MMReplicaController:
 	
 	# Stores the current dimmer value and updates expdimmers. Run in an event-triggered fashion.
 	def saveDimmerMeasures(self, dimmer):
-		alpha = 0.90
+		alpha = 0.95
 		self.expdimmers = alpha*self.expdimmers + (1-alpha)*dimmer
 		
 		dimmerTuple = self.sim.now, dimmer	
