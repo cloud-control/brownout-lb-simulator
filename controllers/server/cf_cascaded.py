@@ -88,7 +88,7 @@ class MMReplicaController:
 		self.pastQueues = []
 		self.avgQueues = 0.0
 		self.maxQueues = 0
-		self.dimmerTuples = []
+		self.pastDimmers = []
 		self.expdimmers = 0.0
 		self.estimatedArrivalRate = 25.0
 		self.alpha = 1.0
@@ -108,6 +108,9 @@ class MMReplicaController:
 				#self.responseTime = avg(self.latestLatencies) # avg latencies
 				#self.responseTime = max(self.latestLatencies) # max of all latencies
 				self.error = self.setpoint - self.responseTime
+				
+				# Update queue measurements
+				self.updateQueueMeasures()
 				
 				# Update parameter estimates			
 				self.updateOuterLoopEstimates()
@@ -148,15 +151,11 @@ class MMReplicaController:
 		if len(self.latestLatencies) == 0:
 			self.latestLatencies.append(0.0)
 			
-		if len(self.dimmerTuples) == 0:
+		if len(self.pastDimmers) == 0:
 			fakeTuple = -1,0, -1.0
-			self.dimmerTuples.append(fakeTuple)
+			self.pastDimmers.append(fakeTuple)
 		
-		dimmers = []
-		
-		for dt in self.dimmerTuples:
-			dim = dt[1]
-			dimmers.append(dim)
+		windowedAvgDimmers = self.updateDimmerMeasures()
 		
 		# maxOrNan on the latencies rather than avg!
 		# Report (the second to last one was previously self.dimmer)
@@ -171,7 +170,7 @@ class MMReplicaController:
 			self.queueLengthSetpoint, \
 			self.nbrLatestArrivals, \
 			self.estimatedArrivalRate, \
-			avg(dimmers), \
+			windowedAvgDimmers, \
 			self.expdimmers, \
 			self.feedback, \
 			self.feedforward, \
@@ -209,7 +208,7 @@ class MMReplicaController:
 	## Inner loop control algorithm deciding execution of optional content	
 	def withOptional(self, currentQueueLength):
 		
-		self.updateQueueMeasures(currentQueueLength)
+		self.saveQueueMeasures(currentQueueLength)
 		
 		# Determine if optional content should be served
 		if currentQueueLength == 1:
@@ -220,7 +219,7 @@ class MMReplicaController:
 		else:
 			dimmer = 1.0
 		
-		self.updateDimmerMeasures(dimmer)
+		self.saveDimmerMeasures(dimmer)
 		
 		return self.random.random() <= dimmer, self.expdimmers
 
@@ -243,11 +242,8 @@ class MMReplicaController:
 				self.latestShortLatencies.append(responseTime)
 			self.queueLength = queueLength
 	
-	
-	def updateQueueMeasures(self, currentQueueLength):
-		queueMeasurement = self.sim.now, currentQueueLength	
-		self.pastQueues.append(queueMeasurement)
-		
+	# Periodically updates the windowed dimmer average (used for estimates and plotting)
+	def updateQueueMeasures(self):
 		windowTime = self.controlPeriod + self.setpoint
 		
 		for qt in self.pastQueues:
@@ -255,29 +251,43 @@ class MMReplicaController:
 			if (self.sim.now - time > windowTime):
 				self.pastQueues.remove(qt)
 		
-		self.avgQueues = 0.0
-		queues = []	
-		for index in range(len(self.pastQueues)):
-			qt = self.pastQueues[index]
+		queues = []		
+		for qt in self.pastQueues:
 			queue = qt[1]
 			queues.append(queue)
-			self.avgQueues = (self.avgQueues*index + queue)/(index+1)
 		
+		self.avgQueues = avg(queues)
 		self.maxQueues = max(queues)
+	
+	
+	# Stores the current queue length. Run in an event-triggered fashion.
+	def saveQueueMeasures(self, currentQueueLength):
+		queueMeasurement = self.sim.now, currentQueueLength	
+		self.pastQueues.append(queueMeasurement)
+	
+	# Periodically updates the windowed dimmer average (only used for plotting atm)
+	def updateDimmerMeasures(self):
+		windowTime = 100.0
 		
-	def updateDimmerMeasures(self, dimmer):
+		for dt in self.pastDimmers:
+			time = dt[0]
+			if (self.sim.now - time > windowTime):
+				self.pastDimmers.remove(dt)
+		
+		dimmers = []	
+		for dt in self.pastDimmers:
+			dim = dt[1]
+			dimmers.append(dim)
+		
+		return avg(dimmers)
+	
+	# Stores the current dimmer value and updates expdimmers. Run in an event-triggered fashion.
+	def saveDimmerMeasures(self, dimmer):
 		alpha = 0.90
 		self.expdimmers = alpha*self.expdimmers + (1-alpha)*dimmer
 		
 		dimmerTuple = self.sim.now, dimmer	
-		self.dimmerTuples.append(dimmerTuple)
-		
-		windowTime = 100.0
-		
-		for dt in self.dimmerTuples:
-			time = dt[0]
-			if (self.sim.now - time > windowTime):
-				self.dimmerTuples.remove(dt)
+		self.pastDimmers.append(dimmerTuple)
 	
 	def __str__(self):
 		return self.name
