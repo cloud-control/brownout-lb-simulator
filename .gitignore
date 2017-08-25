@@ -16,3 +16,7 @@ plotscripts/data.mat
 
 # Vim swap files
 *.swp
+
+# Matlab result files
+*.mat
+*.log
