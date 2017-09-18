@@ -58,7 +58,9 @@ class MMReplicaController:
 		
 		## Inner loop parameters
 		self.queueLength = 0
-		self.queueLengthSetpoint = 0
+		self.queueLengthSetpoint = 0.0
+		self.QueueLengthThreshold = 0.0
+		self.v = 0.0
 
 		## All latencies measured during last control period (controller input)
 		self.latestLatencies = []
@@ -96,17 +98,14 @@ class MMReplicaController:
 		self.estimatedProcessGain = 0.05
 		self.nominalProcessGain = 0.05
 
-	## Runs the outer periodical control loop that sets queue length setpoint
+	## Runs the periodical control loop
 	def runControlLoop(self):
 		
 		if self.latestLatencies:
 			
 			if len(self.latestLongLatencies) > 0:
 				oldError = self.error
-				#self.responseTime = avg(self.latestLongLatencies) # avg long latency
 				self.responseTime = np.percentile(self.latestLongLatencies, 95) # np 95 long latency
-				#self.responseTime = avg(self.latestLatencies) # avg latencies
-				#self.responseTime = max(self.latestLatencies) # max of all latencies
 				self.error = self.setpoint - self.responseTime
 				
 				# Update queue measurements
@@ -133,13 +132,26 @@ class MMReplicaController:
 				feedbackMax = self.estimatedArrivalRate - self.feedforward
 				self.feedback = min(max(prelFeedback, feedbackMin), feedbackMax)
 				
+				
 				# Calculate control signal
 				self.queueLengthSetpoint = self.feedback + self.feedforward
 						
 				# Update outer controller integral state
 				self.updateOuterState(factory, self.feedback, prelFeedback)
-				
-				
+		
+		
+					
+			
+		# Inner P controller (in control signal v)
+		queueError = self.queueLengthSetpoint - self.queueLength
+		K_v = 2.0
+		prelV = K_v*queueError
+		
+		# Saturation: No queue length thresholds below zero
+		self.v = max(prelV, -1.0*self.queueLength)
+		
+		# Set threshold for actuation of control signal v
+		self.QueueLengthThreshold = self.queueLength + self.v	
 					
 		
 		if len(self.latestLongLatencies) == 0:
@@ -176,6 +188,8 @@ class MMReplicaController:
 			self.feedforward, \
 			self.alpha, \
 			self.estimatedProcessGain, \
+			self.v, \
+			self.QueueLengthThreshold, \
 		]
 		
 		self.sim.output(self, ','.join(["{0:.5f}".format(value) \
@@ -211,7 +225,7 @@ class MMReplicaController:
 			self.estimatedProcessGain = 0.90*self.estimatedProcessGain + 0.10*self.responseTime / self.queueLengthSetpoint
 	
 	
-	## Inner loop control algorithm deciding execution of optional content	
+	## Inner loop actuator of control signal v deciding execution of optional content	
 	def withOptional(self, currentQueueLength):
 		
 		self.saveQueueMeasures(currentQueueLength)
@@ -220,7 +234,7 @@ class MMReplicaController:
 		if currentQueueLength == 1:
 			# Always serve optional content if queue is at minimum length
 			dimmer = 1.0
-		elif currentQueueLength > self.queueLengthSetpoint:
+		elif (currentQueueLength > self.QueueLengthThreshold):
 			dimmer = 0.0
 		else:
 			dimmer = 1.0
