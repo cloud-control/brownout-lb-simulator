@@ -144,7 +144,7 @@ class MMReplicaController:
 			
 		# Inner P controller (in control signal v)
 		queueError = self.queueLengthSetpoint - self.queueLength
-		K_v = 2.0
+		K_v = 1.0
 		prelV = K_v*queueError
 		
 		# Saturation: No queue length thresholds below zero

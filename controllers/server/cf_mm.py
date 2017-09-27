@@ -187,17 +187,17 @@ class MMReplicaController:
 	def reportData(self, newArrival, responseTime, queueLength, timeY, timeN, optional):
 		if newArrival:
 			self.nbrLatestArrivals = self.nbrLatestArrivals + 1
-		else:
+		else:	
 			self.latestLatencies.append(responseTime)
-			
-			valuesToOutput = [ \
-				responseTime, \
-			]
-			self.sim.output(str(self) + '-tommi', ','.join(["{0:.5f}".format(value) \
-		for value in valuesToOutput]))
-			
 			if (optional):
 				self.latestLongLatencies.append(responseTime)
+				
+				valuesToOutput = [ \
+					responseTime, \
+				]
+				self.sim.output(str(self) + '-tommi', ','.join(["{0:.5f}".format(value) \
+			for value in valuesToOutput]))
+			
 			else:
 				self.latestShortLatencies.append(responseTime)
 			self.queueLength = queueLength
