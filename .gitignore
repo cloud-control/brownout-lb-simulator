@@ -20,3 +20,6 @@ plotscripts/data.mat
 # Matlab result files
 *.mat
 *.log
+
+# Matlab tikz files
+*.tex
