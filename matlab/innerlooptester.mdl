@@ -6,7 +6,7 @@ Model {
     NumRootInports	    0
     NumRootOutports	    0
     ParameterArgumentNames  ""
-    ComputedModelVersion    "1.10"
+    ComputedModelVersion    "1.11"
     NumModelReferences	    0
     NumTestPointedSignals   0
   }
@@ -27,9 +27,9 @@ Model {
   ModifiedByFormat	  "%<Auto>"
   LastModifiedBy	  "tommi"
   ModifiedDateFormat	  "%<Auto>"
-  LastModifiedDate	  "Mon Sep 18 15:15:12 2017"
-  RTWModifiedTimeStamp	  427647108
-  ModelVersionFormat	  "1.%<AutoIncrement:10>"
+  LastModifiedDate	  "Mon Oct 02 18:10:16 2017"
+  RTWModifiedTimeStamp	  428868614
+  ModelVersionFormat	  "1.%<AutoIncrement:11>"
   ConfigurationManager	  "None"
   SampleTimeColors	  off
   SampleTimeAnnotations	  off
@@ -67,8 +67,7 @@ Model {
     $ObjectID		    1
     $ClassName		    "Simulink.SimulationData.ModelLoggingInfo"
     model_		    "innerlooptester"
-    signals_		    []
-    overrideMode_	    [0U]
+    overrideMode_	    [0.0]
     Array {
       Type		      "Cell"
       Dimension		      1
@@ -737,7 +736,7 @@ Model {
   }
   System {
     Name		    "innerlooptester"
-    Location		    [689, 268, 1359, 623]
+    Location		    [689, 231, 1359, 586]
     Open		    on
     ModelBrowserVisibility  off
     ModelBrowserWidth	    200
@@ -783,7 +782,7 @@ Model {
       Position		      [480, 79, 510, 111]
       ZOrder		      -16
       Floating		      off
-      Location		      [138, 350, 2058, 1336]
+      Location		      [1, 93, 1921, 1079]
       Open		      off
       NumInputPorts	      "1"
       List {
@@ -833,6 +832,7 @@ Model {
       SID		      "6"
       Position		      [330, 77, 390, 113]
       ZOrder		      -9
+      Numerator		      "[0.05]"
       Denominator	      "[1 0]"
     }
     Block {

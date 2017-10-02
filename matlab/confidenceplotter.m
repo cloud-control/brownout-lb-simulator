@@ -1,70 +1,79 @@
-%% get complete vector for ff
-
+%% get avgs and 95% confidence intervals
 repeats = 20;
 samplespersec = 2.0;
-trialtime = 300.0;
-totallength = 12000;
+trialtime = 400.0;
+totallength = 16000;
+replicas = 3;
 
-responsetimesff(responsetimesff == 0.0) = NaN;
 
-times = times(1:totallength);
-responsetimesff = responsetimesff(1:totallength);
-inner_setpointsff = inner_setpointsff(1:totallength);
-avgqueue_lengthsff = avgqueue_lengthsff(1:totallength);
-queue_lengthsff = queue_lengthsff(1:totallength);
-expdimmersff = expdimmersff(1:totallength);
-v = v(1:totallength);
+responsetimes(responsetimes == 0.0) = NaN;
+
+times = times(1:totallength, :);
+responsetimes = responsetimes(1:totallength, :);
+inner_setpoints = inner_setpoints(1:totallength, :);
+avgqueue_lengths = avgqueue_lengths(1:totallength, :);
+queue_lengths = queue_lengths(1:totallength, :);
+expdimmers = expdimmers(1:totallength, :);
+v = v(1:totallength, :);
 
 
 avgt = 1:trialtime*samplespersec;
 
 avgtimes = 1/samplespersec*avgt;
 
-respff = zeros(length(avgtimes), repeats);
-setpointff = zeros(length(avgtimes), repeats);
-avgqueueff = zeros(length(avgtimes), repeats);
-queueff = zeros(length(avgtimes), repeats);
-expdimff = zeros(length(avgtimes), repeats);
-vff = zeros(length(avgtimes), repeats);
+respavg = zeros(length(avgtimes), replicas);
+setpointavg = zeros(length(avgtimes), replicas);
+avgqueueavg = zeros(length(avgtimes), replicas);
+queueavg = zeros(length(avgtimes), replicas);
+expdimmersavg = zeros(length(avgtimes), replicas);
+vavg = zeros(length(avgtimes), replicas);
+queuediffavg = zeros(length(avgtimes), replicas);
+
+respconf = zeros(length(avgtimes), 2*replicas);
+setpointconf = zeros(length(avgtimes), 2*replicas);
+avgqueueconf = zeros(length(avgtimes), 2*replicas);
+queueconf = zeros(length(avgtimes), 2*replicas);
+expdimconf = zeros(length(avgtimes), 2*replicas);
+vconf = zeros(length(avgtimes), 2*replicas);
+queuediffconf = zeros(length(avgtimes), 2*replicas);
+
+l = 1; % conf int index variable
 
 
-respffconf = zeros(length(avgtimes), 2);
-setpointffconf = zeros(length(avgtimes), 2);
-avgqueueffconf = zeros(length(avgtimes), 2);
-queueffconf = zeros(length(avgtimes), 2);
-expdimffconf = zeros(length(avgtimes), 2);
-vffconf = zeros(length(avgtimes), 2);
-queuediffconf = zeros(length(avgtimes), 2);
+for k = 1:replicas
+     
+    
+    for i = 1:max(avgt)-1
+
+        j = i - 1;
+        if j == 0
+            j = 1;
+        end
+
+        indexes = find(mod(1:length(times),max(avgt))==i);
+        indexes_j = find(mod(1:length(times),max(avgt))==j);
+
+        respavg(i, k) = nanmean(responsetimes(indexes, k));
+        setpointavg(i, k) = nanmean(inner_setpoints(indexes, k));
+        avgqueueavg(i, k) = nanmean(avgqueue_lengths(indexes, k));
+        queueavg(i, k) = nanmean(queue_lengths(indexes, k));
+        expdimmersavg(i, k) = nanmean(expdimmers(indexes, k));
+        vavg(i, k) = nanmean(v(indexes, k));
+        queuediffavg(i, k) = nanmean(queue_lengths(indexes, k) - queue_lengths(indexes_j, k));
 
 
-for i = 1:max(avgt)-1
-   
-    j = i - 1;
-    if j == 0
-        j = 1;
+        respconf(i, l:(l+1)) = confint(responsetimes(indexes, k));
+        setpointconf(i, l:(l+1)) = confint(inner_setpoints(indexes, k));
+        avgqueueconf(i, l:(l+1)) = confint(avgqueue_lengths(indexes, k));
+        queueconf(i, l:(l+1)) = confint(queue_lengths(indexes, k));
+        expdimconf(i, l:(l+1)) = confint(expdimmers(indexes, k));
+        vconf(i, l:(l+1)) = confint(v(indexes, k));
+        queuediffconf(i, l:(l+1)) = confint(queue_lengths(indexes, k) - queue_lengths(indexes_j, k));
+
+
+
     end
     
-    indexes = find(mod(1:length(times),max(avgt))==i);
-    indexes_j = find(mod(1:length(times),max(avgt))==j);
+    l = l + 2;
 
-    
-    respavgff(i) = nanmean(responsetimesff(indexes));
-    setpointavgff(i) = nanmean(inner_setpointsff(indexes));
-    avgqueueavgff(i) = nanmean(avgqueue_lengthsff(indexes));
-    queueavgff(i) = nanmean(queue_lengthsff(indexes));
-    expdimmersavgff(i) = nanmean(expdimmersff(indexes));
-    vavgff(i) = nanmean(v(indexes));
-    queuediffavg(i) = nanmean(queue_lengthsff(indexes) - queue_lengthsff(indexes_j));
-    
-    
-    respffconf(i, :) = confint(responsetimesff(indexes));
-    setpointffconf(i, :) = confint(inner_setpointsff(indexes));
-    avgqueueffconf(i, :) = confint(avgqueue_lengthsff(indexes));
-    queueffconf(i, :) = confint(queue_lengthsff(indexes));
-    expdimffconf(i, :) = confint(expdimmersff(indexes));
-    vffconf(i, :) = confint(v(indexes));
-    queuediffconf(i, :) = confint(queue_lengthsff(indexes) - queue_lengthsff(indexes_j));
-    
-   
-    
 end
