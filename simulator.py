@@ -216,7 +216,7 @@ def runSingleSimulation(outdir, autoScalerControllerFactory, replicaControllerFa
 		server = Server(sim, \
 			serviceTimeY = y, serviceTimeN = n, \
 			timeSlice = timeSlice)
-		newReplicaController = replicaControllerFactory.newInstance(sim, str(server) + "-ctl")
+		newReplicaController = replicaControllerFactory.newInstance(sim, server, str(server) + "-ctl")
 		server.controller = newReplicaController
 		servers.append(server)
 		if autoScale:

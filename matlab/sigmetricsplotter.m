@@ -5,7 +5,7 @@ clc;
 
 %% Get total response time data of all servers
 
-experiment_dir2 = '/local/home/tommi/CloudControl/SIGMETRICS2018/brownout-lb-simulator//results/trivial/cc-sqf/';
+experiment_dir2 = '/local/home/tommi/CloudControl/SIGMETRICS2018/brownout-lb-simulator//results/trivial/cc/';
 server_files2 = dir([experiment_dir2, '/sim-server*-ctl-tommi.csv']);
 num_replicas2 = length(server_files2);
 
@@ -43,7 +43,7 @@ varOpt = nanvar(optionalTimes)
 
 
 %% Get simulation data
-experiment_dir = '/local/home/tommi/CloudControl/SIGMETRICS2018/brownout-lb-simulator//results/trivial/cc-sqf/';
+experiment_dir = '/local/home/tommi/CloudControl/SIGMETRICS2018/brownout-lb-simulator//results/trivial/cc/';
 server_files = dir([experiment_dir, '/sim-server*-ctl.csv']);
 num_replicas = length(server_files);
 
@@ -99,54 +99,58 @@ for i = 1:num_replicas
 end
 
 
-%% plot statistically significant transients
+%% plot statistically significant transients for all replicas
 
-k = 2; % the current replica 
-
-l = 2*(k-1) + 1; % index for conf int plots
+nbrReplicas = length(lengths);
 
 
-subplot(4,1,1)
-hold on
-plot(avgtimes(1:799), expdimmersavg(1:799, k), 'k')
-ciplot(expdimconf(:,l), expdimconf(:,(l+1)), avgtimes, 'b',0.5);
-axis([0 300 0 1])
-hold off
+figure();
 
-subplot(4,1,2)
-hold on
-plot(avgtimes(1:799), vavg(1:799, k), 'k')
-ciplot(vconf(:,l), vconf(:,(l+1)), avgtimes, 'b',0.5);
-axis([0 300 -2 4])
-hold off
+for k=1:nbrReplicas
+    l = 2*(k-1) + 1; % index for conf int plots
+    
+    if k == 1
+        color = 'b';
+    elseif k == 2
+        color = 'r';
+    elseif k == 3
+        color = 'g';
+    end
 
-subplot(4,1,3)
-hold on
-%plot(avgtimes, queueavgmm, '.g')
-%plot(avgtimes, queueavgff, 'r')
-%plot(avgtimes(1:799), queueavg(1:799,k), 'k')
-%ciplot(queueconf(:,l), queueconf(:,(l+1)), avgtimes, 'b',0.5);
-%plot(avgtimes, setpointavgff, 'r')
-%plot(avgtimes(1:599), setpointavgff(1:599), 'k')
-plot(avgtimes(1:799), setpointavg(1:799,k), 'k')
-ciplot(setpointconf(:,l), setpointconf(:,(l+1)), avgtimes, 'r', 0.5);
-%plot(avgtimes, queueavgff, '.r')
+    subplot(4,1,1)
+    hold on
+    plot(avgtimes(1:799), expdimmersavg(1:799, k), color)
+    ciplot(expdimconf(:,l), expdimconf(:,(l+1)), avgtimes, color,0.5);
+    axis([0 300 0 1])
+    hold off
 
-axis([0 300 35 70])
-hold off;
+    subplot(4,1,2)
+    hold on
+    plot(avgtimes(1:799), vavg(1:799, k), color)
+    ciplot(vconf(:,l), vconf(:,(l+1)), avgtimes, color,0.5);
+    axis([0 300 -20 20])
+    hold off
 
-subplot(4,1,4)
-hold on;
-plot(avgtimes, 1.0*ones(size(avgtimes)), 'k', 'LineWidth', 2.0)
-%plot(avgtimes, respavgmm, 'g')
-%plot(avgtimes, respavgff, 'r')
-plot(avgtimes(1:799), respavg(1:799,k))
-ciplot(respconf(:,l), respconf(:,(l+1)), avgtimes, 'b',0.5);
-%plot(avgtimes, respavgff, 'r')
-axis([0 300 0 1.5])
+    subplot(4,1,3)
+    hold on
+    plot(avgtimes(1:799), queueavg(1:799,k), color)
+    ciplot(queueconf(:,l), queueconf(:,(l+1)), avgtimes, color,0.5);
+    %plot(avgtimes(1:799), setpointavg(1:799,k), 'k')
+    %ciplot(setpointconf(:,l), setpointconf(:,(l+1)), avgtimes, 'r', 0.5);
 
+    axis([0 300 30 60])
+    hold off;
 
-hold off;
+    subplot(4,1,4)
+    hold on;
+    plot(avgtimes, 1.0*ones(size(avgtimes)), 'k', 'LineWidth', 2.0)
+    plot(avgtimes(1:799), respavg(1:799,k), color)
+    ciplot(respconf(:,l), respconf(:,(l+1)), avgtimes, color,0.5);
+    axis([0 300 0 1.5])
+
+    hold off;
+    
+end
 
 %% plot normal transients
 
@@ -162,9 +166,9 @@ hold off
 subplot(3,1,2)
 hold on
 %plot(avgtimes, queueavgmm, '.g')
-plot(times, queue_lengths)
+%plot(times, queue_lengths)
 %plot(avgtimes, setpointavgff, 'r')
-plot(times, inner_setpoints, 'k')
+plot(times, arrivalshat)
 %plot(times, arrivalshat, 'r')
 %axis([0 500 0 100])
 %plot(avgtimes, queueavgff, '.r')
@@ -179,7 +183,7 @@ plot(times, 1.0*ones(size(times)), 'k', 'LineWidth', 2.0)
 %plot(times, responsetimesfb, 'b')
 plot(times, responsetimes)
 %plot(times, np95_latencies_short, 'r')
-axis([0 500 0 2])
+%axis([0 500 0 2])
 %plot(avgtimes, respavgff, 'r')
 
 

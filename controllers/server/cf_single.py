@@ -33,7 +33,7 @@ def parseCommandLine(_args):
 	global args
 	args = _args
 
-def newInstance(sim, name):
+def newInstance(sim, server, name):
 	return MMReplicaController(sim, name, \
 		args.period, args.controllerK, \
 		args.controllerTi, args.usePI)

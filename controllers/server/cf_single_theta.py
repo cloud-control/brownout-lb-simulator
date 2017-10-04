@@ -4,29 +4,29 @@ import random as xxx_random # prevent accidental usage
 from base.utils import *
 
 def getName():
-	return 'cc'
+	return 'single_theta'
 
 def addCommandLine(parser):
-	parser.add_argument('--CCOuterPeriod',
+	parser.add_argument('--periodTheta',
 		type = float,
 		help = 'Specify the control period',
 		default = 0.5,
 	)
-	parser.add_argument('--CCOuterK',
+	parser.add_argument('--controllerKTheta',
 		type = float,
 		help = 'Specify the outer proportional gain of the controller',
-		default = 4.0,
+		default = 75.0,
 	)
-	parser.add_argument('--CCOuterTi',
+	parser.add_argument('--controllerTiTheta',
 		type = float,
 		help = 'Specify the integral time constant',
-		default = 0.56,
+		default = 10.0,
 	)
 	
-	parser.add_argument('--CCShouldRunFF',
-		type = float,
-		help = '1 if feedforward should be used, 0 otherwise',
-		default = 0,
+	parser.add_argument('--usePITheta',
+		type = int,
+		help = '1 if pi, 0 if p',
+		default = 1,
 	)
 
 def parseCommandLine(_args):
@@ -34,13 +34,13 @@ def parseCommandLine(_args):
 	args = _args
 
 def newInstance(sim, server, name):
-	return MMReplicaController(sim, name, \
-		args.CCOuterPeriod, args.CCOuterK, \
-		args.CCOuterTi, args.CCShouldRunFF)
+	return MMReplicaController(sim, server, name, \
+		args.periodTheta, args.controllerKTheta, \
+		args.controllerTiTheta, args.usePITheta)
 
 class MMReplicaController:
-	def __init__(self, sim, name, period, outerK, \
-		outerTi, shouldRunFF, seed = 1):
+	def __init__(self, sim, server, name, period, K, \
+		Ti, usePI, seed = 1):
 			
 		## Outer loop parameters
 		self.setpoint = 1.0
@@ -48,13 +48,15 @@ class MMReplicaController:
 		self.controlPeriod = period 
 		self.responseTime = 0.0
 		self.percentile = 95
-		self.outerK = outerK
-		self.outerTi = outerTi
+		self.K = K
+		self.Ti = Ti
 		self.integralPart = 0.0
-		self.outerTr = 1.0
+		self.Tr = 1.0
 		self.feedback = 0.0
 		self.feedforward = 0.0
-		self.shouldRunFF = shouldRunFF
+		self.shouldRunFF = 0.0
+		self.usePI = usePI
+		self.dimmer = 0.5
 		
 		## Inner loop parameters
 		self.queueLength = 0
@@ -75,6 +77,9 @@ class MMReplicaController:
 		self.sim = sim
 		if self.controlPeriod > 0:
 			self.sim.add(0, self.runControlLoop)
+		
+		## Reference to server
+		self.server = server
 		
 		## Random number generator
 		self.random = xxx_random.Random()
@@ -114,46 +119,35 @@ class MMReplicaController:
 				# Update parameter estimates			
 				self.updateOuterLoopEstimates()
 				
-				# Outer loop PI controller						
-				factory = self.nominalProcessGain/self.estimatedProcessGain
-					
-				proportionalPart = factory*self.outerK * self.error
-				prelFeedback = proportionalPart + self.integralPart
-				
-				
-				# Calculate feedforward if activated
-				if self.shouldRunFF == 1:
-					self.feedforward = self.setpoint * self.estimatedArrivalRate / (self.alpha*self.gihat)
+				if self.usePI == 1:			
+					# Use PI controller								
+					proportionalPart = self.K * self.error
+					prelFeedback = proportionalPart + self.integralPart
+								
 				else:
-					self.feedforward = 0.0
-		
-				# Saturate control signal
-				feedbackMin = -1.0*self.feedforward
-				feedbackMax = self.estimatedArrivalRate - self.feedforward
-				self.feedback = min(max(prelFeedback, feedbackMin), feedbackMax)
+					# Use P controller
+					Kp = 4.0
+					prelFeedback = Kp*self.error					
+
+				t_f = self.server.serviceTimeY
+				t_r = self.server.serviceTimeN
 				
+				# Saturation of v to keep dimmer value between 0 and 1
+				feedbackMin = self.estimatedArrivalRate- 1.0/t_r
+				feedbackMax = self.estimatedArrivalRate - 1.0/t_f
+				self.v = min(max(prelFeedback, feedbackMin), feedbackMax)
+
+				# Transform from v to dimmer value
+				serviceLevel = (1.0/(self.estimatedArrivalRate-self.v) - t_r) / (t_f - t_r)
 				
-				# Calculate control signal
-				self.queueLengthSetpoint = self.feedback + self.feedforward
-						
-				# Update outer controller integral state
-				self.updateOuterState(factory, self.feedback, prelFeedback)
-		
-		
-					
-			
-		# Inner P controller (in control signal v)
-		queueError = self.queueLengthSetpoint - self.queueLength
-		K_v = 1.0
-		prelV = K_v*queueError
-		
-		# Saturation: No queue length thresholds below zero
-		self.v = max(prelV, -1.0*self.queueLength)
-		
-		# Set threshold for actuation of control signal v
-		self.QueueLengthThreshold = self.queueLength + self.v	
-					
-		
+				# Saturation of dimmer value, it's a probability
+				self.dimmer = min(max(serviceLevel, 0.0), 1.0)
+				
+				if self.usePI == 1:
+					# Update PI controller integral state
+					self.updateOuterState(self.v, prelFeedback)	
+				
+	
 		if len(self.latestLongLatencies) == 0:
 			self.latestLongLatencies.append(0.0)
 			
@@ -204,11 +198,11 @@ class MMReplicaController:
 		self.sim.add(self.controlPeriod, self.runControlLoop)
 		
 
-	## Updates outer controller integral state (includes anti-windup)
-	def updateOuterState(self, gain, u, v):
+	## Updates controller integral state (includes anti-windup)
+	def updateOuterState(self, u, v):
 		self.integralPart = self.integralPart + self.error * \
-						(gain*self.outerK * self.controlPeriod / self.outerTi) + \
-						(self.controlPeriod / self.outerTr) * (u - v)
+						(self.K * self.controlPeriod / self.Ti) + \
+						(self.controlPeriod / self.Tr) * (u - v)
 	
 	## Periodical estimations
 	def updateOuterLoopEstimates(self):
@@ -229,19 +223,9 @@ class MMReplicaController:
 	def withOptional(self, currentQueueLength):
 		
 		self.saveQueueMeasures(currentQueueLength)
+		self.saveDimmerMeasures(self.dimmer)
 		
-		# Determine if optional content should be served
-		if currentQueueLength == 1:
-			# Always serve optional content if queue is at minimum length
-			dimmer = 1.0
-		elif (currentQueueLength > self.QueueLengthThreshold):
-			dimmer = 0.0
-		else:
-			dimmer = 1.0
-		
-		self.saveDimmerMeasures(dimmer)
-		
-		return self.random.random() <= dimmer, self.expdimmers
+		return self.random.random() <= self.dimmer, self.dimmer
 
 
 	def reportData(self, newArrival, responseTime, queueLength, timeY, timeN, optional):
