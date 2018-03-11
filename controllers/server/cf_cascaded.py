@@ -116,8 +116,8 @@ class MMReplicaController:
                 self.updateOuterLoopEstimates()
 
                 # Outer loop PI controller
-                #self.factory = self.nominalProcessGain/self.estimatedProcessGain
-                self.factory = 3.5 #1.11 for lambda=100, 3.5 for lambda=400
+                self.factory = self.nominalProcessGain/self.estimatedProcessGain
+                #self.factory = 3.5 #1.11 for lambda=100, 3.5 for lambda=400
 
                 proportionalPart = self.factory*self.outerK * self.error
                 prelFeedback = proportionalPart + self.integralPart
@@ -132,7 +132,6 @@ class MMReplicaController:
                 # Saturate control signal
                 feedbackMin = -1.0*self.feedforward
                 feedbackMax = self.estimatedArrivalRate - self.feedforward
-                feedbackMax = 10000.0;
                 self.feedback = min(max(prelFeedback, feedbackMin), feedbackMax)
 
 
