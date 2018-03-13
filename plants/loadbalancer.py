@@ -13,7 +13,7 @@ class LoadBalancer:
     ## Supported load-balancing algorithms.
     ALGORITHMS = ("weighted-RR theta-diff SQF SQF-plus FRF equal-thetas equal-queues equal-thetas-SQF " + \
         "FRF-EWMA predictive 2RC RR random fake-random theta-diff-plus ctl-simplify equal-thetas-fast theta-diff-plus-SQF " + \
-        "theta-diff-plus-fast SRTF equal-thetas-fast-mul").split()
+        "theta-diff-plus-fast SRTF equal-thetas-fast-mul co-op").split()
 
     ## Constructor.
     # @param sim Simulator to attach to

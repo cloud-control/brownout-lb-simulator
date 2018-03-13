@@ -1,14 +1,9 @@
-speedfactor = 0.35#0.35 previously
+speedfactor = 0.70#0.35 previously
 #speedfactor1 = 0.70
 addServer(y = speedfactor * 0.07    , n = speedfactor * 0.001    )
 addServer(y = speedfactor * 0.07    , n = speedfactor * 0.001    )
 addServer(y = speedfactor * 0.07    , n = speedfactor * 0.001    )
-addServer(y = speedfactor * 0.07    , n = speedfactor * 0.001    )
-addServer(y = speedfactor * 0.07    , n = speedfactor * 0.001    )
-addServer(y = speedfactor * 0.07    , n = speedfactor * 0.001    )
-addServer(y = speedfactor * 0.07    , n = speedfactor * 0.001    )
-addServer(y = speedfactor * 0.07    , n = speedfactor * 0.001    )
-addServer(y = speedfactor * 0.07    , n = speedfactor * 0.001    )
+
 """addServer(y = speedfactor * 0.07    , n = speedfactor * 0.001    )
 addServer(y = speedfactor * 0.07    , n = speedfactor * 0.001    )
 addServer(y = speedfactor * 0.07    , n = speedfactor * 0.001    )
@@ -33,7 +28,7 @@ addServer(y = speedfactor * 0.07    , n = speedfactor * 0.001    )"""
 #	setRate(at =    time+300.0, rate = 0.0)
 
 #setRate(at =    0, rate = 300.0)
-setRate(at =    0, rate = 1200.0)
+setRate(at =    0, rate = 200.0)
 #setRate(at =    300.0, rate = 0.0)
 
 endOfSimulation(at = 500)

@@ -8,9 +8,9 @@ class Request(object):
 	## Variable used for giving IDs to requests for pretty-printing
 	lastRequestId = 1
 	## List of allowed attributes (improves performance and reduces errors)
-	__slots__ = ('requestId', 'arrival', 'completion', 'onCompleted', \
+	__slots__ = ('requestId', 'arrival', 'queueDeparture', 'completion', 'onCompleted', \
 		'originalRequest', 'theta', 'withOptional', 'chosenBackend',
-		'remainingTime', 'createdAt')
+		'remainingTime', 'createdAt', 'packetRequest')
 	
 	## Constructor
 	def __init__(self):

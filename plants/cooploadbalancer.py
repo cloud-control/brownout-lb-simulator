@@ -3,6 +3,8 @@ from __future__ import division
 import math
 import numpy as np
 import random as xxx_random # prevent accidental usage
+import operator
+from copy import deepcopy
 
 from base import Request
 from base.utils import *
@@ -27,9 +29,19 @@ class CoOperativeLoadBalancer:
         self.weights = []
         ## latencies measured during last control period (metric)
         self.latestLatencies = []
+        ## service times measured during last control period (metric)
+        self.latestServiceTimes = []
+        ## waiting times measured during last control period
+        self.latestWaitingTimes = []
         ## queue length of each replica (control input for SQF algorithm)
         self.queueLengths = []
         self.lastQueueLengths = []
+        ## requests waiting in queue at loadbalancer
+        self.waitingQueue = []
+        ## Packet requests from servers
+        self.packetRequests = []
+        ## Queue length threshold for waiting queue controller
+        self.queueLengthThreshold = 170
         ## number of requests, with or without optional content, served since
         # the load-balancer came online (metric)
         self.numRequests = 0
@@ -98,8 +110,11 @@ class CoOperativeLoadBalancer:
         n = len(self.backends)
 
         # DO NOT USE! `[ [] ] * n` as it leads to undesired behaviour.
-
+        self.waitingQueue = []
+        self.packetRequests = [3] * n
+        self.latestWaitingTimes = []
         self.latestLatencies = [[] for _ in range(n)]  # to be updated at onComplete
+        self.latestServiceTimes = [[] for _ in range(n)]  # to be updated at onComplete
         self.lastLastLatencies = [[] for _ in range(n)]
         self.lastQueueLengths = [0] * n
         assert len(self.queueLengths) == n
@@ -121,17 +136,62 @@ class CoOperativeLoadBalancer:
     def request(self, request):
         request.arrival = self.sim.now
 
-        # Define which backend to send request to, or queue it!
-        chosenBackendIndex = 0
+        self.waitingQueue.append(request)
 
-        request.chosenBackend = self.backends[chosenBackendIndex]
-        newRequest = Request()
-        newRequest.originalRequest = request
-        newRequest.onCompleted = lambda: self.onCompleted(newRequest)
-        #self.sim.log(self, "Directed request to {0}", chosenBackendIndex)
-        self.queueLengths[chosenBackendIndex] += 1
-        self.numRequestsPerReplica[chosenBackendIndex] += 1
-        self.backends[chosenBackendIndex].request(newRequest)
+        # TODO: Finish this method
+        self.forwardRequests()
+
+    def forwardRequests(self):
+        # Sort list in descending order
+        packetTemp = deepcopy(self.packetRequests)
+        sortedPacketRequests = sorted(enumerate(packetTemp), key=operator.itemgetter(1), reverse=True)
+
+        for index, req in sortedPacketRequests:
+            for i in range(0, req):
+                if self.waitingQueue:
+                    request = self.waitingQueue.pop(0)
+                else:
+                    return
+                request.withOptional, request.theta = self.withOptional()
+                request.chosenBackend = self.backends[index]
+                request.queueDeparture = self.sim.now
+                #print "at forwardRequests"
+                #print str(self.packetRequests)
+
+                self.packetRequests[index] = self.packetRequests[index] - 1
+                self.latestWaitingTimes.append(request.queueDeparture - request.arrival)
+                newRequest = Request()
+                newRequest.originalRequest = request
+                newRequest.withOptional = request.withOptional
+                newRequest.theta = request.theta
+                #print "forwarding request " + str(newRequest) + " to server " + str(request.chosenBackend)
+                newRequest.onCompleted = lambda: self.onCompleted(newRequest)
+                # self.sim.log(self, "Directed request to {0}", chosenBackendIndex)
+                self.queueLengths[index] += 1
+                self.numRequestsPerReplica[index] += 1
+                self.backends[index].request(newRequest)
+
+    ## Inner loop actuator of control signal v deciding execution of optional content
+    def withOptional(self):
+
+        # TODO: Implement the estimations?
+        #self.saveQueueMeasures(currentQueueLength)
+
+        waitingQueueLength = len(self.waitingQueue)
+
+        # Determine if optional content should be served
+        if waitingQueueLength == 1:
+            # Always serve optional content if queue is at minimum length
+            dimmer = 1.0
+        elif waitingQueueLength > self.queueLengthThreshold:
+            dimmer = 0.0
+        else:
+            dimmer = 1.0
+
+        #self.saveDimmerMeasures(dimmer)
+
+        #return self.random.random() <= dimmer, self.expdimmers
+        return self.random.random() <= dimmer, 0.5
 
     ## Handles request completion.
     # Stores piggybacked dimmer values and calls orginator's onCompleted()
@@ -141,6 +201,7 @@ class CoOperativeLoadBalancer:
         if request.withOptional:
             self.numRequestsWithOptional += 1
         theta = request.theta
+        packetRequest = request.packetRequest
         request.originalRequest.withOptional = request.withOptional
         request = request.originalRequest
         request.theta = theta
@@ -160,11 +221,20 @@ class CoOperativeLoadBalancer:
             chosenBackendIndex = self.backends.index(request.chosenBackend)
             self.latestLatencies[chosenBackendIndex].\
                 append(request.completion - request.arrival)
+            if request.withOptional:
+                self.latestServiceTimes[chosenBackendIndex]. \
+                    append(request.completion - request.queueDeparture)
             self.queueLengths[chosenBackendIndex] -= 1
+            self.packetRequests[chosenBackendIndex] += packetRequest
+            #print "at onCompleted"
+            #print "chosenBackendIndex: " + str(chosenBackendIndex)
+            #print str(self.packetRequests)
             ewmaAlpha = 2 / (self.ewmaNumSamples + 1)
             self.ewmaResponseTime[chosenBackendIndex] = \
                 ewmaAlpha * (request.completion - request.arrival) + \
                 (1 - ewmaAlpha) * self.ewmaResponseTime[chosenBackendIndex]
+
+            self.forwardRequests()
 
         # Call original onCompleted
         request.onCompleted()
@@ -178,21 +248,31 @@ class CoOperativeLoadBalancer:
         self.iteration += 1
         self.sim.add(self.controlPeriod, self.runControlLoop)
 
-        # Do periodical stuff, e.g. to update queue length setpoint
+        # TODO: Implement the control strategy (Queue length PI and feedforward for queue length setpoint)
 
 
-        valuesToOutput = [ self.sim.now ] + self.weights + self.lastThetas + \
-            [ avg(latencies) for latencies in self.lastLatencies ] + \
-            [ max(latencies + [0]) for latencies in self.lastLatencies ] + \
+        if len(self.latestWaitingTimes) == 0:
+            self.latestWaitingTimes.append(0.0)
+
+        if len(self.latestLatencies) == 0:
+            self.latestLatencies.append(0.0)
+
+        if len(self.latestServiceTimes) == 0:
+            self.latestLatencies.append(0.0)
+
+
+        valuesToOutput = [ self.sim.now ] +\
+            [ avg(latencies) for latencies in self.latestLatencies ] + \
             [ self.numRequests, self.numRequestsWithOptional ] + \
-            effectiveWeights
+            [avg(self.latestWaitingTimes)] + \
+            [avg(latencies) for latencies in self.latestServiceTimes ]
         self.sim.output(self, ','.join(["{0:.5f}".format(value) \
             for value in valuesToOutput]))
 
         self.lastQueueLengths = self.queueLengths[:]
-        self.lastLastThetas = self.lastThetas[:]
-        self.lastLastLatencies = self.lastLatencies
-        self.lastLatencies = [ [] for _ in self.backends ]
+        self.latestLatencies = [ [] for _ in self.backends ]
+        self.latestServiceTimes = [[] for _ in self.backends]
+        self.latestWaitingTimes = []
         self.numLastRequestsPerReplica = self.numRequestsPerReplica[:]
 
     ## Pretty-print load-balancer's name.

@@ -44,7 +44,7 @@ class Server:
         ## list of active requests (server model variable)
         self.activeRequests = deque()
         ## max number of active jobs
-        self.maxActiveJobs = 3
+        self.maxActiveJobs = 10000
         ## list of request waiting to access server
         self.waitingRequests = []
         ## how often to report metrics
@@ -122,7 +122,7 @@ class Server:
         # Activate scheduler, if its not active
         if len(self.activeRequests) == 0:
             self.sim.add(0, self.onScheduleRequests)
-
+        #print "Backend: " + str(request.originalRequest.chosenBackend)
         request.arrival = self.sim.now
         self.controller.reportData(True, 0, 0, 0, 0, 0)
 
@@ -178,11 +178,15 @@ class Server:
         if not hasattr(activeRequest, 'remainingTime'):
             #self.sim.log(self, "request {0} entered the system", activeRequest)
 
-            # Pick whether to serve it with optional content or not
-            if self.controller:
-                activeRequest.withOptional, activeRequest.theta = self.controller.withOptional(currentQueueLength)
-            else:
-                activeRequest.withOptional, activeRequest.theta = True, 1
+            if not hasattr(activeRequest, 'withOptional'):
+                # Pick whether to serve it with optional content or not
+                if self.controller:
+                    #print "Opt content not decided for request " + str(activeRequest)
+                    activeRequest.withOptional, activeRequest.theta = self.controller.withOptional(currentQueueLength)
+                else:
+                    activeRequest.withOptional, activeRequest.theta = True, 1
+            #else:
+                #print "Opt content decided for request " + str(activeRequest)
 
             activeRequest.remainingTime = self.drawServiceTime(activeRequest.withOptional)
 
@@ -231,6 +235,9 @@ class Server:
         if self.controller:
             self.controller.reportData(False, request.completion - request.arrival,
               self.getTotalQueueLength(), self.serviceTimeY, self.serviceTimeN, request.withOptional)
+
+        # TODO: This should be determined by service controller!
+        request.packetRequest = 1
         request.onCompleted()
 
         # Append the next request waiting to run (if there is one)

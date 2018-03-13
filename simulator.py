@@ -11,7 +11,7 @@ import random
 import os
 import sys
 
-from plants import AutoScaler, ClosedLoopClient, OpenLoopClient, LoadBalancer, Server
+from plants import AutoScaler, ClosedLoopClient, OpenLoopClient, LoadBalancer, Server, CoOperativeLoadBalancer
 from base import Request, SimulatorKernel
 from base.utils import *
 from controllers import loadControllerFactories
@@ -180,16 +180,19 @@ def runSingleSimulation(outdir, autoScalerControllerFactory, replicaControllerFa
     sim = SimulatorKernel(outputDirectory = outdir)
     servers = []
     clients = []
-    loadBalancer = LoadBalancer(sim, controlPeriod = 1.0)
+    if loadBalancingAlgorithm == 'co-op':
+        loadBalancer = CoOperativeLoadBalancer(sim, controlPeriod=1.0)
+    else:
+        loadBalancer = LoadBalancer(sim, controlPeriod = 1.0)
+        loadBalancer.algorithm = loadBalancingAlgorithm
+        loadBalancer.equal_theta_gain = equal_theta_gain
+        loadBalancer.equal_thetas_fast_gain = equal_thetas_fast_gain
+
     autoScaler = AutoScaler(sim, loadBalancer,
                 controller = autoScalerControllerFactory.newInstance(sim,
                     'as-ctr'), startupDelay = startupDelayFunc)
     openLoopClient = OpenLoopClient(sim, autoScaler)
 
-
-    loadBalancer.algorithm = loadBalancingAlgorithm
-    loadBalancer.equal_theta_gain = equal_theta_gain
-    loadBalancer.equal_thetas_fast_gain = equal_thetas_fast_gain
 
     # Define verbs for scenarios
     def addClients(at, n):
