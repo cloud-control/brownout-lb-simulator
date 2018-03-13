@@ -29,6 +29,7 @@ addServer(y = speedfactor * 0.07    , n = speedfactor * 0.001    )"""
 
 #setRate(at =    0, rate = 300.0)
 setRate(at =    0, rate = 200.0)
-#setRate(at =    300.0, rate = 0.0)
+#setRate(at =    100, rate = 100.0)
+#setRate(at =    200.0, rate = 300.0)
 
-endOfSimulation(at = 500)
+endOfSimulation(at = 300)

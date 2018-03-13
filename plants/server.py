@@ -121,10 +121,11 @@ class Server:
     def request(self, request):
         # Activate scheduler, if its not active
         if len(self.activeRequests) == 0:
+            #print "scheduler was not active"
             self.sim.add(0, self.onScheduleRequests)
         #print "Backend: " + str(request.originalRequest.chosenBackend)
         request.arrival = self.sim.now
-        self.controller.reportData(True, 0, 0, 0, 0, 0)
+        self.controller.reportData(True, 0, 0, 0, 0, 0, 0)
 
         # Add request to list of active requests if possible
         if len(self.activeRequests) < self.maxActiveJobs:
@@ -234,11 +235,18 @@ class Server:
         self.latestLatencies.append(request.completion - request.arrival)
         if self.controller:
             self.controller.reportData(False, request.completion - request.arrival,
-              self.getTotalQueueLength(), self.serviceTimeY, self.serviceTimeN, request.withOptional)
+              self.getTotalQueueLength(), self.serviceTimeY, self.serviceTimeN,
+            request.withOptional, request.completion - request.queueDeparture)
+            #print "got here 1"
+            request.packetRequest = self.controller.decidePacketRequest()
+            #print "decided for request nbr " + str(request) + ": " + str(request.packetRequest)
 
         # TODO: This should be determined by service controller!
-        request.packetRequest = 1
+        #print "got here 3"
+        #request.packetRequest = 1
+        #print "got here 4"
         request.onCompleted()
+        #print "got here 5"
 
         # Append the next request waiting to run (if there is one)
         if len(self.waitingRequests) > 0:
@@ -262,9 +270,13 @@ class Server:
         self.sim.output(str(self) + '-arl', ','.join(["{0:.5f}".format(value) \
             for value in valuesToOutput]))
 
+        #print "got here 6"
+
         # Continue with scheduler
         if len(self.activeRequests) > 0:
             self.sim.add(0, self.onScheduleRequests)
+
+        #print "got here at time " + str(self.sim.now) + " for " + str(request)
 
 
     ## Returns the total queue length (active + waiting requests)
