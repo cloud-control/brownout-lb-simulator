@@ -17,7 +17,9 @@ addServer(y = speedfactor * 0.07    , n = speedfactor * 0.001    )"""
 addServer(y = speedfactor * 0.07    , n = speedfactor * 0.001    )
 addServer(y = speedfactor * 0.07    , n = speedfactor * 0.001    )"""
 
-# changeServiceTime(at = 50.0, serverId = 1, y = speedfactor*2*0.07, n = speedfactor*2*0.001)
+changeServiceTime(at = 150.0, serverId = 0, y = speedfactor*2*0.07, n = speedfactor*2*0.001)
+changeServiceTime(at = 150.0, serverId = 1, y = speedfactor*2*0.07, n = speedfactor*2*0.001)
+changeServiceTime(at = 150.0, serverId = 2, y = speedfactor*2*0.07, n = speedfactor*2*0.001)
 
 #addServer(y = speedfactor * 0.07 * 2.0, n = speedfactor * 0.001 * 2.0)
 #addServer(y = speedfactor * 0.07 * 4.0, n = speedfactor * 0.001 * 4.0)

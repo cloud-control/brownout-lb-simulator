@@ -1,5 +1,5 @@
 %% Clear everything and set exp dir
-close all;
+%close all;
 clear;
 %clc;
 
@@ -47,6 +47,8 @@ for i = 1:num_replicas
     ctrls(:,i) = ctrl;
     actuatedCtrl = content(:,6);
     actuatedCtrls(:,i) = actuatedCtrl;
+    estimatedProcessGain = content(:,7);
+    estimatedProcessGains(:,i) = estimatedProcessGain;
 end
 
 
@@ -75,15 +77,19 @@ plot(lbtimes, waitingTimes, 'b')
 
 figure()
 
-subplot(2,1,1)
+subplot(3,1,1)
 plot(servertimes, ctrls(:,1), 'r');
 hold on;
 plot(servertimes, actuatedCtrls(:,1), 'b');
 
-subplot(2,1,2)
+subplot(3,1,2)
 plot(servertimes, filteredServiceTimes(:,1), 'b')
 hold on;
-plot(servertimes, 0.2*ones(size(servertimes)), 'k')
+plot(servertimes, 0.4*ones(size(servertimes)), 'k')
+%axis([0 200 0 0.3])
+
+subplot(3,1,3)
+plot(servertimes, estimatedProcessGains(:,1))
 
 
 
