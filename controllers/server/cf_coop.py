@@ -32,12 +32,13 @@ class MMReplicaController:
 
         self.serviceTime = 0.0
         self.filteredServiceTime = 0.0
-        self.serviceTimeSetpoint = 0.40
+        self.serviceTimeSetpoint = 0.70
         self.serviceTimeError = 0.0
         self.ctrlActuated = 0
 
         self.ctrl = 0.0
 
+        self.ki = 0.0
         self.K = 4.8532
         self.Ti = 0.7213
         self.beta = 1.0
@@ -57,16 +58,19 @@ class MMReplicaController:
     ## Runs the periodical control loop
     def runControlLoop(self):
 
-        # Filter service times
-        alpha_s = 0.5
-        if self.latestServiceTimes:
-            self.filteredServiceTime = (1 - alpha_s) * self.filteredServiceTime + alpha_s * avg(self.latestServiceTimes)
-
         # Estimate process gain (relation between nbr of packets being served and the service time)
         alpha_p = 0.5
         if self.latestServiceTimes:
             self.estimatedProcessGain = (1 - alpha_p) * self.estimatedProcessGain + \
-                alpha_p * avg(self.latestServiceTimes) / (self.ctrlActuated + 1)
+                alpha_p * np.percentile(self.latestServiceTimes, 95) / (self.ctrlActuated + 1)
+
+
+        """# Filter service times
+        alpha_s = 0.5
+        if self.latestServiceTimes:
+            self.filteredServiceTime = (1 - alpha_s) * self.filteredServiceTime + \
+                alpha_s * np.percentile(self.latestServiceTimes, 95)
+
 
         # Adaptive service time PI controller (keeps filter pole at a and places integrator pole at location b)
         a = -math.log(1 - alpha_s) / self.controlPeriod
@@ -88,13 +92,33 @@ class MMReplicaController:
         self.ctrl = max(prelCtrl, 0.0)
 
         # Update controller integral state
-        self.updateControllerState(self.ctrl, prelCtrl)
+        self.updatePIControllerState(self.ctrl, prelCtrl)"""
+
+        # Adaptive I controller on unfiltered 95th percentile of service times
+
+        b = 0.8 # Placement of integrator pole
+        a = 1.0 - b # Placement of process pole
+
+        self.ki = a*b/self.estimatedProcessGain
+
+        if self.latestServiceTimes:
+            self.serviceTimeError = self.serviceTimeSetpoint - np.percentile(self.latestServiceTimes, 95)
+
+        prelCtrl = self.integralPart
+
+        # Saturation: nbr of packets running > 0
+        self.ctrl = max(prelCtrl, 0.0)
+
+        # Update controller integral state
+        self.updateIControllerState(self.ctrl, prelCtrl)
+
+
 
         if not self.latestServiceTimes:
             self.latestServiceTimes.append(0.0)
         valuesToOutput = [ \
             self.sim.now, \
-            avg(self.latestServiceTimes),
+            np.percentile(self.latestServiceTimes, 95),
             self.filteredServiceTime,
             self.serviceTimeSetpoint,
             self.ctrl,
@@ -111,9 +135,14 @@ class MMReplicaController:
         # Re-run later
         self.sim.add(self.controlPeriod, self.runControlLoop)
 
-    def updateControllerState(self, ctrl, prelCtrl):
+    def updatePIControllerState(self, ctrl, prelCtrl):
         self.integralPart = self.integralPart + self.serviceTimeError * \
                             (self.K * self.controlPeriod / self.Ti) + \
+                            (self.controlPeriod / self.Tr) * (ctrl - prelCtrl)
+
+    def updateIControllerState(self, ctrl, prelCtrl):
+        self.integralPart = self.integralPart + self.serviceTimeError * \
+                            self.ki + \
                             (self.controlPeriod / self.Tr) * (ctrl - prelCtrl)
 
     def reportData(self, newArrival, responseTime, queueLength, timeY, timeN, optional, serviceTime):
