@@ -1,4 +1,4 @@
-speedfactor = 0.70#0.35 previously
+speedfactor = 0.70#0.70 previously
 #speedfactor1 = 0.70
 addServer(y = speedfactor * 0.07    , n = speedfactor * 0.001    )
 addServer(y = speedfactor * 0.07    , n = speedfactor * 0.001    )
@@ -17,9 +17,9 @@ addServer(y = speedfactor * 0.07    , n = speedfactor * 0.001    )"""
 addServer(y = speedfactor * 0.07    , n = speedfactor * 0.001    )
 addServer(y = speedfactor * 0.07    , n = speedfactor * 0.001    )"""
 
-changeServiceTime(at = 150.0, serverId = 0, y = speedfactor*2*0.07, n = speedfactor*2*0.001)
-changeServiceTime(at = 150.0, serverId = 1, y = speedfactor*2*0.07, n = speedfactor*2*0.001)
-changeServiceTime(at = 150.0, serverId = 2, y = speedfactor*2*0.07, n = speedfactor*2*0.001)
+"""changeServiceTime(at = 0.0, serverId = 0, y = speedfactor*2*0.07, n = speedfactor*2*0.001)
+changeServiceTime(at = 0.0, serverId = 1, y = speedfactor*2*0.07, n = speedfactor*2*0.001)
+changeServiceTime(at = 0.0, serverId = 2, y = speedfactor*2*0.07, n = speedfactor*2*0.001)"""
 
 #addServer(y = speedfactor * 0.07 * 2.0, n = speedfactor * 0.001 * 2.0)
 #addServer(y = speedfactor * 0.07 * 4.0, n = speedfactor * 0.001 * 4.0)
@@ -31,7 +31,7 @@ changeServiceTime(at = 150.0, serverId = 2, y = speedfactor*2*0.07, n = speedfac
 
 #setRate(at =    0, rate = 300.0)
 setRate(at =    0, rate = 200.0)
-#setRate(at =    100, rate = 100.0)
-#setRate(at =    200.0, rate = 300.0)
+setRate(at =    150, rate = 100.0)
+setRate(at =    250.0, rate = 300.0)
 
-endOfSimulation(at = 300)
+endOfSimulation(at = 350)

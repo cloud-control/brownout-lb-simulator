@@ -1,5 +1,5 @@
 %% Clear everything and set exp dir
-%close all;
+close all;
 clear;
 %clc;
 
@@ -17,7 +17,8 @@ waitingTimes95th = content(:,8);
 waitingQueue = content(:,9);
 lambdaHat = content(:,13);
 queueSetpoints = content(:,14);
-
+optResponseTimes = content(:,15);
+waitingTimeSetpoints = content(:,16);
 
 %% Get simulation data from servers
 server_files = dir([experiment_dir, '/sim-server*-ctl.csv']);
@@ -37,8 +38,8 @@ for i = 1:num_replicas
     
     %getting data
     servertimes= content(:, 1);
-    avgServiceTime = content(:,2);
-    avgServiceTimes(:,i) = avgServiceTime;
+    serviceTime = content(:,2);
+    serviceTimes(:,i) = serviceTime;
     filteredServiceTime = content(:,3);
     filteredServiceTimes(:,i) = filteredServiceTime;
     serviceTimeSetpoint = content(:,4);
@@ -58,8 +59,8 @@ figure()
 subplot(3,1,1)
 
 hold on
-
-plot(lbtimes, lambdaHat)
+plot(lbtimes,ones(size(lbtimes)), 'k')
+plot(lbtimes, optResponseTimes)
 hold off;
 
 subplot(3,1,2)
@@ -68,10 +69,11 @@ hold on;
 plot(lbtimes, waitingQueue, 'b')
 
 subplot(3,1,3)
-plot(lbtimes,ones(size(lbtimes)), 'k')
+%plot(lbtimes,ones(size(lbtimes)), 'k')
 hold on
 plot(lbtimes, waitingTimes, 'b')
-%plot(times, waitingTimes95th, 'r')
+%plot(lbtimes, waitingTimes95th, 'r')
+plot(lbtimes, waitingTimeSetpoints, 'k')
 %axis([0 20 0 120])
 
 
@@ -83,9 +85,9 @@ hold on;
 plot(servertimes, actuatedCtrls(:,1), 'b');
 
 subplot(3,1,2)
-plot(servertimes, filteredServiceTimes(:,1), 'b')
+plot(servertimes, serviceTimes(:,1), 'b')
 hold on;
-plot(servertimes, 0.4*ones(size(servertimes)), 'k')
+plot(servertimes, 0.7*ones(size(servertimes)), 'k')
 %axis([0 200 0 0.3])
 
 subplot(3,1,3)

@@ -40,7 +40,7 @@ Gc2 = minreal(K2 + ki/s);
 Gcl1 = minreal(zpk(Gc1*G/(1+Gc1*G)))
 Gcl2 = minreal(zpk(Gc2*G/(1+Gc2*G)))
 
-pole(Gcl)
+%pole(Gcl)
 
 figure()
 step(Gcl1, 'r')
