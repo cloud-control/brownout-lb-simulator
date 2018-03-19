@@ -248,7 +248,7 @@ class MMReplicaController:
         return self.random.random() <= dimmer, self.expdimmers
 
 
-    def reportData(self, newArrival, responseTime, queueLength, timeY, timeN, optional):
+    def reportData(self, newArrival, responseTime, queueLength, timeY, timeN, optional, serviceTime):
         if newArrival:
             self.nbrLatestArrivals = self.nbrLatestArrivals + 1
         else:
@@ -312,6 +312,9 @@ class MMReplicaController:
 
         dimmerTuple = self.sim.now, dimmer
         self.pastDimmers.append(dimmerTuple)
+
+    def decidePacketRequest(self):
+        pass
 
     def __str__(self):
         return self.name

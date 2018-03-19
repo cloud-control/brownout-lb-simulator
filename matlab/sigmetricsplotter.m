@@ -10,15 +10,15 @@ lb_file_name = [experiment_dir, '/', 'sim-lb-co-op.csv'];
 content =  csvread(lb_file_name);
 
 lbtimes = content(:,1);
-responseTimes = content(:,2:4);
-serviceTimes = content(:,10:12);
-waitingTimes = content(:,7);
-waitingTimes95th = content(:,8);
-waitingQueue = content(:,9);
-lambdaHat = content(:,13);
-queueSetpoints = content(:,14);
-optResponseTimes = content(:,15);
-waitingTimeSetpoints = content(:,16);
+responseTimes = content(:,2:6);
+serviceTimes = content(:,12:16);
+waitingTimes = content(:,9);
+waitingTimes95th = content(:,10);
+waitingQueue = content(:,11);
+lambdaHat = content(:,17);
+queueSetpoints = content(:,18);
+optResponseTimes = content(:,19);
+waitingTimeSetpoints = content(:,20);
 
 %% Get simulation data from servers
 server_files = dir([experiment_dir, '/sim-server*-ctl.csv']);
@@ -92,6 +92,13 @@ plot(servertimes, 0.7*ones(size(servertimes)), 'k')
 
 subplot(3,1,3)
 plot(servertimes, estimatedProcessGains(:,1))
+
+%% plot statistically significant transients
+
+plot(avgtimes(1:end), respavg(1:end), 'r')
+ciplot(respconf(:,1), respconf(:,2), [avgtimes], 'r', 0.5);
+hold on;
+
 
 
 

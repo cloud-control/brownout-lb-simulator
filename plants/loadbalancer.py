@@ -23,7 +23,7 @@ class LoadBalancer:
     def __init__(self, sim, controlPeriod = 1, initialTheta = 0.5, seed = 1):
         ## control period (control parameter)
         #self.controlPeriod = controlPeriod # second
-        self.controlPeriod = 0.1
+        self.controlPeriod = 0.5
         ## initial value of measured theta (control initialization parameter)
         self.initialTheta = initialTheta
         ## what algorithm to use
@@ -74,6 +74,7 @@ class LoadBalancer:
         self.ctlAlpha = []
         ## time when last event-driven control decision was taken
         self.lastDecision = 0
+        self.latestOptionalLatencies = []
         ## Backends that were removed. They are still tracked to ensure
         # their request queue is properly drained. The keys are the removed
         # backends, whereas the value is an object containing removal-relevant information,
@@ -128,6 +129,7 @@ class LoadBalancer:
         self.lastLatencies = [ [] for _ in range(n) ] # to be updated at onComplete
         self.lastLastLatencies = [ [] for _ in range(n) ]
         self.lastQueueLengths = [ 0 ] * n
+        self.latestOptionalLatencies = []
         assert len(self.queueLengths) == n
         self.queueOffsets = [ 0 ] * n
         self.numRequestsPerReplica = [ 0 ] * n # to be updated in request
@@ -312,9 +314,11 @@ class LoadBalancer:
         else:
             raise Exception("Unknown load-balancing algorithm " + self.algorithm)
 
+        request.queueDeparture = self.sim.now
         request.chosenBackend = self.backends[chosenBackendIndex]
         newRequest = Request()
         newRequest.originalRequest = request
+        newRequest.queueDeparture = request.queueDeparture
         newRequest.onCompleted = lambda: self.onCompleted(newRequest)
         #self.sim.log(self, "Directed request to {0}", chosenBackendIndex)
         self.queueLengths[chosenBackendIndex] += 1
@@ -349,6 +353,8 @@ class LoadBalancer:
             self.lastThetas[chosenBackendIndex] = theta
             self.lastLatencies[chosenBackendIndex].\
                 append(request.completion - request.arrival)
+            if request.withOptional:
+                self.latestOptionalLatencies.append(request.completion-request.arrival)
             self.queueLengths[chosenBackendIndex] -= 1
             ewmaAlpha = 2 / (self.ewmaNumSamples + 1)
             self.ewmaResponseTime[chosenBackendIndex] = \
@@ -521,17 +527,21 @@ class LoadBalancer:
         if self.algorithm == 'theta-diff-plus-SQF':
             self.weights = self.queueOffsets
 
+        if len(self.latestOptionalLatencies) == 0:
+            self.latestOptionalLatencies.append(0.0)
+
         valuesToOutput = [ self.sim.now ] + self.weights + self.lastThetas + \
             [ avg(latencies) for latencies in self.lastLatencies ] + \
             [ max(latencies + [0]) for latencies in self.lastLatencies ] + \
             [ self.numRequests, self.numRequestsWithOptional ] + \
-            effectiveWeights
+            effectiveWeights + [np.percentile(self.latestOptionalLatencies, 95)]
         self.sim.output(self, ','.join(["{0:.5f}".format(value) \
             for value in valuesToOutput]))
 
         self.lastQueueLengths = self.queueLengths[:]
         self.lastLastThetas = self.lastThetas[:]
         self.lastLastLatencies = self.lastLatencies
+        self.latestOptionalLatencies = []
         self.lastLatencies = [ [] for _ in self.backends ]
         self.numLastRequestsPerReplica = self.numRequestsPerReplica[:]
 

@@ -32,7 +32,7 @@ class MMReplicaController:
 
         self.serviceTime = 0.0
         self.filteredServiceTime = 0.0
-        self.serviceTimeSetpoint = 0.70
+        self.serviceTimeSetpoint = 0.20
         self.serviceTimeError = 0.0
         self.ctrlActuated = 0
 
