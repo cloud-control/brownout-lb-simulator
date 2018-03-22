@@ -302,7 +302,8 @@ class CoOperativeLoadBalancer:
         self.updateTotalControllerState(self.waitingTimeSetpoint, prelTot)
 
         # Estimate current arrival rate
-        self.estimatedArrivalRate = 0.5 * self.estimatedArrivalRate + 0.5 * self.nbrLatestArrivals / self.controlPeriod
+        alpha_a = 0.9
+        self.estimatedArrivalRate = (1-alpha_a) * self.estimatedArrivalRate + alpha_a * self.nbrLatestArrivals / self.controlPeriod
 
         # Feedforward controller on waiting times, determines queue length setpoint
         self.queueLengthSetpoint = self.waitingTimeSetpoint*self.estimatedArrivalRate + 1

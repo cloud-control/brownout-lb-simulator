@@ -94,7 +94,7 @@ subplot(3,1,3)
 plot(servertimes, estimatedProcessGains(:,1))
 
 %% plot statistically significant transients
-
+close all
 plot(avgtimes(1:end), respavg(1:end), 'r')
 ciplot(respconf(:,1), respconf(:,2), [avgtimes], 'r', 0.5);
 hold on;
