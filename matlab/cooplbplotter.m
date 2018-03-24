@@ -11,14 +11,15 @@ content =  csvread(lb_file_name);
 
 lbtimes = content(:,1);
 responseTimes = content(:,2:6);
-serviceTimes = content(:,12:16);
+lbserviceTimes = content(:,12);
 waitingTimes = content(:,9);
 waitingTimes95th = content(:,10);
 waitingQueue = content(:,11);
-lambdaHat = content(:,17);
-queueSetpoints = content(:,18);
-optResponseTimes = content(:,19);
-waitingTimeSetpoints = content(:,20);
+lambdaHat = content(:,13);
+queueSetpoints = content(:,14);
+optResponseTimes = content(:,15);
+waitingTimeSetpoints = content(:,16);
+serviceTimeSetpoints = content(:,17);
 
 %% Get simulation data from servers
 server_files = dir([experiment_dir, '/sim-server*-ctl.csv']);
@@ -56,24 +57,32 @@ end
 %% plot normal transients
 figure()
 
-subplot(3,1,1)
+subplot(4,1,1)
 
 hold on
 plot(lbtimes,ones(size(lbtimes)), 'k')
 plot(lbtimes, optResponseTimes)
 hold off;
 
-subplot(3,1,2)
+subplot(4,1,2)
 plot(lbtimes, queueSetpoints, 'r')
 hold on;
 plot(lbtimes, waitingQueue, 'b')
 
-subplot(3,1,3)
+subplot(4,1,3)
 %plot(lbtimes,ones(size(lbtimes)), 'k')
 hold on
 plot(lbtimes, waitingTimes, 'b')
 %plot(lbtimes, waitingTimes95th, 'r')
 plot(lbtimes, waitingTimeSetpoints, 'k')
+%axis([0 20 0 120])
+
+subplot(4,1,4)
+%plot(lbtimes,ones(size(lbtimes)), 'k')
+hold on
+plot(lbtimes, lbserviceTimes, 'b')
+%plot(lbtimes, waitingTimes95th, 'r')
+plot(lbtimes, serviceTimeSetpoints, 'k')
 %axis([0 20 0 120])
 
 

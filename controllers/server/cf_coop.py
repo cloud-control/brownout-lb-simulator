@@ -32,7 +32,7 @@ class MMReplicaController:
 
         self.serviceTime = 0.0
         self.filteredServiceTime = 0.0
-        self.serviceTimeSetpoint = 0.10
+        self.avgServiceTimeSetpoint = 0.0
         self.serviceTimeError = 0.0
         self.ctrlActuated = 0
 
@@ -62,7 +62,7 @@ class MMReplicaController:
         alpha_p = 0.5
         if self.latestServiceTimes:
             self.estimatedProcessGain = (1 - alpha_p) * self.estimatedProcessGain + \
-                alpha_p * np.percentile(self.latestServiceTimes, 95) / (self.ctrlActuated + 1)
+                alpha_p * avg(self.latestServiceTimes) / (self.ctrlActuated + 1)
 
 
         """# Filter service times
@@ -102,7 +102,7 @@ class MMReplicaController:
         self.ki = a*b/self.estimatedProcessGain
 
         if self.latestServiceTimes:
-            self.serviceTimeError = self.serviceTimeSetpoint - np.percentile(self.latestServiceTimes, 95)
+            self.serviceTimeError = self.avgServiceTimeSetpoint - avg(self.latestServiceTimes)
 
         prelCtrl = self.integralPart
 
@@ -120,7 +120,7 @@ class MMReplicaController:
             self.sim.now, \
             np.percentile(self.latestServiceTimes, 95),
             self.filteredServiceTime,
-            self.serviceTimeSetpoint,
+            self.avgServiceTimeSetpoint,
             self.ctrl,
             self.ctrlActuated,
             self.estimatedProcessGain,
@@ -145,7 +145,9 @@ class MMReplicaController:
                             self.ki + \
                             (self.controlPeriod / self.Tr) * (ctrl - prelCtrl)
 
-    def reportData(self, newArrival, responseTime, queueLength, timeY, timeN, optional, serviceTime):
+    def reportData(self, newArrival, responseTime, queueLength, timeY, timeN, optional, serviceTime, avgServiceTimeSetpoint):
+        if newArrival:
+            self.avgServiceTimeSetpoint = avgServiceTimeSetpoint
         if optional and not newArrival:
             self.latestServiceTimes.append(serviceTime)
 

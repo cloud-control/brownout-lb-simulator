@@ -125,7 +125,7 @@ class Server:
             self.sim.add(0, self.onScheduleRequests)
         #print "Backend: " + str(request.originalRequest.chosenBackend)
         request.arrival = self.sim.now
-        self.controller.reportData(True, 0, 0, 0, 0, 0, 0)
+        self.controller.reportData(True, 0, 0, 0, 0, 0, 0, request.avgServiceTimeSetpoint)
 
         # Add request to list of active requests if possible
         if len(self.activeRequests) < self.maxActiveJobs:
@@ -236,7 +236,7 @@ class Server:
         if self.controller:
             self.controller.reportData(False, request.completion - request.arrival,
               self.getTotalQueueLength(), self.serviceTimeY, self.serviceTimeN,
-            request.withOptional, request.completion - request.queueDeparture)
+            request.withOptional, request.completion - request.queueDeparture, request.avgServiceTimeSetpoint)
             #print "got here 1"
             request.packetRequest = self.controller.decidePacketRequest()
             #print "decided for request nbr " + str(request) + ": " + str(request.packetRequest)

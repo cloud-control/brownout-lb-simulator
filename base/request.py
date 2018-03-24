@@ -10,7 +10,7 @@ class Request(object):
 	## List of allowed attributes (improves performance and reduces errors)
 	__slots__ = ('requestId', 'arrival', 'queueDeparture', 'completion', 'onCompleted', \
 		'originalRequest', 'theta', 'withOptional', 'chosenBackend',
-		'remainingTime', 'createdAt', 'packetRequest')
+		'remainingTime', 'createdAt', 'packetRequest', 'avgServiceTimeSetpoint')
 	
 	## Constructor
 	def __init__(self):

@@ -248,7 +248,7 @@ class MMReplicaController:
         return self.random.random() <= dimmer, self.expdimmers
 
 
-    def reportData(self, newArrival, responseTime, queueLength, timeY, timeN, optional, serviceTime):
+    def reportData(self, newArrival, responseTime, queueLength, timeY, timeN, optional, serviceTime, avgServiceTimeSetpoint):
         if newArrival:
             self.nbrLatestArrivals = self.nbrLatestArrivals + 1
         else:
