@@ -16,11 +16,11 @@ class CoOperativeLoadBalancer:
     def __init__(self, sim, controlPeriod=1, seed=1):
         ## control period (control parameter)
         #self.controlPeriod = controlPeriod
-        self.controlPeriod = 0.5
+        self.controlPeriod = 0.25
 
         self.K = 1.5 # 1.5
         self.Ti = 2.5 # 2.5
-        self.beta = 0.6 # 0.6
+        self.beta = 1.0 # 0.6
         self.Tr = 10.0
 
         self.totalKi = 0.0333
@@ -296,8 +296,11 @@ class CoOperativeLoadBalancer:
         # Saturation: No setpoints below zero
         correctedSetpoint = max(correctedSetpointPrel, 0.0)
 
-        self.avgWaitingTimeSetpoint = self.ratio * correctedSetpoint
-        self.avgServiceTimeSetpoint = (1-self.ratio) * correctedSetpoint
+        #self.avgWaitingTimeSetpoint = self.ratio * correctedSetpoint
+        #self.avgServiceTimeSetpoint = (1-self.ratio) * correctedSetpoint
+
+        self.avgWaitingTimeSetpoint = 1.0
+        self.avgServiceTimeSetpoint = 0.3
 
         # Update controller integral state
         self.updateTotalControllerState(correctedSetpoint, correctedSetpointPrel)
@@ -308,6 +311,16 @@ class CoOperativeLoadBalancer:
 
         # Feedforward controller on waiting times, determines queue length setpoint
         self.queueLengthSetpoint = self.avgWaitingTimeSetpoint*self.estimatedArrivalRate + 1
+
+        #print "time: " + str(self.sim.now) + " waiting time controller I-part: " + str(self.integralPart)
+
+        modder = int(self.sim.now) % 50
+        modder2 = int(self.sim.now * 10) % 10
+
+        if modder == 0 and modder2 == 0:
+            print self.sim.now
+
+        #print self.integralPart
 
         queueLength = len(self.waitingQueue)
         self.queueError = self.queueLengthSetpoint - queueLength

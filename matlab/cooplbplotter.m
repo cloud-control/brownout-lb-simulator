@@ -68,6 +68,7 @@ subplot(4,1,2)
 plot(lbtimes, queueSetpoints, 'r')
 hold on;
 plot(lbtimes, waitingQueue, 'b')
+%axis([99 149 0 120])
 
 subplot(4,1,3)
 %plot(lbtimes,ones(size(lbtimes)), 'k')
@@ -104,9 +105,23 @@ plot(servertimes, estimatedProcessGains(:,1))
 
 %% plot statistically significant transients
 close all
-plot(avgtimes(1:end), respavg(1:end), 'r')
-ciplot(respconf(:,1), respconf(:,2), [avgtimes], 'r', 0.5);
+subplot(2,1,1)
+plot(avgtimes, queueavg, 'r')
+ciplot(queueconf(:,1), queueconf(:,2), avgtimes, 'r', 0.5);
 hold on;
+plot(avgtimes, queuesetpointavg, 'r')
+ciplot(queuesetpointconf(:,1), queuesetpointconf(:,2), avgtimes, 'b', 0.5);
+
+subplot(2,1,2)
+plot(avgtimes, waitingtimeavg, 'r')
+ciplot(waitingtimeconf(:,1), waitingtimeconf(:,2), avgtimes, 'r', 0.5);
+
+% 
+% csvVector1 = [avgtimes', queueconf(:,1)];
+% csvVector2 = [avgtimes(end:-1:1)', queueconf(end:-1:1,2)];
+% csvVector = [csvVector1; csvVector2];
+% csvwrite('sim-queues-conf-beta-1.csv',csvVector)
+% csvwrite('queue-theory-beta-1.csv', [simulinkqueue.time, simulinkqueue.data])
 
 
 

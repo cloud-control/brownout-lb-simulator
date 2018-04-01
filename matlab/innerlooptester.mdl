@@ -7,7 +7,7 @@ Model {
     NumRootInports	    0
     NumRootOutports	    0
     ParameterArgumentNames  ""
-    ComputedModelVersion    "1.106"
+    ComputedModelVersion    "1.132"
     NumModelReferences	    0
     NumTestPointedSignals   0
     NumProvidedFunctions    0
@@ -43,7 +43,7 @@ Model {
       $ObjectID		      3
       $ClassName	      "Simulink.WindowInfo"
       IsActive		      [1]
-      Location		      [864.0, 231.0, 811.0, 499.0]
+      Location		      [798.0, 93.0, 1460.0, 1108.0]
       Object {
 	$PropName		"ModelBrowserInfo"
 	$ObjectID		4
@@ -52,7 +52,7 @@ Model {
 	DockPosition		"Left"
 	Width			[50]
 	Height			[50]
-	Filter			[8]
+	Filter			[9]
       }
       Object {
 	$PropName		"ExplorerBarInfo"
@@ -67,7 +67,7 @@ Model {
 	IsActive		[1]
 	ViewObjType		"SimulinkTopLevel"
 	LoadSaveID		"0"
-	Extents			[757.0, 299.0]
+	Extents			[1406.0, 908.0]
 	ZoomFactor		[1.0]
 	Offset			[0.0, 0.0]
       }
@@ -79,9 +79,9 @@ Model {
   ModifiedByFormat	  "%<Auto>"
   LastModifiedBy	  "tommi"
   ModifiedDateFormat	  "%<Auto>"
-  LastModifiedDate	  "Tue Mar 13 16:39:27 2018"
-  RTWModifiedTimeStamp	  442859967
-  ModelVersionFormat	  "1.%<AutoIncrement:106>"
+  LastModifiedDate	  "Wed Mar 28 17:15:58 2018"
+  RTWModifiedTimeStamp	  444158157
+  ModelVersionFormat	  "1.%<AutoIncrement:132>"
   ConfigurationManager	  "none"
   SampleTimeColors	  off
   SampleTimeAnnotations	  off
@@ -184,7 +184,7 @@ Model {
 	  StartTime		  "0.0"
 	  StopTime		  "40"
 	  AbsTol		  "auto"
-	  FixedStep		  "auto"
+	  FixedStep		  "0.5"
 	  InitialStep		  "auto"
 	  MaxNumMinSteps	  "-1"
 	  MaxOrder		  5
@@ -200,8 +200,8 @@ Model {
 	  SolverMode		  "Auto"
 	  EnableConcurrentExecution off
 	  ConcurrentTasks	  off
-	  Solver		  "ode45"
-	  SolverName		  "ode45"
+	  Solver		  "VariableStepAuto"
+	  SolverName		  "VariableStepAuto"
 	  SolverJacobianMethodControl "auto"
 	  ShapePreserveControl	  "DisableAll"
 	  ZeroCrossControl	  "UseLocalSettings"
@@ -747,7 +747,7 @@ Model {
       }
       Name		      "Configuration"
       CurrentDlgPage	      "Solver"
-      ConfigPrmDlgPosition     [ 540, 241, 1380, 761 ] 
+      ConfigPrmDlgPosition     [ 560, 257, 1653, 857 ] 
     }
     PropName		    "ConfigurationSets"
   }
@@ -818,6 +818,30 @@ Model {
   }
   BlockParameterDefaults {
     Block {
+      BlockType		      DiscreteIntegrator
+      IntegratorMethod	      "Integration: Forward Euler"
+      gainval		      "1.0"
+      ExternalReset	      "none"
+      InitialConditionSource  "internal"
+      InitialCondition	      "0"
+      InitialConditionSetting "Output"
+      SampleTime	      "1"
+      OutMin		      "[]"
+      OutMax		      "[]"
+      OutDataTypeStr	      "Inherit: Inherit via internal rule"
+      LockScale		      off
+      RndMeth		      "Floor"
+      SaturateOnIntegerOverflow	off
+      LimitOutput	      off
+      UpperSaturationLimit    "inf"
+      LowerSaturationLimit    "-inf"
+      ShowSaturationPort      off
+      ShowStatePort	      off
+      IgnoreLimit	      off
+      StateMustResolveToSignalObject off
+      RTWStateStorageClass    "Auto"
+    }
+    Block {
       BlockType		      Gain
       Gain		      "1"
       Multiplication	      "Element-wise(K.*u)"
@@ -872,6 +896,17 @@ Model {
       SampleTime	      "-1"
     }
     Block {
+      BlockType		      ToWorkspace
+      VariableName	      "simulink_output"
+      MaxDataPoints	      "1000"
+      Decimation	      "1"
+      SaveFormat	      "Array"
+      Save2DSignal	      "Inherit from input (this choice will be removed - see release notes)"
+      FixptAsFi		      off
+      NumInputs		      "1"
+      SampleTime	      "0"
+    }
+    Block {
       BlockType		      TransferFcn
       Numerator		      "[1]"
       Denominator	      "[1 2 1]"
@@ -882,7 +917,7 @@ Model {
   }
   System {
     Name		    "innerlooptester"
-    Location		    [864, 231, 1675, 730]
+    Location		    [798, 93, 2258, 1201]
     Open		    on
     ModelBrowserVisibility  off
     ModelBrowserWidth	    200
@@ -896,7 +931,20 @@ Model {
     ShowPageBoundaries	    off
     ZoomFactor		    "100"
     ReportName		    "simulink-default.rpt"
-    SIDHighWatermark	    "17"
+    SIDHighWatermark	    "19"
+    Block {
+      BlockType		      DiscreteIntegrator
+      Name		      "Discrete-Time\nIntegrator"
+      SID		      "19"
+      Ports		      [1, 1]
+      Position		      [285, 144, 345, 186]
+      ZOrder		      10
+      gainval		      "0.6"
+      InitialConditionSetting "State (most efficient)"
+      SampleTime	      "0.25"
+      ICPrevOutput	      "DiscIntNeverNeededParam"
+      ICPrevScaledInput	      "DiscIntNeverNeededParam"
+    }
     Block {
       BlockType		      Gain
       Name		      "Gain1"
@@ -927,7 +975,7 @@ Model {
       BlockType		      TransferFcn
       Name		      "I-part"
       SID		      "8"
-      Position		      [275, 147, 330, 183]
+      Position		      [650, 462, 705, 498]
       ZOrder		      -9
       Numerator		      "[0.6]"
       Denominator	      "[1 0]"
@@ -938,7 +986,7 @@ Model {
       SID		      "15"
       Position		      [325, 95, 355, 125]
       ZOrder		      6
-      Gain		      "1.0"
+      Gain		      "1.5"
       ParamDataTypeStr	      "Inherit: Inherit via internal rule"
       OutDataTypeStr	      "Inherit: Inherit via internal rule"
       SaturateOnIntegerOverflow	off
@@ -958,33 +1006,34 @@ Model {
       Position		      [465, 55, 495, 85]
       ZOrder		      7
       Variance		      "0"
+      SampleTime	      "0.5"
     }
     Block {
       BlockType		      Scope
       Name		      "Scope"
       SID		      "3"
       Ports		      [1]
-      Position		      [615, 149, 645, 181]
+      Position		      [690, 149, 720, 181]
       ZOrder		      -16
       ScopeSpecificationString "Simulink.scopes.TimeScopeBlockCfg('CurrentConfiguration', extmgr.ConfigurationSet(extm"
       "gr.Configuration('Core','General UI',true),extmgr.Configuration('Core','Source UI',true),extmgr.Configuration('S"
-      "ources','WiredSimulink',true,'DataLoggingSaveFormat','StructureWithTime','DataLoggingLimitDataPoints',true,'Data"
-      "LoggingDecimation','1','DataLoggingDecimateData',true),extmgr.Configuration('Visuals','Time Domain',true,'Serial"
-      "izedDisplays',{struct('MinYLimReal','-0.13912','MaxYLimReal','1.25207','YLabelReal','','MinYLimMag','0.00000','M"
-      "axYLimMag','1.25207','LegendVisibility','off','XGrid',true,'YGrid',true,'PlotMagPhase',false,'AxesColor',[0 0 0]"
-      ",'AxesTickColor',[0.686274509803922 0.686274509803922 0.686274509803922],'ColorOrder',[1 1 0.0666666666666667;0."
-      "0745098039215686 0.623529411764706 1;1 0.411764705882353 0.16078431372549;0.392156862745098 0.831372549019608 0."
-      "0745098039215686;0.717647058823529 0.274509803921569 1;0.0588235294117647 1 1;1 0.0745098039215686 0.65098039215"
-      "6863],'Title','%<SignalLabel>','LinePropertiesCache',{{}},'UserDefinedChannelNames',{{}},'NumLines',1,'LineNames"
-      "',{{'Sum3'}},'ShowContent',true,'Placement',1)},'DisplayPropertyDefaults',struct('MinYLimReal','-0.13912','MaxYL"
-      "imReal','1.25207','YLabelReal','','MinYLimMag','0.00000','MaxYLimMag','1.25207','LegendVisibility','off','XGrid'"
-      ",true,'YGrid',true,'PlotMagPhase',false,'AxesColor',[0 0 0],'AxesTickColor',[0.686274509803922 0.686274509803922"
-      " 0.686274509803922],'ColorOrder',[1 1 0.0666666666666667;0.0745098039215686 0.623529411764706 1;1 0.411764705882"
-      "353 0.16078431372549;0.392156862745098 0.831372549019608 0.0745098039215686;0.717647058823529 0.274509803921569 "
-      "1;0.0588235294117647 1 1;1 0.0745098039215686 0.650980392156863],'Title','%<SignalLabel>','LinePropertiesCache',"
-      "{{}},'UserDefinedChannelNames',{{}},'NumLines',0,'LineNames',{{[]}},'ShowContent',true,'Placement',1)),extmgr.Co"
-      "nfiguration('Tools','Plot Navigation',true,'OnceAtStop',false,'PreviousAutoscale','XY'),extmgr.Configuration('To"
-      "ols','Measurements',true,'Version','2016a')),'Version','2016a','Location',[1 334 1718 1199])"
+      "ources','WiredSimulink',true,'DataLoggingSaveFormat','StructureWithTime','DataLoggingDecimation','1','DataLoggin"
+      "gDecimateData',true),extmgr.Configuration('Visuals','Time Domain',true,'SerializedDisplays',{struct('MinYLimReal"
+      "','-15.41301','MaxYLimReal','138.71705','YLabelReal','','MinYLimMag','0.00000','MaxYLimMag','138.71705','LegendV"
+      "isibility','Off','XGrid',true,'YGrid',true,'PlotMagPhase',false,'AxesColor',[0 0 0],'AxesTickColor',[0.686274509"
+      "803922 0.686274509803922 0.686274509803922],'ColorOrder',[1 1 0.0666666666666667;0.0745098039215686 0.6235294117"
+      "64706 1;1 0.411764705882353 0.16078431372549;0.392156862745098 0.831372549019608 0.0745098039215686;0.7176470588"
+      "23529 0.274509803921569 1;0.0588235294117647 1 1;1 0.0745098039215686 0.650980392156863],'Title','%<SignalLabel>"
+      "','LinePropertiesCache',{{}},'UserDefinedChannelNames',{{}},'NumLines',1,'LineNames',{{'Sum3'}},'ShowContent',tr"
+      "ue,'Placement',1)},'DisplayPropertyDefaults',struct('MinYLimReal','-15.41301','MaxYLimReal','138.71705','YLabelR"
+      "eal','','MinYLimMag','0.00000','MaxYLimMag','138.71705','LegendVisibility','Off','XGrid',true,'YGrid',true,'Plot"
+      "MagPhase',false,'AxesColor',[0 0 0],'AxesTickColor',[0.686274509803922 0.686274509803922 0.686274509803922],'Col"
+      "orOrder',[1 1 0.0666666666666667;0.0745098039215686 0.623529411764706 1;1 0.411764705882353 0.16078431372549;0.3"
+      "92156862745098 0.831372549019608 0.0745098039215686;0.717647058823529 0.274509803921569 1;0.0588235294117647 1 1"
+      ";1 0.0745098039215686 0.650980392156863],'Title','%<SignalLabel>','LinePropertiesCache',{{}},'UserDefinedChannel"
+      "Names',{{}},'NumLines',0,'LineNames',{{[]}},'ShowContent',true,'Placement',1)),extmgr.Configuration('Tools','Plo"
+      "t Navigation',true,'OnceAtStop',false,'PreviousAutoscale','XY'),extmgr.Configuration('Tools','Measurements',true"
+      ",'Version','2016a')),'Version','2016a','Location',[1 238 1718 1103])"
     }
     Block {
       BlockType		      Step
@@ -993,7 +1042,8 @@ Model {
       Position		      [90, 150, 120, 180]
       ZOrder		      -22
       Time		      "0"
-      SampleTime	      "0"
+      After		      "100"
+      SampleTime	      "0.5"
     }
     Block {
       BlockType		      Step
@@ -1001,9 +1051,9 @@ Model {
       SID		      "11"
       Position		      [345, 25, 375, 55]
       ZOrder		      2
-      Time		      "20"
-      After		      "-0.5"
-      SampleTime	      "0"
+      Time		      "0"
+      After		      "20"
+      SampleTime	      "0.5"
     }
     Block {
       BlockType		      Sum
@@ -1062,6 +1112,20 @@ Model {
       SaturateOnIntegerOverflow	off
     }
     Block {
+      BlockType		      ToWorkspace
+      Name		      "To Workspace"
+      SID		      "18"
+      Ports		      [1]
+      Position		      [650, 215, 730, 255]
+      ZOrder		      9
+      VariableName	      "simulinkqueue"
+      MaxDataPoints	      "inf"
+      SaveFormat	      "Timeseries"
+      Save2DSignal	      "3-D array (concatenate along third dimension)"
+      FixptAsFi		      on
+      SampleTime	      "0.5"
+    }
+    Block {
       BlockType		      Gain
       Name		      "beta"
       SID		      "12"
@@ -1088,13 +1152,6 @@ Model {
 	DstBlock		"Sum2"
 	DstPort			1
       }
-    }
-    Line {
-      ZOrder		      8
-      SrcBlock		      "Sum"
-      SrcPort		      1
-      DstBlock		      "I-part"
-      DstPort		      1
     }
     Line {
       ZOrder		      10
@@ -1127,14 +1184,6 @@ Model {
 	DstBlock		"beta"
 	DstPort			1
       }
-    }
-    Line {
-      ZOrder		      18
-      SrcBlock		      "I-part"
-      SrcPort		      1
-      Points		      [35, 0; 0, 30]
-      DstBlock		      "Sum1"
-      DstPort		      3
     }
     Line {
       ZOrder		      27
@@ -1173,8 +1222,18 @@ Model {
       }
       Branch {
 	ZOrder			34
-	DstBlock		"Scope"
-	DstPort			1
+	Points			[29, 0]
+	Branch {
+	  ZOrder		  44
+	  Points		  [0, 70]
+	  DstBlock		  "To Workspace"
+	  DstPort		  1
+	}
+	Branch {
+	  ZOrder		  43
+	  DstBlock		  "Scope"
+	  DstPort		  1
+	}
       }
     }
     Line {
@@ -1192,6 +1251,21 @@ Model {
       Points		      [4, 0; 0, 30]
       DstBlock		      "Sum3"
       DstPort		      2
+    }
+    Line {
+      ZOrder		      48
+      SrcBlock		      "Sum"
+      SrcPort		      1
+      DstBlock		      "Discrete-Time\nIntegrator"
+      DstPort		      1
+    }
+    Line {
+      ZOrder		      50
+      SrcBlock		      "Discrete-Time\nIntegrator"
+      SrcPort		      1
+      Points		      [15, 0; 0, 30]
+      DstBlock		      "Sum1"
+      DstPort		      3
     }
   }
 }
