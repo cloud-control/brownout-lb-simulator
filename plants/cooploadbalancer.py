@@ -192,7 +192,12 @@ class CoOperativeLoadBalancer:
             #print self.packetRequests[index]
 
             self.packetRequests[index] = self.packetRequests[index] - 1
-            self.latestWaitingTimes.append(request.queueDeparture - request.arrival)
+            waitingTime = request.queueDeparture - request.arrival
+            self.latestWaitingTimes.append(waitingTime)
+
+            valuesToOutput = [waitingTime]
+            self.sim.output(str(self) + '-tommi', ','.join(["{0:.5f}".format(value) for value in valuesToOutput]))
+
             newRequest = Request()
             newRequest.originalRequest = request
             newRequest.withOptional = request.withOptional
@@ -295,8 +300,8 @@ class CoOperativeLoadBalancer:
         #self.avgWaitingTimeSetpoint = self.ratio * correctedSetpoint
         #self.avgServiceTimeSetpoint = (1-self.ratio) * correctedSetpoint
 
-        self.avgWaitingTimeSetpoint = 1.0
-        self.avgServiceTimeSetpoint = 0.3
+        self.avgWaitingTimeSetpoint = 0.5
+        self.avgServiceTimeSetpoint = 0.5
 
         # Update total response time controller integral state
         self.updateTotalControllerState(correctedSetpoint, correctedSetpointPrel)
