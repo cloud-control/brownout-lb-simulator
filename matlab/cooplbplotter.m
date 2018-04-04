@@ -3,7 +3,7 @@ close all;
 clear;
 %clc;
 
-experiment_dir = '/local/home/tommi/CloudControl/ICAC2018/brownout-lb-simulator//results/trivial/co-op/';
+experiment_dir = '/local/home/tommi/CloudControl/ICAC2018/sim-repo/brownout-lb-simulator//results/trivial/co-op/';
 
 %% Get data from loadbalancer
 lb_file_name = [experiment_dir, '/', 'sim-lb-co-op.csv'];
@@ -19,7 +19,7 @@ lambdaHat = content(:,13);
 queueSetpoints = content(:,14);
 optResponseTimes = content(:,15);
 waitingTimeSetpoints = content(:,16);
-serviceTimeSetpoints = content(:,17);
+lbserviceTimeSetpoints = content(:,17);
 
 %% Get simulation data from servers
 server_files = dir([experiment_dir, '/sim-server*-ctl.csv']);
@@ -83,7 +83,7 @@ subplot(4,1,4)
 hold on
 plot(lbtimes, lbserviceTimes, 'b')
 %plot(lbtimes, waitingTimes95th, 'r')
-plot(lbtimes, serviceTimeSetpoints, 'k')
+plot(lbtimes, lbserviceTimeSetpoints, 'k')
 %axis([0 20 0 120])
 
 
@@ -104,7 +104,8 @@ subplot(3,1,3)
 plot(servertimes, estimatedProcessGains(:,1))
 
 %% plot statistically significant transients
-close all
+%close all
+figure()
 subplot(2,1,1)
 plot(avgtimes, queueavg, 'r')
 ciplot(queueconf(:,1), queueconf(:,2), avgtimes, 'r', 0.5);
@@ -115,13 +116,27 @@ ciplot(queuesetpointconf(:,1), queuesetpointconf(:,2), avgtimes, 'b', 0.5);
 subplot(2,1,2)
 plot(avgtimes, waitingtimeavg, 'r')
 ciplot(waitingtimeconf(:,1), waitingtimeconf(:,2), avgtimes, 'r', 0.5);
+hold on;
+plot([0 250], [1 1], 'k')
 
-% 
-% csvVector1 = [avgtimes', queueconf(:,1)];
-% csvVector2 = [avgtimes(end:-1:1)', queueconf(end:-1:1,2)];
-% csvVector = [csvVector1; csvVector2];
-% csvwrite('sim-queues-conf-beta-1.csv',csvVector)
-% csvwrite('queue-theory-beta-1.csv', [simulinkqueue.time, simulinkqueue.data])
+
+csvVector1q = [avgtimes, queueconf(:,1)];
+csvVector2q = [avgtimes(end:-1:1), queueconf(end:-1:1,2)];
+csvVectorq = [csvVector1q; csvVector2q];
+csvwrite('waiting-threshold2-queues.csv',csvVectorq)
+
+csvVector1qs = [avgtimes, queuesetpointconf(:,1)];
+csvVector2qs = [avgtimes(end:-1:1), queuesetpointconf(end:-1:1,2)];
+csvVectorqs = [csvVector1qs; csvVector2qs];
+csvwrite('waiting-threshold2-queue-setpoints.csv',csvVectorqs)
+
+csvVector1wt = [avgtimes, waitingtimeconf(:,1)];
+csvVector2wt = [avgtimes(end:-1:1), waitingtimeconf(end:-1:1,2)];
+csvVectorwt = [csvVector1wt; csvVector2wt];
+csvwrite('waiting-threshold2-waiting-times.csv',csvVectorwt)
+
+
+
 
 
 

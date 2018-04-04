@@ -2,7 +2,7 @@
 repeats = 20;
 samplespersec = 4.0;
 trialtime = 250.0;
-totallength = 2500;
+totallength = 5000;
 replicas = 5;
 
 lbtimes2 = lbtimes(1001:end);
