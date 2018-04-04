@@ -1,4 +1,4 @@
-cdfplot(optionalTimesff);
+cdfplot(allWaitingTimes);
 h = gcf;
 axesObjs = get(h, 'Children');  %axes handles
 dataObjs = get(axesObjs, 'Children'); %handles to low-level graphics objects in axes
@@ -6,13 +6,17 @@ objTypes = get(dataObjs, 'Type');  %type of low-level graphics object
 xdata = get(dataObjs, 'XData');  %data from low-level grahics objects
 ydata = get(dataObjs, 'YData');
 
-fbcdfx = xdata(2:100:end-1);
-fbcdfx = [fbcdfx xdata(end-1)];
-fbcdfy = ydata(2:100:end-1);
-fbcdfy = [fbcdfy ydata(end-1)];
+fbcdfx = xdata(2:100:end);
+fbcdfx = [fbcdfx xdata(end)];
+fbcdfy = ydata(2:100:end);
+fbcdfy = [fbcdfy ydata(end)];
 
 close all;
 plot(fbcdfx,fbcdfy);
+
+csvVectorcdf = [fbcdfx', fbcdfy'];
+csvwrite('waiting-threshold-cdf.csv',csvVectorcdf)
+
 
 %% plot all
 

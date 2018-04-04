@@ -13,6 +13,7 @@ optResponseTimes2(optResponseTimes2 == 0.0) = NaN;
 waitingTimes2 = waitingTimes(1001:end);
 waitingQueue2 = waitingQueue(1001:end);
 queueSetpoints2 = queueSetpoints(1001:end);
+waitingThresholds2 = waitingThresholds(1001:end);
 
 avgt = 1:trialtime*samplespersec;
 
@@ -29,8 +30,11 @@ queueconf = zeros(length(avgtimes), 2);
 waitingtimeavg = zeros(length(avgtimes), 1);
 waitingtimeconf = zeros(length(avgtimes), 2);
 
-queuesetpointavg= zeros(length(avgtimes), 1);
+queuesetpointavg = zeros(length(avgtimes), 1);
 queuesetpointconf = zeros(length(avgtimes), 2);
+
+waitingthresholdavg = zeros(length(avgtimes), 1);
+waitingthresholdconf = zeros(length(avgtimes), 2);
 
 
 l = 1; % conf int index variable
@@ -48,6 +52,9 @@ l = 1; % conf int index variable
         
         waitingtimeavg(i) = nanmean(waitingTimes2(indexes));
         waitingtimeconf(i, l:(l+1)) = confint(waitingTimes2(indexes));
+        
+        waitingthresholdavg(i) = nanmean(waitingThresholds2(indexes));
+        waitingthresholdconf(i, l:(l+1)) = confint(waitingThresholds2(indexes));
         
         queuesetpointavg(i) = nanmean(queueSetpoints2(indexes));
         queuesetpointconf(i, l:(l+1)) = confint(queueSetpoints2(indexes));
