@@ -19,7 +19,7 @@ class CoOperativeLoadBalancer:
         self.controlPeriod = 0.25
 
         self.K = 1.5 # 1.5
-        self.Ti = 2.5 # 2.5
+        self.Ti = 5.0 # 2.5
         self.beta = 1.0 # 0.6
         self.Tr = 10.0
 
@@ -34,6 +34,7 @@ class CoOperativeLoadBalancer:
 
         self.queueLengthSetpoint = 0.0
         self.avgWaitingTimeSetpoint = 0.0
+        self.waitingThreshold = 0.0
         self.avgServiceTimeSetpoint = 0.0
         self.responseTimeSetpoint = 1.0
         self.integralPart = 0.0
@@ -182,7 +183,7 @@ class CoOperativeLoadBalancer:
                 request = self.waitingQueue.pop(0)
             else:
                 return
-            request.withOptional, request.theta = self.withOptional()
+            request.withOptional, request.theta = self.withOptional(request)
             request.chosenBackend = self.backends[index]
             request.queueDeparture = self.sim.now
             #print "at forwardRequests"
@@ -191,7 +192,12 @@ class CoOperativeLoadBalancer:
             #print self.packetRequests[index]
 
             self.packetRequests[index] = self.packetRequests[index] - 1
-            self.latestWaitingTimes.append(request.queueDeparture - request.arrival)
+            waitingTime = request.queueDeparture - request.arrival
+            self.latestWaitingTimes.append(waitingTime)
+
+            valuesToOutput = [waitingTime]
+            self.sim.output(str(self) + '-tommi', ','.join(["{0:.5f}".format(value) for value in valuesToOutput]))
+
             newRequest = Request()
             newRequest.originalRequest = request
             newRequest.withOptional = request.withOptional
@@ -210,25 +216,17 @@ class CoOperativeLoadBalancer:
 
 
     ## Inner loop actuator of control signal v deciding execution of optional content
-    def withOptional(self):
+    def withOptional(self, request):
 
-        # TODO: Implement the estimations?
-        #self.saveQueueMeasures(currentQueueLength)
+        waitingTime = self.sim.now - request.arrival
 
-        waitingQueueLength = len(self.waitingQueue)
-
-        # Determine if optional content should be served
-        if waitingQueueLength == 1:
-            # Always serve optional content if queue is at minimum length
+        if self.waitingThreshold == 0.0:
             dimmer = 1.0
-        elif waitingQueueLength > self.queueLengthThreshold:
+        elif waitingTime > self.waitingThreshold:
             dimmer = 0.0
         else:
             dimmer = 1.0
 
-        #self.saveDimmerMeasures(dimmer)
-
-        #return self.random.random() <= dimmer, self.expdimmers
         return self.random.random() <= dimmer, 0.5
 
     ## Handles request completion.
@@ -283,6 +281,8 @@ class CoOperativeLoadBalancer:
     # CVS-formatted statistics through the Simulator's output routine.
     def runControlLoop(self):
 
+        self.printProgress()
+
         # Total response time pure I controller on 95th percentile, uses waiting/service time setpoints as actuator
         if self.latestWaitingTimes:
             self.waitingError = self.avgWaitingTimeSetpoint - avg(self.latestWaitingTimes)
@@ -291,6 +291,7 @@ class CoOperativeLoadBalancer:
         if self.latestOptionalLatencies:
             self.responseTimeError = self.responseTimeSetpoint - np.percentile(self.latestOptionalLatencies, 95)
 
+        # Total response time controller on the selected statistical measure
         correctedSetpointPrel = self.responseTimeSetpoint + self.totalIntegralPart
 
         # Saturation: No setpoints below zero
@@ -299,44 +300,20 @@ class CoOperativeLoadBalancer:
         #self.avgWaitingTimeSetpoint = self.ratio * correctedSetpoint
         #self.avgServiceTimeSetpoint = (1-self.ratio) * correctedSetpoint
 
-        self.avgWaitingTimeSetpoint = 1.0
-        self.avgServiceTimeSetpoint = 0.3
+        self.avgWaitingTimeSetpoint = 0.5
+        self.avgServiceTimeSetpoint = 0.5
 
-        # Update controller integral state
+        # Update total response time controller integral state
         self.updateTotalControllerState(correctedSetpoint, correctedSetpointPrel)
 
-        # Estimate current arrival rate
-        alpha_a = 0.9
-        self.estimatedArrivalRate = (1-alpha_a) * self.estimatedArrivalRate + alpha_a * self.nbrLatestArrivals / self.controlPeriod
+        # Integral controller on avg waiting times using a threshold on request waiting times
+        waitingThresholdPrel = self.avgWaitingTimeSetpoint + self.integralPart
 
-        # Feedforward controller on waiting times, determines queue length setpoint
-        self.queueLengthSetpoint = self.avgWaitingTimeSetpoint*self.estimatedArrivalRate + 1
+        # Saturation: No waiting thresholds below zero
+        self.waitingThreshold = max(waitingThresholdPrel, 0.0)
 
-        #print "time: " + str(self.sim.now) + " waiting time controller I-part: " + str(self.integralPart)
-
-        modder = int(self.sim.now) % 50
-        modder2 = int(self.sim.now * 10) % 10
-
-        if modder == 0 and modder2 == 0:
-            print self.sim.now
-
-        #print self.integralPart
-
-        queueLength = len(self.waitingQueue)
-        self.queueError = self.queueLengthSetpoint - queueLength
-
-        # Queue length PI controller with reference weighting
-        proportionalPart = self.K *(self.beta*self.queueLengthSetpoint - queueLength)
-        prelV = proportionalPart + self.integralPart
-
-        # Saturation: No queue length thresholds below zero
-        self.v = max(prelV, -1.0 * len(self.waitingQueue))
-
-        # Set threshold for actuation of control signal v
-        self.queueLengthThreshold = queueLength + self.v
-
-        # Update controller integral state
-        self.updateControllerState(self.v, prelV)
+        # Update waiting time controller integral state
+        self.updateControllerState(self.waitingThreshold, waitingThresholdPrel)
 
         if len(self.latestWaitingTimes) == 0:
             self.latestWaitingTimes.append(0.0)
@@ -370,7 +347,7 @@ class CoOperativeLoadBalancer:
         self.sim.add(self.controlPeriod, self.runControlLoop)
 
     def updateControllerState(self, v, prelV):
-        self.integralPart = self.integralPart + self.queueError * \
+        self.integralPart = self.integralPart + self.waitingError * \
                             (self.K * self.controlPeriod / self.Ti) + \
                             (self.controlPeriod / self.Tr) * (v - prelV)
 
@@ -378,6 +355,13 @@ class CoOperativeLoadBalancer:
         self.totalIntegralPart = self.totalIntegralPart + self.responseTimeError * \
                             (self.totalKi * self.controlPeriod) + \
                             (self.controlPeriod / self.totalTr) * (v - prelV)
+
+    def printProgress(self):
+        modder = int(self.sim.now) % 50
+        modder2 = int(self.sim.now * 10) % 10
+
+        if modder == 0 and modder2 == 0:
+            print self.sim.now
 
     ## Pretty-print load-balancer's name.
     def __str__(self):
