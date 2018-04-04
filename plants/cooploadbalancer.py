@@ -330,7 +330,7 @@ class CoOperativeLoadBalancer:
             [avg(self.latestWaitingTimes)] + [np.percentile(self.latestWaitingTimes, 95)] + [len(self.waitingQueue)] + \
             [avg(self.latestServiceTimes) ] + [self.estimatedArrivalRate] + \
             [self.queueLengthSetpoint] + [np.percentile(self.latestOptionalLatencies, 95)] + [self.avgWaitingTimeSetpoint] + \
-            [self.avgServiceTimeSetpoint]
+            [self.avgServiceTimeSetpoint] + [self.waitingThreshold]
         self.sim.output(self, ','.join(["{0:.5f}".format(value) \
             for value in valuesToOutput]))
 
