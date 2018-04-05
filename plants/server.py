@@ -44,7 +44,7 @@ class Server:
         ## list of active requests (server model variable)
         self.activeRequests = deque()
         ## max number of active jobs
-        self.maxActiveJobs = 3
+        self.maxActiveJobs = 1000
         ## list of request waiting to access server
         self.waitingRequests = []
         ## how often to report metrics

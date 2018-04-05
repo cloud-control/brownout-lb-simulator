@@ -1,4 +1,4 @@
-%% get avgs and 95% confidence intervals
+%% get avgs and 95% confidence intervals for waiting time experiments
 repeats = 20;
 samplespersec = 4.0;
 trialtime = 250.0;
@@ -58,5 +58,51 @@ l = 1; % conf int index variable
         
         queuesetpointavg(i) = nanmean(queueSetpoints2(indexes));
         queuesetpointconf(i, l:(l+1)) = confint(queueSetpoints2(indexes));
+
+    end
+    
+    
+%% get avgs and 95% confidence intervals for distributed lb experiments
+repeats = 20;
+samplespersec = 2.0;
+trialtime = 250.0;
+totallength = 5000;
+replicas = 5;
+
+lbtimes2 = lbtimes(501:end);
+optResponseTimes2 = optResponseTimes(501:end);
+server1ResponseTimes = optServerResponseTimes(501:end, 1);
+
+optResponseTimes2(optResponseTimes2 == 0.0) = NaN;
+server1ResponseTimes(server1ResponseTimes == 0.0) = NaN;
+
+avgt = 1:trialtime*samplespersec;
+
+avgtimes = 1/samplespersec*(avgt-1);
+
+avgtimes = avgtimes';
+
+respavg = zeros(length(avgtimes), 1);
+respconf = zeros(length(avgtimes), 2);
+
+server1respavg = zeros(length(avgtimes), 1);
+server1respconf = zeros(length(avgtimes), 2);
+
+
+
+
+l = 1; % conf int index variable
+     
+    
+    for i = 1:max(avgt)-1
+
+        indexes = find(mod(1:length(lbtimes2),max(avgt))==i);
+        
+        respavg(i) = nanmean(optResponseTimes2(indexes));
+        respconf(i, l:(l+1)) = confint(optResponseTimes2(indexes));
+        
+        server1respavg(i) = nanmean(server1ResponseTimes(indexes));
+        server1respconf(i, l:(l+1)) = confint(server1ResponseTimes(indexes));
+        
 
     end
