@@ -256,11 +256,8 @@ class MMReplicaController:
             if (optional):
                 self.latestLongLatencies.append(responseTime)
 
-                valuesToOutput = [ \
-                    responseTime, \
-                ]
-                self.sim.output(str(self) + '-tommi', ','.join(["{0:.5f}".format(value) \
-            for value in valuesToOutput]))
+                valuesToOutput = [responseTime]
+                self.sim.output(str(self) + '-tommi', ','.join(["{0:.5f}".format(value) for value in valuesToOutput]))
 
             else:
                 self.latestShortLatencies.append(responseTime)

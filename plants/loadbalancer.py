@@ -352,10 +352,12 @@ class LoadBalancer:
         else:
             chosenBackendIndex = self.backends.index(request.chosenBackend)
             self.lastThetas[chosenBackendIndex] = theta
-            self.lastLatencies[chosenBackendIndex].\
-                append(request.completion - request.arrival)
+            responseTime = request.completion - request.arrival
+            self.lastLatencies[chosenBackendIndex].append(responseTime)
             if request.withOptional:
-                self.latestOptionalLatencies.append(request.completion-request.arrival)
+                self.latestOptionalLatencies.append(responseTime)
+                valuesToOutput = [responseTime]
+                self.sim.output(str(self) + '-tommi', ','.join(["{0:.5f}".format(value) for value in valuesToOutput]))
             self.queueLengths[chosenBackendIndex] -= 1
             ewmaAlpha = 2 / (self.ewmaNumSamples + 1)
             self.ewmaResponseTime[chosenBackendIndex] = \
