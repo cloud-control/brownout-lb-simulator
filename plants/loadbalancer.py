@@ -319,6 +319,7 @@ class LoadBalancer:
         newRequest = Request()
         newRequest.originalRequest = request
         newRequest.queueDeparture = request.queueDeparture
+        newRequest.avgServiceTimeSetpoint = 0.0
         newRequest.onCompleted = lambda: self.onCompleted(newRequest)
         #self.sim.log(self, "Directed request to {0}", chosenBackendIndex)
         self.queueLengths[chosenBackendIndex] += 1
@@ -368,6 +369,9 @@ class LoadBalancer:
     # Takes as input the dimmers and computes new weights. Also outputs
     # CVS-formatted statistics through the Simulator's output routine.
     def runControlLoop(self):
+
+        self.printProgress()
+
         if self.algorithm == 'weighted-RR':
             # Nothing to do here
             pass
@@ -544,6 +548,13 @@ class LoadBalancer:
         self.latestOptionalLatencies = []
         self.lastLatencies = [ [] for _ in self.backends ]
         self.numLastRequestsPerReplica = self.numRequestsPerReplica[:]
+
+    def printProgress(self):
+        modder = int(self.sim.now) % 50
+        modder2 = int(self.sim.now * 10) % 10
+
+        if modder == 0 and modder2 == 0:
+            print self.sim.now
 
     ## Pretty-print load-balancer's name.
     def __str__(self):

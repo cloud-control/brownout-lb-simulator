@@ -3,8 +3,8 @@
 clear;
 %clc;
 
-%experiment_dir = '/local/home/tommi/CloudControl/ICAC2018/brownout-lb-simulator//results/trivial/cc/';
-experiment_dir = '/local/home/tommi/CloudControl/ICAC2018/sim-repo/brownout-lb-simulator/results/trivial/cc';
+experiment_dir = '/local/home/tommi/CloudControl/ICAC2018/brownout-lb-simulator//results/trivial/cc/';
+%experiment_dir = '/local/home/tommi/CloudControl/ICAC2018/sim-repo/brownout-lb-simulator/results/trivial/cc';
 
 %% Get data from loadbalancer
 lb_file_name = [experiment_dir, '/', 'sim-lb.csv'];
@@ -40,6 +40,8 @@ end
 figure()
 
 plot(lbtimes, optResponseTimes)
+hold on;
+plot(servertimes, optServerResponseTimes(:,1))
 
 %% plot statistically significant transients
 
