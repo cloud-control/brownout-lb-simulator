@@ -46,6 +46,8 @@ class MMReplicaController:
         self.integralPart = 0.0
         self.estimatedProcessGain = 0.05
 
+        self.nbrRunningRequests = 0
+
         self.latestServiceTimes = []
 
         ## Random number generator
@@ -104,15 +106,15 @@ class MMReplicaController:
         if self.latestServiceTimes:
             self.serviceTimeError = self.avgServiceTimeSetpoint - avg(self.latestServiceTimes)
 
-        prelCtrl = self.integralPart
+        Imin = 0.0
+        Imax = 5.0 + self.nbrRunningRequests
 
-        # Saturation: nbr of packets running > 0
-        self.ctrl = max(prelCtrl, 0.0)
+        self.integralPart = min(max(self.integralPart, Imin), Imax)
+
+        self.ctrl = self.integralPart
 
         # Update controller integral state
-        self.updateIControllerState(self.ctrl, prelCtrl)
-
-
+        self.updateIControllerState()
 
         if not self.latestServiceTimes:
             self.latestServiceTimes.append(0.0)
@@ -140,14 +142,13 @@ class MMReplicaController:
                             (self.K * self.controlPeriod / self.Ti) + \
                             (self.controlPeriod / self.Tr) * (ctrl - prelCtrl)
 
-    def updateIControllerState(self, ctrl, prelCtrl):
-        self.integralPart = self.integralPart + self.serviceTimeError * \
-                            self.ki + \
-                            (self.controlPeriod / self.Tr) * (ctrl - prelCtrl)
+    def updateIControllerState(self):
+        self.integralPart = self.integralPart + self.serviceTimeError * self.ki
 
     def reportData(self, newArrival, responseTime, queueLength, timeY, timeN, optional, serviceTime, avgServiceTimeSetpoint):
         if newArrival:
             self.avgServiceTimeSetpoint = avgServiceTimeSetpoint
+            self.nbrRunningRequests += 1
         if optional and not newArrival:
             self.latestServiceTimes.append(serviceTime)
 
@@ -157,6 +158,9 @@ class MMReplicaController:
 
         packetReq = int(actuationDiff + 1)
         # packetReq = 1
+
+        self.nbrRunningRequests -= 1
+
         return packetReq
 
     def __str__(self):

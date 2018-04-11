@@ -291,11 +291,13 @@ class CoOperativeLoadBalancer:
         if self.latestOptionalLatencies:
             self.responseTimeError = self.responseTimeSetpoint - np.percentile(self.latestOptionalLatencies, 95)
 
-        # Total response time controller on the selected statistical measure
-        correctedSetpointPrel = self.responseTimeSetpoint + self.totalIntegralPart
+        # Saturate the I controller on total response times (works as an anti-windup)
+        IminResp = -0.5 * self.responseTimeSetpoint
+        ImaxResp = 0.0
+        self.totalIntegralPart = min(max(self.totalIntegralPart, IminResp), ImaxResp)
 
-        # Saturation: No setpoints below zero
-        correctedSetpoint = max(correctedSetpointPrel, 0.0)
+        # Total response time controller on the selected statistical measure
+        correctedSetpoint = self.responseTimeSetpoint + self.totalIntegralPart
 
         #self.avgWaitingTimeSetpoint = self.ratio * correctedSetpoint
         #self.avgServiceTimeSetpoint = (1-self.ratio) * correctedSetpoint
@@ -303,17 +305,19 @@ class CoOperativeLoadBalancer:
         self.avgWaitingTimeSetpoint = 0.5
         self.avgServiceTimeSetpoint = 0.5
 
-        # Update total response time controller integral state
-        self.updateTotalControllerState(correctedSetpoint, correctedSetpointPrel)
+        # Saturate the I controller on waiting times (works as an anti-windup)
+        IminWait = -0.2 * self.avgWaitingTimeSetpoint
+        ImaxWait = 0.2 * self.avgWaitingTimeSetpoint
+        self.integralPart = min(max(self.integralPart, IminWait), ImaxWait)
 
         # Integral controller on avg waiting times using a threshold on request waiting times
-        waitingThresholdPrel = self.avgWaitingTimeSetpoint + self.integralPart
+        self.waitingThreshold = self.avgWaitingTimeSetpoint + self.integralPart
 
-        # Saturation: No waiting thresholds below zero
-        self.waitingThreshold = max(waitingThresholdPrel, 0.0)
+        # Update total response time controller integral state
+        self.updateTotalControllerState()
 
         # Update waiting time controller integral state
-        self.updateControllerState(self.waitingThreshold, waitingThresholdPrel)
+        self.updateControllerState()
 
         if len(self.latestWaitingTimes) == 0:
             self.latestWaitingTimes.append(0.0)
@@ -346,15 +350,11 @@ class CoOperativeLoadBalancer:
         self.iteration += 1
         self.sim.add(self.controlPeriod, self.runControlLoop)
 
-    def updateControllerState(self, v, prelV):
-        self.integralPart = self.integralPart + self.waitingError * \
-                            (self.K * self.controlPeriod / self.Ti) + \
-                            (self.controlPeriod / self.Tr) * (v - prelV)
+    def updateControllerState(self):
+        self.integralPart = self.integralPart + self.waitingError * (self.K * self.controlPeriod / self.Ti)
 
-    def updateTotalControllerState(self, v, prelV):
-        self.totalIntegralPart = self.totalIntegralPart + self.responseTimeError * \
-                            (self.totalKi * self.controlPeriod) + \
-                            (self.controlPeriod / self.totalTr) * (v - prelV)
+    def updateTotalControllerState(self):
+        self.totalIntegralPart = self.totalIntegralPart + self.responseTimeError * (self.totalKi * self.controlPeriod)
 
     def printProgress(self):
         modder = int(self.sim.now) % 50
