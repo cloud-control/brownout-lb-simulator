@@ -1,9 +1,9 @@
 speedfactor = 1.0
-addServer(y = speedfactor * 0.07    , n = speedfactor * 0.001    )
-addServer(y = speedfactor * 0.07    , n = speedfactor * 0.001    )
-addServer(y = speedfactor * 0.07    , n = speedfactor * 0.001    )
-addServer(y = speedfactor * 0.07    , n = speedfactor * 0.001    )
-addServer(y = speedfactor * 0.07    , n = speedfactor * 0.001    )
+addServer(at=0.0,y = speedfactor * 0.07    , n = speedfactor * 0.001    )
+addServer(at=0.0,y = speedfactor * 0.07    , n = speedfactor * 0.001    )
+addServer(at=0.0,y = speedfactor * 0.07    , n = speedfactor * 0.001    )
+addServer(at=0.0,y = speedfactor * 0.07    , n = speedfactor * 0.001    )
+addServer(at=0.0,y = speedfactor * 0.07    , n = speedfactor * 0.001    )
 
 for i in range(0, 21):
     setRate(at =    0+i*250, rate = 100.0)
