@@ -184,7 +184,7 @@ class MMReplicaController:
 	#	#save only the latencies, the rest is not needed
 	#	self.latestLatencies.append(responseTime)
 		
-	def reportData(self, newArrival, responseTime, queueLength, timeY, timeN, optional):
+	def reportData(self, newArrival, responseTime, queueLength, timeY, timeN, optional, x, y):
 		if newArrival:
 			self.nbrLatestArrivals = self.nbrLatestArrivals + 1
 		else:	
@@ -237,6 +237,9 @@ class MMReplicaController:
 			time = dt[0]
 			if (self.sim.now - time > windowTime):
 				self.dimmerTuples.remove(dt)
+
+	def decidePacketRequest(self):
+		pass
 	
 	def __str__(self):
 		return self.name
