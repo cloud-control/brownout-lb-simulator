@@ -26,15 +26,15 @@ def output(outputFile, outputLine):
 
 outputFile = initOutput('scenarios')
 
-nbrIterations = 2
+nbrIterations = 100
 
 for i in range(0, nbrIterations):
     servers = int(randomize(3, 11)) # 3-10 servers
 
     serverSpeeds = []
     for j in range(0, servers):
-        optSpeed = randomize(0.02, 0.07)
-        manSpeed = randomize(0.001, 0.004)
+        optSpeed = randomize(0.05/5, 0.20/5)
+        manSpeed = randomize(0.001/5, 0.004/5)
         serverSpeeds.append((optSpeed, manSpeed))
 
     meanOpt = mean([speed[0] for speed in serverSpeeds])
@@ -44,17 +44,33 @@ for i in range(0, nbrIterations):
 
     arrivals = 1/(desiredOptContent*meanOpt/servers + (1-desiredOptContent)*meanMan/servers)
 
+    #minMc = max(int(1/meanOpt - 200*servers/(arrivals*meanOpt)), 5)
+
+    #maxMc = min(max(int(1 / meanOpt - 60 * servers / (arrivals * meanOpt)), minMc), 50)
+
+    minMc = 5
+    maxMc = 30
+
+    MC = int(randomize(minMc, maxMc))
+
+    quote = (arrivals*(1-meanOpt*MC)/servers)
+
     setRate(at=i*50.0, rate=arrivals)
     changeActiveServers(at=i*50.0, nbrActive=servers, serverSpeeds=serverSpeeds)
+    changeMC(at=i*50+1, newMC=MC)
 
-    print("Scenario " + str(i+1))
+    """print("Scenario " + str(i+1))
     print("Nbr servers " + str(servers))
     print("meanOpt " + str(meanOpt))
     print("meanMan " + str(meanMan))
     print("desiredOptContent " + str(desiredOptContent))
     print("Arrival rate " + str(arrivals))
+    print("minMC is: " + str(minMc))
+    print("maxMc is: " + str(maxMc))
+    print("MC is: " + str(MC))
+    print("quote is: " + str(quote))"""
 
-    valuesToOutput = [i+1, servers, meanOpt, meanMan, desiredOptContent, arrivals]
+    valuesToOutput = [i+1, servers, meanOpt, meanMan, desiredOptContent, arrivals, MC, quote]
 
     output(outputFile, ','.join(["{0:.5f}".format(value) for value in valuesToOutput]))
 

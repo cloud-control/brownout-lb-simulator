@@ -124,7 +124,7 @@ class MMReplicaController:
             self.filteredServiceTime,
             self.avgServiceTimeSetpoint,
             self.ctrl,
-            self.ctrlActuated,
+            self.ctrlActuated+1,
             self.estimatedProcessGain,
         ]
 
