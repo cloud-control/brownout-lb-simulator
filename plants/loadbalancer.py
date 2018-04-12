@@ -366,7 +366,10 @@ class LoadBalancer:
             self.lastLatencies[chosenBackendIndex].append(responseTime)
             if request.withOptional:
                 self.latestOptionalLatencies.append(responseTime)
-                valuesToOutput = [responseTime]
+                valuesToOutput = [1, responseTime]
+                self.sim.output(str(self) + '-allOpt', ','.join(["{0:.5f}".format(value) for value in valuesToOutput]))
+            else:
+                valuesToOutput = [0, responseTime]
                 self.sim.output(str(self) + '-allOpt', ','.join(["{0:.5f}".format(value) for value in valuesToOutput]))
             self.queueLengths[chosenBackendIndex] -= 1
             ewmaAlpha = 2 / (self.ewmaNumSamples + 1)
