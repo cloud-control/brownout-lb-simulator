@@ -44,7 +44,7 @@ class Server:
         ## list of active requests (server model variable)
         self.activeRequests = deque()
         ## max number of active jobs
-        self.maxActiveJobs = 1000
+        self.maxActiveJobs = 15
         ## list of request waiting to access server
         self.waitingRequests = []
         ## how often to report metrics
@@ -86,6 +86,10 @@ class Server:
         if self.__activeTimeStarted is not None:
             ret += self.sim.now - self.__activeTimeStarted
         return ret
+
+    def changeMC(self, newMC):
+        print "In server " + str(self.name) + " with newMC " + str(newMC) + " at " + str(self.sim.now)
+        self.maxActiveJobs = newMC
 
     ## Runs report loop.
     # Regularly report on the status of the server
@@ -249,7 +253,7 @@ class Server:
         #print "got here 5"
 
         # Append the next request waiting to run (if there is one)
-        if len(self.waitingRequests) > 0:
+        if (len(self.waitingRequests) > 0) and (len(self.activeRequests) < self.maxActiveJobs):
             waitingRequest = self.waitingRequests.pop(0)
             self.activeRequests.append(waitingRequest)
 

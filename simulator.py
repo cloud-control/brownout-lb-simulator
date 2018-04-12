@@ -215,6 +215,14 @@ def runSingleSimulation(outdir, autoScalerControllerFactory, replicaControllerFa
             server.serviceTimeN = n
         sim.add(at, changeServiceTimeHandler)
 
+    def changeMC(at, newMC):
+        def changeMCHandler():
+            if servers:
+                for server in servers:
+                    if server:
+                        server.changeMC(newMC)
+        sim.add(at, changeMCHandler)
+
     def changeActiveServers(at, nbrActive, serverSpeeds):
         def changeActiveServersHandler():
             oldActiveServers = len(loadBalancer.backends)
