@@ -304,7 +304,7 @@ class MMReplicaController:
 
     # Stores the current dimmer value and updates expdimmers. Run in an event-triggered fashion.
     def saveDimmerMeasures(self, dimmer):
-        alpha = 0.95
+        alpha = 0.99
         self.expdimmers = alpha*self.expdimmers + (1-alpha)*dimmer
 
         dimmerTuple = self.sim.now, dimmer
