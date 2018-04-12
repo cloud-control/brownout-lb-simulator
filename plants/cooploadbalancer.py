@@ -257,7 +257,10 @@ class CoOperativeLoadBalancer:
                 append(request.completion - request.arrival)
             if request.withOptional:
                 self.latestServiceTimes.append(request.completion - request.queueDeparture)
-                self.latestOptionalLatencies.append(request.completion - request.arrival)
+                responseTime = request.completion - request.arrival
+                self.latestOptionalLatencies.append(responseTime)
+                valuesToOutput = [responseTime]
+                self.sim.output(str(self) + '-allOpt', ','.join(["{0:.5f}".format(value) for value in valuesToOutput]))
             self.queueLengths[chosenBackendIndex] -= 1
             #print packetRequest
             self.packetDemands[chosenBackendIndex] += packetRequest
@@ -297,11 +300,11 @@ class CoOperativeLoadBalancer:
         # Total response time controller on the selected statistical measure
         correctedSetpoint = self.responseTimeSetpoint + self.totalIntegralPart
 
-        #self.avgWaitingTimeSetpoint = self.ratio * correctedSetpoint
-        #self.avgServiceTimeSetpoint = (1-self.ratio) * correctedSetpoint
+        self.avgWaitingTimeSetpoint = self.ratio * correctedSetpoint
+        self.avgServiceTimeSetpoint = (1-self.ratio) * correctedSetpoint
 
-        self.avgWaitingTimeSetpoint = 0.5
-        self.avgServiceTimeSetpoint = 0.5
+        #self.avgWaitingTimeSetpoint = 0.5
+        #self.avgServiceTimeSetpoint = 0.5
 
         # Saturate the I controller on waiting times (works as an anti-windup)
         IminWait = -0.2 * self.avgWaitingTimeSetpoint
@@ -326,11 +329,11 @@ class CoOperativeLoadBalancer:
         if len(self.latestOptionalLatencies) == 0:
             self.latestOptionalLatencies.append(0.0)
 
-        valuesToOutput = [ self.sim.now ] +\
+        valuesToOutput = [ self.sim.now ] + [np.percentile(self.latestOptionalLatencies, 95)] +\
             [ self.numRequests, self.numRequestsWithOptional ] + \
             [avg(self.latestWaitingTimes)] + [np.percentile(self.latestWaitingTimes, 95)] + [len(self.waitingQueue)] + \
             [avg(self.latestServiceTimes) ] + [self.estimatedArrivalRate] + \
-            [self.queueLengthSetpoint] + [np.percentile(self.latestOptionalLatencies, 95)] + [self.avgWaitingTimeSetpoint] + \
+            [self.queueLengthSetpoint]  + [self.avgWaitingTimeSetpoint] + \
             [self.avgServiceTimeSetpoint] + [self.waitingThreshold]
         self.sim.output(self, ','.join(["{0:.5f}".format(value) \
             for value in valuesToOutput]))

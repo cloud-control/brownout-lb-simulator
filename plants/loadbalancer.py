@@ -23,7 +23,7 @@ class LoadBalancer:
     def __init__(self, sim, controlPeriod = 1, initialTheta = 0.5, seed = 1):
         ## control period (control parameter)
         #self.controlPeriod = controlPeriod # second
-        self.controlPeriod = 0.5
+        self.controlPeriod = 0.25
         ## initial value of measured theta (control initialization parameter)
         self.initialTheta = initialTheta
         ## what algorithm to use
@@ -367,7 +367,7 @@ class LoadBalancer:
             if request.withOptional:
                 self.latestOptionalLatencies.append(responseTime)
                 valuesToOutput = [responseTime]
-                self.sim.output(str(self) + '-tommi', ','.join(["{0:.5f}".format(value) for value in valuesToOutput]))
+                self.sim.output(str(self) + '-allOpt', ','.join(["{0:.5f}".format(value) for value in valuesToOutput]))
             self.queueLengths[chosenBackendIndex] -= 1
             ewmaAlpha = 2 / (self.ewmaNumSamples + 1)
             self.ewmaResponseTime[chosenBackendIndex] = \

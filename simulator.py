@@ -288,7 +288,7 @@ def runSingleSimulation(outdir, autoScalerControllerFactory, replicaControllerFa
     toReport.append(( "replicaAlgorithm", replicaControllerFactory.getName().ljust(20) ))
     toReport.append(( "numRequests", str(len(responseTimes)).rjust(7) ))
     toReport.append(( "numRequestsWithOptional", str(numRequestsWithOptional).rjust(7) ))
-    toReport.append(( "optionalRatio", "{:.3f}".format(numRequestsWithOptional / len(responseTimes)) ))
+    toReport.append(( "optionalRatio", "{:.4f}".format(numRequestsWithOptional / len(responseTimes)) ))
     toReport.append(( "avgResponseTime", "{:.3f}".format(avg(responseTimes)) ))
     toReport.append(( "p95ResponseTime", "{:.3f}".format(np.percentile(responseTimes, 95)) ))
     toReport.append(( "p99ResponseTime", "{:.3f}".format(np.percentile(responseTimes, 99)) ))
