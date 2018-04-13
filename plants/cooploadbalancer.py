@@ -30,7 +30,7 @@ class CoOperativeLoadBalancer:
         self.serviceError = 0.0
         self.responseTimeError = 0.0
         self.totalIntegralPart = 0.0
-        self.ratio = 0.8
+        self.ratio = 0.9
 
         self.queueLengthSetpoint = 0.0
         self.avgWaitingTimeSetpoint = 0.0
