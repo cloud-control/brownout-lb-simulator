@@ -294,7 +294,7 @@ class CoOperativeLoadBalancer:
         if self.latestServiceTimes:
             self.serviceError = self.avgServiceTimeSetpoint - avg(self.latestServiceTimes)
         if self.latestLatencies:
-            self.responseTimeError = self.responseTimeSetpoint - np.percentile(self.latestLatencies, 95)
+            self.responseTimeError = self.responseTimeSetpoint - np.percentile(self.latestOptionalLatencies, 95)
 
         # Saturate the I controller on total response times (works as an anti-windup)
         IminResp = -0.5 * self.responseTimeSetpoint
@@ -350,6 +350,7 @@ class CoOperativeLoadBalancer:
         self.latestServiceTimes = []
         self.latestWaitingTimes = []
         self.latestOptionalLatencies = []
+        self.latestLatencies = []
         self.numLastRequestsPerReplica = self.numRequestsPerReplica[:]
         self.nbrLatestArrivals = 0
 
