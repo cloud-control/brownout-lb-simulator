@@ -18,13 +18,9 @@ class CoOperativeLoadBalancer:
         #self.controlPeriod = controlPeriod
         self.controlPeriod = 0.25
 
-        self.K = 1.5 # 1.5
-        self.Ti = 5.0 # 2.5
-        self.beta = 1.0 # 0.6
-        self.Tr = 10.0
+        self.ki = 0.075
 
-        self.totalKi = 0.0333
-        self.totalTr = 10.0
+        self.totalKi = 0.0083
 
         self.waitingError = 0.0
         self.serviceError = 0.0
@@ -102,9 +98,6 @@ class CoOperativeLoadBalancer:
         self.reqNbr = 0
         self.backend_requests = []
 
-        # suppress output of cvxopt solver
-        # solvers.options['show_progress'] = False
-
         # Launch control loop
         self.sim.add(0, self.runControlLoop)
 
@@ -181,7 +174,6 @@ class CoOperativeLoadBalancer:
 
         index, req = sortedPacketRequests[0]
         if req >= 1:
-            #print "waiting queue at lb is: " + str(len(self.waitingQueue))
             if self.waitingQueue:
                 request = self.waitingQueue.pop(0)
             else:
@@ -203,9 +195,7 @@ class CoOperativeLoadBalancer:
             newRequest.theta = request.theta
             newRequest.queueDeparture = request.queueDeparture
             newRequest.avgServiceTimeSetpoint = self.avgServiceTimeSetpoint
-            #print "forwarding request " + str(newRequest) + " to server " + str(request.chosenBackend)
             newRequest.onCompleted = lambda: self.onCompleted(newRequest)
-            # self.sim.log(self, "Directed request to {0}", chosenBackendIndex)
             self.queueLengths[index] += 1
             self.numRequestsPerReplica[index] += 1
             self.backends[index].request(newRequest)
@@ -266,11 +256,7 @@ class CoOperativeLoadBalancer:
                 valuesToOutput = [0, responseTime]
                 self.sim.output(str(self) + '-allOpt', ','.join(["{0:.5f}".format(value) for value in valuesToOutput]))
             self.queueLengths[chosenBackendIndex] -= 1
-            #print packetRequest
             self.packetDemands[chosenBackendIndex] += packetRequest
-            #print "at onCompleted"
-            #print "chosenBackendIndex: " + str(chosenBackendIndex)
-            #print str(self.packetDemands)
             ewmaAlpha = 2 / (self.ewmaNumSamples + 1)
             self.ewmaResponseTime[chosenBackendIndex] = \
                 ewmaAlpha * (request.completion - request.arrival) + \
@@ -306,9 +292,6 @@ class CoOperativeLoadBalancer:
 
         self.avgWaitingTimeSetpoint = self.ratio * correctedSetpoint
         self.avgServiceTimeSetpoint = (1-self.ratio) * correctedSetpoint
-
-        #self.avgWaitingTimeSetpoint = 0.5
-        #self.avgServiceTimeSetpoint = 0.5
 
         # Saturate the I controller on waiting times (works as an anti-windup)
         IminWait = -0.2 * self.avgWaitingTimeSetpoint
@@ -359,10 +342,10 @@ class CoOperativeLoadBalancer:
         self.sim.add(self.controlPeriod, self.runControlLoop)
 
     def updateControllerState(self):
-        self.integralPart = self.integralPart + self.waitingError * (self.K * self.controlPeriod / self.Ti)
+        self.integralPart = self.integralPart + self.waitingError * self.ki
 
     def updateTotalControllerState(self):
-        self.totalIntegralPart = self.totalIntegralPart + self.responseTimeError * (self.totalKi * self.controlPeriod)
+        self.totalIntegralPart = self.totalIntegralPart + self.responseTimeError * self.totalKi
 
     def printProgress(self):
         modder = int(self.sim.now) % 50
