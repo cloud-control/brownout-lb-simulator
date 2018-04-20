@@ -1,23 +1,30 @@
 %% Clear everything and set exp dir
-%close all;
+close all;
 clear;
-%clc;
+clc;
 
 %experiment_dir = '/local/home/tommi/CloudControl/ICAC2018/brownout-lb-simulator//results/trivial/cc/';
-experiment_dir = '/local/home/tommi/CloudControl/ICAC2018/sim-repo/brownout-lb-simulator/results/trivial/cc';
+%experiment_dir = '/local/home/tommi/CloudControl/ICAC2018/sim-repo-2/brownout-lb-simulator/results/trivial/cc';
+experiment_dir = '/local/home/tommi/CloudControl/ICAC2018/icac2018_resultsv2/random-vs-sqf/sqf';
+
 
 %% Get data from loadbalancer
 lb_file_name = [experiment_dir, '/', 'sim-lb.csv'];
 content =  csvread(lb_file_name);
 
 lbtimes = content(:,1);
-optResponseTimes = content(:,29);
+optResponseTimes95th = content(:,2);
+%lbweights = content(:,3:7);
 
 %% Get total optional response time data from loadbalancer
 
-lb_file_name2 = [experiment_dir, '/', 'sim-lb-tommi.csv'];
+lb_file_name2 = [experiment_dir, '/', 'sim-lb-allOpt.csv'];
 content2 =  csvread(lb_file_name2);
-allOptResponseTimes = content2(:,1);
+
+optContents = content2(:,1);
+allOpts = find(optContents == 1);
+allResponseTimes = content2(:,2);
+allOptResponseTimes = allResponseTimes(allOpts);
 
 %% Get simulation data from servers
 server_files = dir([experiment_dir, '/sim-server*-ctl.csv']);
@@ -39,37 +46,54 @@ for i = 1:num_replicas
     servertimes= content(:, 1);
     optServer = content(:,2);
     optServerResponseTimes(:,i) = optServer;
+    q = content(:,6);
+    queues(:,i) = q;
+    
+    expdim = content(:,12);
+    expdimmers(:,i) = expdim;
 end
 
 
 %% plot normal transients
 figure()
-
-plot(lbtimes, optResponseTimes)
 hold on;
-plot(servertimes, optServerResponseTimes(:,1))
+plot(lbtimes, optResponseTimes95th, 'g')
+plot([0 250], [1 1])
+
+%plot(servertimes, optServerResponseTimes, 'r')
+
+%plot(servertimes, queues, 'r')
+
+%%
+figure()
+subplot(3,1,1)
+plot(lbtimes, optResponseTimes95th)
+subplot(3,1,2)
+plot(lbtimes, lbweights)
+subplot(3,1,3)
+plot(servertimes, expdimmers)
 
 %% plot statistically significant transients
 
 figure()
 
-ciplot(respconf(:,1), respconf(:,2), [avgtimes], 'b', 0.5);
+%ciplot(respconf(:,1), respconf(:,2), [avgtimes], 'b', 0.5);
 
 hold on;
 
 ciplot(server1respconf(:,1), server1respconf(:,2), [avgtimes], 'r', 0.5);
 
-plot([0 250], [1 1], 'k')
+plot([0 100], [1 1], 'k')
 
-csvVector1dr = [avgtimes, respconf(:,1)];
-csvVector2dr = [avgtimes(end:-1:1), respconf(end:-1:1,2)];
-csvVectordr = [csvVector1dr; csvVector2dr];
-csvwrite('distributed-lb-sqf-response-times.csv',csvVectordr)
-
-csvVector1drs1 = [avgtimes, server1respconf(:,1)];
-csvVector2drs1 = [avgtimes(end:-1:1), server1respconf(end:-1:1,2)];
-csvVectordrs1 = [csvVector1drs1; csvVector2drs1];
-csvwrite('distributed-lb-sqf-server1-response-times.csv',csvVectordrs1)
+% csvVector1dr = [avgtimes, respconf(:,1)];
+% csvVector2dr = [avgtimes(end:-1:1), respconf(end:-1:1,2)];
+% csvVectordr = [csvVector1dr; csvVector2dr];
+% csvwrite('distributed-lb-sqf-response-times.csv',csvVectordr)
+% 
+csvVector1r = [avgtimes, server1respconf(:,1)];
+csvVector2r = [avgtimes(end:-1:1), server1respconf(end:-1:1,2)];
+csvVectorr = [csvVector1r; csvVector2r];
+csvwrite('distributed-lb-sqf-server1-response-times.csv',csvVectorr)
 
 
 

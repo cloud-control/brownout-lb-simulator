@@ -14,8 +14,8 @@ fbcdfy = [fbcdfy ydata(end)];
 close all;
 plot(fbcdfx,fbcdfy);
 
-csvVectorcdf = [fbcdfx', fbcdfy'];
-csvwrite('distributed-sqf-cdf.csv',csvVectorcdf)
+%csvVectorcdf = [fbcdfx', fbcdfy'];
+%csvwrite('distributed-sqf-cdf.csv',csvVectorcdf)
 
 
 %% plot all

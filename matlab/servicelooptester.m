@@ -10,13 +10,16 @@ s = tf('s');
 
 a = -log(1-alpha)/h;
 
+zeta = 0.8;
+w = 1.3;
+
 G = Kphat*(alpha*s+a)/(s+a);
 Gz = Kphat*(alpha*z)/(z-1+alpha);
 Ghat = d2c(Gz);
 
 
-%kp = (-2*zeta*w+(alpha*w^2)/a + a)/(2*zeta*w*Kp*alpha-(alpha^2*w^2*Kp)/a - Kp*a);
-%ki = (w^2*(1+Kp*alpha*kp))/(Kp*a);
+kp = (-2*zeta*w+(alpha*w^2)/a + a)/(2*zeta*w*Kp*alpha-(alpha^2*w^2*Kp)/a - Kp*a);
+ki = (w^2*(1+Kp*alpha*kp))/(Kp*a);
 
 %kp = 1;
 %ki = 1;
@@ -24,10 +27,10 @@ Ghat = d2c(Gz);
 % control design to get good behavior against load disturbances
 % Keep filter pole at its original location a and move the integrator pole
 % along the negative real axis!
-b = 0.3;
+b = 1.6;
 
-kp = (b*(1-alpha))/(alpha^2*b*Kp+Kp*a-Kp*alpha*a-Kp*alpha*b)
-ki = (b*(1+Kp*alpha*kp))/(Kp)
+%kp = (b*(1-alpha))/(alpha^2*b*Kp+Kp*a-Kp*alpha*a-Kp*alpha*b)
+%ki = (b*(1+Kp*alpha*kp))/(Kp)
 
 
 

@@ -1,7 +1,7 @@
 %% Clear everything and set exp dir
 close all;
 clear;
-%clc;
+clc;
 
 experiment_dir = '/local/home/tommi/CloudControl/ICAC2018/sim-repo/brownout-lb-simulator//results/trivial/co-op/';
 
@@ -10,17 +10,17 @@ lb_file_name = [experiment_dir, '/', 'sim-lb-co-op.csv'];
 content =  csvread(lb_file_name);
 
 lbtimes = content(:,1);
-responseTimes = content(:,2:6);
-lbserviceTimes = content(:,12);
-waitingTimes = content(:,9);
-waitingTimes95th = content(:,10);
-waitingQueue = content(:,11);
-lambdaHat = content(:,13);
-queueSetpoints = content(:,14);
-optResponseTimes = content(:,15);
-waitingTimeSetpoints = content(:,16);
-lbserviceTimeSetpoints = content(:,17);
-waitingThresholds = content(:,18);
+optResponseTimes = content(:,2);
+lbserviceTimes = content(:,8);
+waitingTimes = content(:,5);
+waitingTimes95th = content(:,6);
+waitingQueue = content(:,7);
+lambdaHat = content(:,9);
+queueSetpoints = content(:,10);
+
+waitingTimeSetpoints = content(:,11);
+lbserviceTimeSetpoints = content(:,12);
+waitingThresholds = content(:,13);
 
 %% Get total waiting time data from loadbalancer
 
@@ -35,28 +35,20 @@ num_replicas = length(server_files);
 for i = 1:num_replicas
     
     filename = server_files(i).name;
-    content = csvread([experiment_dir, '/', filename]);
+    servercontent = csvread([experiment_dir, '/', filename]);
     
-%     file sim-serverX-ctl.csv contains:
-%     (1) time, 
-%     (2) nbr of latency samples per ctrl interval, 
-%     (3) max_latency (or nan), 
-%     (4) dimmer value,
-%     (5) dimmer value with nan if replica is inactive
-    
-    %getting data
-    servertimes= content(:, 1);
-    serviceTime = content(:,2);
+    servertimes= servercontent(:, 1);
+    serviceTime = servercontent(:,2);
     serviceTimes(:,i) = serviceTime;
-    filteredServiceTime = content(:,3);
+    filteredServiceTime = servercontent(:,4);
     filteredServiceTimes(:,i) = filteredServiceTime;
-    serviceTimeSetpoint = content(:,4);
+    serviceTimeSetpoint = servercontent(:,5);
     serviceTimeSetpoints(:,i) = serviceTimeSetpoint;
-    ctrl = content(:,5);
+    ctrl = servercontent(:,6);
     ctrls(:,i) = ctrl;
-    actuatedCtrl = content(:,6);
+    actuatedCtrl = servercontent(:,7);
     actuatedCtrls(:,i) = actuatedCtrl;
-    estimatedProcessGain = content(:,7);
+    estimatedProcessGain = servercontent(:,8);
     estimatedProcessGains(:,i) = estimatedProcessGain;
 end
 
@@ -67,8 +59,8 @@ figure()
 subplot(4,1,1)
 
 hold on;
-plot(lbtimes, queueSetpoints, 'r')
-plot(lbtimes, waitingQueue, 'b')
+%plot(lbtimes, queueSetpoints, 'r')
+plot(lbtimes, optResponseTimes, 'b')
 hold off;
 
 subplot(4,1,2)
@@ -81,7 +73,7 @@ subplot(4,1,3)
 hold on
 plot(lbtimes, waitingTimes, 'b')
 %plot(lbtimes, waitingTimes95th, 'r')
-plot(lbtimes, waitingTimeSetpoints, 'k')
+%plot(lbtimes, waitingTimeSetpoints, 'k')
 %axis([0 20 0 120])
 
 subplot(4,1,4)
@@ -109,7 +101,44 @@ plot(servertimes, 0.7*ones(size(servertimes)), 'k')
 subplot(3,1,3)
 plot(servertimes, estimatedProcessGains(:,1))
 
-%% plot statistically significant transients
+%% plot statistically significant transients for service times
+%close all
+figure()
+subplot(3,1,1)
+ciplot(estimatedProcessGainsconf(:,1), estimatedProcessGainsconf(:,2), avgtimes, 'r', 0.5);
+
+subplot(3,1,2)
+ciplot(ctrlsconf(:,1), ctrlsconf(:,2), avgtimes, 'r', 0.5);
+hold on;
+ciplot(actuatedCtrlsconf(:,1), actuatedCtrlsconf(:,2), avgtimes, 'b', 0.5);
+
+subplot(3,1,3)
+ciplot(serviceTimesconf(:,1), serviceTimesconf(:,2), avgtimes, 'r', 0.5);
+hold on;
+plot([0 250], [0.5 0.5], 'k')
+
+csvVector1e = [avgtimes, estimatedProcessGainsconf(:,1)];
+csvVector2e = [avgtimes(end:-1:1), estimatedProcessGainsconf(end:-1:1,2)];
+csvVectore = [csvVector1e; csvVector2e];
+csvwrite('service-estimates.csv',csvVectore)
+
+csvVector1u = [avgtimes, ctrlsconf(:,1)];
+csvVector2u = [avgtimes(end:-1:1), ctrlsconf(end:-1:1,2)];
+csvVectoru = [csvVector1u; csvVector2u];
+csvwrite('service-control-signals.csv',csvVectoru)
+
+csvVector1ua= [avgtimes, actuatedCtrlsconf(:,1)];
+csvVector2ua = [avgtimes(end:-1:1), actuatedCtrlsconf(end:-1:1,2)];
+csvVectorua = [csvVector1ua; csvVector2ua];
+csvwrite('service-control-actuated.csv',csvVectorua)
+
+csvVector1st= [avgtimes, serviceTimesconf(:,1)];
+csvVector2st = [avgtimes(end:-1:1), serviceTimesconf(end:-1:1,2)];
+csvVectorst = [csvVector1st; csvVector2st];
+csvwrite('service-times.csv',csvVectorst)
+
+
+%% plot statistically significant transients for waiting times
 %close all
 figure()
 subplot(3,1,1)
@@ -131,20 +160,20 @@ hold on;
 plot([0 250], [1 1], 'k')
 
 
-csvVector1q = [avgtimes, queueconf(:,1)];
-csvVector2q = [avgtimes(end:-1:1), queueconf(end:-1:1,2)];
-csvVectorq = [csvVector1q; csvVector2q];
-csvwrite('waiting-threshold-queues.csv',csvVectorq)
-
-csvVector1wt = [avgtimes, waitingtimeconf(:,1)];
-csvVector2wt = [avgtimes(end:-1:1), waitingtimeconf(end:-1:1,2)];
-csvVectorwt = [csvVector1wt; csvVector2wt];
-csvwrite('waiting-threshold-waiting-times.csv',csvVectorwt)
-
-csvVector1thres = [avgtimes, waitingthresholdconf(:,1)];
-csvVector2thres = [avgtimes(end:-1:1), waitingthresholdconf(end:-1:1,2)];
-csvVectorthres = [csvVector1thres; csvVector2thres];
-csvwrite('waiting-threshold-waiting-thresholds.csv',csvVectorthres)
+% csvVector1q = [avgtimes, queueconf(:,1)];
+% csvVector2q = [avgtimes(end:-1:1), queueconf(end:-1:1,2)];
+% csvVectorq = [csvVector1q; csvVector2q];
+% csvwrite('waiting-threshold-queues.csv',csvVectorq)
+% 
+% csvVector1wt = [avgtimes, waitingtimeconf(:,1)];
+% csvVector2wt = [avgtimes(end:-1:1), waitingtimeconf(end:-1:1,2)];
+% csvVectorwt = [csvVector1wt; csvVector2wt];
+% csvwrite('waiting-threshold-waiting-times.csv',csvVectorwt)
+% 
+% csvVector1thres = [avgtimes, waitingthresholdconf(:,1)];
+% csvVector2thres = [avgtimes(end:-1:1), waitingthresholdconf(end:-1:1,2)];
+% csvVectorthres = [csvVector1thres; csvVector2thres];
+% csvwrite('waiting-threshold-waiting-thresholds.csv',csvVectorthres)
 
 
 
