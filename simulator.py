@@ -215,17 +215,56 @@ def runSingleSimulation(outdir, autoScalerControllerFactory, replicaControllerFa
             server.serviceTimeN = n
         sim.add(at, changeServiceTimeHandler)
 
-    def addServer(y, n, autoScale = False):
-        server = Server(sim, \
-            serviceTimeY = y, serviceTimeN = n, \
-            timeSlice = timeSlice)
-        newReplicaController = replicaControllerFactory.newInstance(sim, server, str(server) + "-ctl")
-        server.controller = newReplicaController
-        servers.append(server)
-        if autoScale:
-            autoScaler.addBackend(server)
-        else:
-            loadBalancer.addBackend(server)
+    def changeMC(at, newMC):
+        def changeMCHandler():
+            if servers:
+                for server in servers:
+                    if server:
+                        server.changeMC(newMC)
+        sim.add(at, changeMCHandler)
+
+    def changeActiveServers(at, nbrActive, serverSpeeds):
+        def changeActiveServersHandler():
+            oldActiveServers = len(loadBalancer.backends)
+            #print("Old active servers was " + str(oldActiveServers))
+
+            #print(serverSpeeds)
+
+            nbrDiff = nbrActive - oldActiveServers
+
+            while nbrDiff < 0:
+                backendToRemove = loadBalancer.backends[-1]
+                loadBalancer.removeBackend(backendToRemove)
+                nbrDiff += 1
+
+            i = 0
+            for backend in loadBalancer.backends:
+                backend.serviceTimeY = serverSpeeds[i][0]
+                backend.serviceTimeN = serverSpeeds[i][1]
+                i += 1
+
+            timeDiff = 0.01
+            while nbrDiff > 0:
+                addServer(at=timeDiff*i, y=serverSpeeds[i][0], n=serverSpeeds[i][1])
+                i += 1
+                nbrDiff -= 1
+        sim.add(at, changeActiveServersHandler)
+
+    def addServer(at, y, n, autoScale = False):
+        #print("at is " + str(at))
+        def addServerHandler():
+            #print("in handler: at is " + str(at))
+            server = Server(sim, \
+                serviceTimeY = y, serviceTimeN = n, \
+                timeSlice = timeSlice)
+            newReplicaController = replicaControllerFactory.newInstance(sim, server, str(server) + "-ctl")
+            server.controller = newReplicaController
+            servers.append(server)
+            if autoScale:
+                autoScaler.addBackend(server)
+            else:
+                loadBalancer.addBackend(server)
+        sim.add(at, addServerHandler)
 
     def setRate(at, rate):
         sim.add(at, lambda: openLoopClient.setRate(rate))
@@ -257,7 +296,7 @@ def runSingleSimulation(outdir, autoScalerControllerFactory, replicaControllerFa
     toReport.append(( "replicaAlgorithm", replicaControllerFactory.getName().ljust(20) ))
     toReport.append(( "numRequests", str(len(responseTimes)).rjust(7) ))
     toReport.append(( "numRequestsWithOptional", str(numRequestsWithOptional).rjust(7) ))
-    toReport.append(( "optionalRatio", "{:.3f}".format(numRequestsWithOptional / len(responseTimes)) ))
+    toReport.append(( "optionalRatio", "{:.4f}".format(numRequestsWithOptional / len(responseTimes)) ))
     toReport.append(( "avgResponseTime", "{:.3f}".format(avg(responseTimes)) ))
     toReport.append(( "p95ResponseTime", "{:.3f}".format(np.percentile(responseTimes, 95)) ))
     toReport.append(( "p99ResponseTime", "{:.3f}".format(np.percentile(responseTimes, 99)) ))

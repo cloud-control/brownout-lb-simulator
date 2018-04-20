@@ -30,7 +30,7 @@ class CoOperativeLoadBalancer:
         self.serviceError = 0.0
         self.responseTimeError = 0.0
         self.totalIntegralPart = 0.0
-        self.ratio = 0.8
+        self.ratio = 0.9
 
         self.queueLengthSetpoint = 0.0
         self.avgWaitingTimeSetpoint = 0.0
@@ -55,8 +55,9 @@ class CoOperativeLoadBalancer:
         ## weights determining how to load-balance requests (control output)
         self.weights = []
         ## latencies measured during last control period (metric)
-        self.latestLatencies = []
+        self.latestLatenciesPerBackend = []
         self.latestOptionalLatencies = []
+        self.latestLatencies = []
         ## service times measured during last control period (metric)
         self.latestServiceTimes = []
         ## waiting times measured during last control period
@@ -67,7 +68,7 @@ class CoOperativeLoadBalancer:
         ## requests waiting in queue at loadbalancer
         self.waitingQueue = []
         ## Packet requests from servers
-        self.packetRequests = []
+        self.packetDemands = []
         ## Queue length threshold for waiting queue controller
         self.queueLengthThreshold = 0.0
         ## number of requests, with or without optional content, served since
@@ -112,7 +113,7 @@ class CoOperativeLoadBalancer:
     def addBackend(self, backend):
         self.backends.append(backend)
         self.queueLengths.append(0)
-        self._resetDecisionVariables()
+        self._resetDecisionVariables(True)
 
     ## Remove a backend
     # @param backend backend server to remove
@@ -122,7 +123,7 @@ class CoOperativeLoadBalancer:
         queueLength = self.queueLengths[backendIndex]
         del self.backends[backendIndex]
         del self.queueLengths[backendIndex]
-        self._resetDecisionVariables()
+        self._resetDecisionVariables(False)
 
         if queueLength > 0:
             removedBackendInfo = dict(
@@ -133,32 +134,35 @@ class CoOperativeLoadBalancer:
         else:
             if onShutdownCompleted:    onShutdownCompleted()
 
+
     ## Reset the decision variables
-    def _resetDecisionVariables(self):
+    def _resetDecisionVariables(self, serverAdded):
         n = len(self.backends)
 
-        # DO NOT USE! `[ [] ] * n` as it leads to undesired behaviour.
-        self.waitingQueue = []
-        self.packetRequests = [1] * n
-        self.latestWaitingTimes = []
-        self.latestOptionalLatencies = []
-        self.latestLatencies = [[] for _ in range(n)]  # to be updated at onComplete
-        self.latestServiceTimes = []  # to be updated at onComplete
-        self.lastLastLatencies = [[] for _ in range(n)]
-        self.lastQueueLengths = [0] * n
+        if serverAdded:
+            self.packetDemands.append(1)
+            self.latestLatenciesPerBackend.append([])
+            self.lastQueueLengths.append(0)
+            self.numRequestsPerReplica.append(0)
+            self.numLastRequestsPerReplica.append(0)
+            self.ewmaResponseTime.append(0)
+            self.ctlRlsP.append(1000)
+            self.ctlAlpha.append(1)
+            self.backend_requests.append(0)
+        else:
+            del self.packetDemands[-1]
+            del self.latestLatenciesPerBackend[-1]
+            del self.lastQueueLengths[-1]
+            del self.numRequestsPerReplica[-1]
+            del self.numLastRequestsPerReplica[-1]
+            del self.ewmaResponseTime[-1]
+            del self.ctlRlsP[-1]
+            del self.ctlAlpha[-1]
+            del self.backend_requests[-1]
+
         assert len(self.queueLengths) == n
-        self.queueOffsets = [0] * n
-        self.numRequestsPerReplica = [0] * n  # to be updated in request
-        self.numLastRequestsPerReplica = [0] * n  # to be updated in runControlLoop
-        self.ewmaResponseTime = [0] * n  # to be updated in onComplete
-        ## for ctl-simplify
-        self.ctlRlsP = [1000] * n
-        self.ctlAlpha = [1] * n
 
         self.weights = [1.0 / len(self.backends)] * len(self.backends)
-        self.backend_requests = [0] * len(self.backends)
-        self.reqNbr = 0
-
 
     ## Handles a request.
     # @param request the request to handle
@@ -172,8 +176,7 @@ class CoOperativeLoadBalancer:
 
     def forwardRequests(self):
         # Sort list in descending order
-        packetTemp = deepcopy(self.packetRequests)
-        #print "packet reqs: " + str(packetTemp)
+        packetTemp = deepcopy(self.packetDemands)
         sortedPacketRequests = sorted(enumerate(packetTemp), key=operator.itemgetter(1), reverse=True)
 
         index, req = sortedPacketRequests[0]
@@ -186,12 +189,8 @@ class CoOperativeLoadBalancer:
             request.withOptional, request.theta = self.withOptional(request)
             request.chosenBackend = self.backends[index]
             request.queueDeparture = self.sim.now
-            #print "at forwardRequests"
-            #print str(self.packetRequests)
 
-            #print self.packetRequests[index]
-
-            self.packetRequests[index] = self.packetRequests[index] - 1
+            self.packetDemands[index] = self.packetDemands[index] - 1
             waitingTime = request.queueDeparture - request.arrival
             self.latestWaitingTimes.append(waitingTime)
 
@@ -211,7 +210,7 @@ class CoOperativeLoadBalancer:
             self.numRequestsPerReplica[index] += 1
             self.backends[index].request(newRequest)
 
-            if sum(self.packetRequests) > 0:
+            if max(self.packetDemands) > 0:
                 self.sim.add(0, self.forwardRequests)
 
 
@@ -254,18 +253,24 @@ class CoOperativeLoadBalancer:
                 del self.removedBackends[request.chosenBackend]
                 if onShutdownCompleted: onShutdownCompleted()
         else:
+            responseTime = request.completion - request.arrival
             chosenBackendIndex = self.backends.index(request.chosenBackend)
-            self.latestLatencies[chosenBackendIndex].\
-                append(request.completion - request.arrival)
+            self.latestLatenciesPerBackend[chosenBackendIndex].append(responseTime)
+            self.latestLatencies.append(responseTime)
             if request.withOptional:
                 self.latestServiceTimes.append(request.completion - request.queueDeparture)
-                self.latestOptionalLatencies.append(request.completion - request.arrival)
+                self.latestOptionalLatencies.append(responseTime)
+                valuesToOutput = [1, responseTime]
+                self.sim.output(str(self) + '-allOpt', ','.join(["{0:.5f}".format(value) for value in valuesToOutput]))
+            else:
+                valuesToOutput = [0, responseTime]
+                self.sim.output(str(self) + '-allOpt', ','.join(["{0:.5f}".format(value) for value in valuesToOutput]))
             self.queueLengths[chosenBackendIndex] -= 1
             #print packetRequest
-            self.packetRequests[chosenBackendIndex] += packetRequest
+            self.packetDemands[chosenBackendIndex] += packetRequest
             #print "at onCompleted"
             #print "chosenBackendIndex: " + str(chosenBackendIndex)
-            #print str(self.packetRequests)
+            #print str(self.packetDemands)
             ewmaAlpha = 2 / (self.ewmaNumSamples + 1)
             self.ewmaResponseTime[chosenBackendIndex] = \
                 ewmaAlpha * (request.completion - request.arrival) + \
@@ -288,57 +293,64 @@ class CoOperativeLoadBalancer:
             self.waitingError = self.avgWaitingTimeSetpoint - avg(self.latestWaitingTimes)
         if self.latestServiceTimes:
             self.serviceError = self.avgServiceTimeSetpoint - avg(self.latestServiceTimes)
-        if self.latestOptionalLatencies:
+        if self.latestLatencies:
             self.responseTimeError = self.responseTimeSetpoint - np.percentile(self.latestOptionalLatencies, 95)
 
+        # Saturate the I controller on total response times (works as an anti-windup)
+        IminResp = -0.5 * self.responseTimeSetpoint
+        ImaxResp = 0.0
+        self.totalIntegralPart = min(max(self.totalIntegralPart, IminResp), ImaxResp)
+
         # Total response time controller on the selected statistical measure
-        correctedSetpointPrel = self.responseTimeSetpoint + self.totalIntegralPart
+        correctedSetpoint = self.responseTimeSetpoint + self.totalIntegralPart
 
-        # Saturation: No setpoints below zero
-        correctedSetpoint = max(correctedSetpointPrel, 0.0)
+        self.avgWaitingTimeSetpoint = self.ratio * correctedSetpoint
+        self.avgServiceTimeSetpoint = (1-self.ratio) * correctedSetpoint
 
-        #self.avgWaitingTimeSetpoint = self.ratio * correctedSetpoint
-        #self.avgServiceTimeSetpoint = (1-self.ratio) * correctedSetpoint
+        #self.avgWaitingTimeSetpoint = 0.5
+        #self.avgServiceTimeSetpoint = 0.5
 
-        self.avgWaitingTimeSetpoint = 0.5
-        self.avgServiceTimeSetpoint = 0.5
-
-        # Update total response time controller integral state
-        self.updateTotalControllerState(correctedSetpoint, correctedSetpointPrel)
+        # Saturate the I controller on waiting times (works as an anti-windup)
+        IminWait = -0.2 * self.avgWaitingTimeSetpoint
+        ImaxWait = 0.2 * self.avgWaitingTimeSetpoint
+        self.integralPart = min(max(self.integralPart, IminWait), ImaxWait)
 
         # Integral controller on avg waiting times using a threshold on request waiting times
-        waitingThresholdPrel = self.avgWaitingTimeSetpoint + self.integralPart
+        self.waitingThreshold = self.avgWaitingTimeSetpoint + self.integralPart
 
-        # Saturation: No waiting thresholds below zero
-        self.waitingThreshold = max(waitingThresholdPrel, 0.0)
+        # Update total response time controller integral state
+        self.updateTotalControllerState()
 
         # Update waiting time controller integral state
-        self.updateControllerState(self.waitingThreshold, waitingThresholdPrel)
+        self.updateControllerState()
 
         if len(self.latestWaitingTimes) == 0:
             self.latestWaitingTimes.append(0.0)
-        if len(self.latestLatencies) == 0:
-            self.latestLatencies.append(0.0)
+        if len(self.latestLatenciesPerBackend) == 0:
+            self.latestLatenciesPerBackend.append(0.0)
         if len(self.latestServiceTimes) == 0:
             self.latestServiceTimes.append(0.0)
         if len(self.latestOptionalLatencies) == 0:
             self.latestOptionalLatencies.append(0.0)
+        if len(self.latestLatencies) == 0:
+            self.latestLatencies.append(0.0)
 
-        valuesToOutput = [ self.sim.now ] +\
-            [ avg(latencies) for latencies in self.latestLatencies ] + \
+        valuesToOutput = [ self.sim.now ] + [np.percentile(self.latestLatencies, 95)] + \
+                         [np.percentile(self.latestOptionalLatencies, 95)] +\
             [ self.numRequests, self.numRequestsWithOptional ] + \
             [avg(self.latestWaitingTimes)] + [np.percentile(self.latestWaitingTimes, 95)] + [len(self.waitingQueue)] + \
             [avg(self.latestServiceTimes) ] + [self.estimatedArrivalRate] + \
-            [self.queueLengthSetpoint] + [np.percentile(self.latestOptionalLatencies, 95)] + [self.avgWaitingTimeSetpoint] + \
+            [self.queueLengthSetpoint]  + [self.avgWaitingTimeSetpoint] + \
             [self.avgServiceTimeSetpoint] + [self.waitingThreshold]
         self.sim.output(self, ','.join(["{0:.5f}".format(value) \
             for value in valuesToOutput]))
 
         self.lastQueueLengths = self.queueLengths[:]
-        self.latestLatencies = [ [] for _ in self.backends ]
+        self.latestLatenciesPerBackend = [ [] for _ in self.backends ]
         self.latestServiceTimes = []
         self.latestWaitingTimes = []
         self.latestOptionalLatencies = []
+        self.latestLatencies = []
         self.numLastRequestsPerReplica = self.numRequestsPerReplica[:]
         self.nbrLatestArrivals = 0
 
@@ -346,15 +358,11 @@ class CoOperativeLoadBalancer:
         self.iteration += 1
         self.sim.add(self.controlPeriod, self.runControlLoop)
 
-    def updateControllerState(self, v, prelV):
-        self.integralPart = self.integralPart + self.waitingError * \
-                            (self.K * self.controlPeriod / self.Ti) + \
-                            (self.controlPeriod / self.Tr) * (v - prelV)
+    def updateControllerState(self):
+        self.integralPart = self.integralPart + self.waitingError * (self.K * self.controlPeriod / self.Ti)
 
-    def updateTotalControllerState(self, v, prelV):
-        self.totalIntegralPart = self.totalIntegralPart + self.responseTimeError * \
-                            (self.totalKi * self.controlPeriod) + \
-                            (self.controlPeriod / self.totalTr) * (v - prelV)
+    def updateTotalControllerState(self):
+        self.totalIntegralPart = self.totalIntegralPart + self.responseTimeError * (self.totalKi * self.controlPeriod)
 
     def printProgress(self):
         modder = int(self.sim.now) % 50
