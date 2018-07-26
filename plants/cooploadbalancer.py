@@ -207,14 +207,16 @@ class CoOperativeLoadBalancer:
     ## Inner loop actuator of control signal v deciding execution of optional content
     def withOptional(self, request):
 
-        waitingTime = self.sim.now - request.arrival
+        """waitingTime = self.sim.now - request.arrival
 
         if self.waitingThreshold == 0.0:
             dimmer = 1.0
         elif waitingTime > self.waitingThreshold:
             dimmer = 0.0
         else:
-            dimmer = 1.0
+            dimmer = 1.0"""
+
+        dimmer = 1.0
 
         return self.random.random() <= dimmer, 0.5
 

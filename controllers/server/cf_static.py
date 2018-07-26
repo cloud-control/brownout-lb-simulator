@@ -14,7 +14,7 @@ def parseCommandLine(args):
 	global staticDimmer
 	staticDimmer = args.rcStaticDimmer
 
-def newInstance(sim, name):
+def newInstance(sim, server, name):
 	return StaticReplicaController(sim, name)
 
 class StaticReplicaController:
@@ -29,9 +29,12 @@ class StaticReplicaController:
 	def __str__(self):
 		return self.name
 
-	def withOptional(self):
+	def withOptional(self, request):
 		return self.random.random() <= staticDimmer, staticDimmer
 
-	def reportData(self, responseTime, queueLenght, timeY, timeN):
+	def decidePacketRequest(self):
+		pass
+
+	def reportData(self, newArrival, responseTime, queueLength, timeY, timeN, optional, serviceTime, avgServiceTimeSetpoint):
 		# Not needed for the static controller
 		pass

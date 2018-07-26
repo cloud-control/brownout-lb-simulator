@@ -76,7 +76,8 @@ class MMReplicaController:
 
         self.integralPart = min(max(self.integralPart, Imin), Imax)
 
-        self.ctrl = self.integralPart
+        #self.ctrl = self.integralPart
+        self.ctrl = 0.0
 
         # Update controller integral state
         self.updateIControllerState()

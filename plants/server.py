@@ -152,8 +152,8 @@ class Server:
             if withOptional else \
             (self.serviceTimeN, self.serviceTimeNVariance)
 
-        serviceTime = \
-            max(self.random.normalvariate(serviceTime, variance), self.minimumServiceTime)
+        #serviceTime = max(self.random.normalvariate(serviceTime, variance), self.minimumServiceTime)
+        serviceTime = np.random.exponential(serviceTime)
 
         return serviceTime
 
