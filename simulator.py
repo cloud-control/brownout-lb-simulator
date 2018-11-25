@@ -10,8 +10,9 @@ import numpy as np
 import random
 import os
 import sys
+import time
 
-from plants import AutoScaler, ClosedLoopClient, OpenLoopClient, LoadBalancer, Server, CoOperativeLoadBalancer
+from plants import AutoScaler, ClosedLoopClient, OpenLoopClient, LoadBalancer, Server, CoOperativeLoadBalancer, Cloner
 from base import Request, SimulatorKernel
 from base.utils import *
 from controllers import loadControllerFactories
@@ -40,6 +41,7 @@ def distribution(s):
 ## Entry-point for simulator.
 # Setups up all entities, then runs simulation(s).
 def main():
+    start_time = time.time()
     # Load all controller factories
     autoScalerControllerFactories = loadControllerFactories('autoscaler')
     replicaControllerFactories = loadControllerFactories('server')
@@ -99,6 +101,10 @@ def main():
         type = float,
         help = 'Gain in the equal-thetas-fast algorithm',
         default = 2.0) #0.117)
+    group.add_argument('--cloning',
+        type = float,
+        help = '1 if cloning is activated, 0 otherwise',
+        default = 0)
 
     # Add replica controller factories specific command-line arguments
     for rcf in replicaControllerFactories:
@@ -151,6 +157,7 @@ def main():
                         scenario = args.scenario,
                         timeSlice = args.timeSlice,
                         loadBalancingAlgorithm = loadBalancingAlgorithm,
+                        cloning=args.cloning,
                         equal_theta_gain = args.equal_theta_gain,
                         equal_thetas_fast_gain = args.equal_thetas_fast_gain,
                         startupDelay = args.startupDelay,
@@ -158,6 +165,9 @@ def main():
                 except Exception as e:
                     print("Caught exception with {0} and {1}: {2}".
                         format(autoScalerControllerFactory, replicaControllerFactory, e))
+
+    elapsed_time = time.time() - start_time
+    print("Elapsed time (seconds): " + str(elapsed_time))
 
 ## Runs a single simulation
 # @param outdir folder in which results should be written
@@ -170,21 +180,24 @@ def main():
 # @param equal_thetas_fast_gain paramater for load-balancing algorithm (TODO: move into LoadBalancingAlgorithm)
 # @param startupDelay a tuple of the form (distribution, param1, param2)
 def runSingleSimulation(outdir, autoScalerControllerFactory, replicaControllerFactory, scenario, timeSlice,
-        loadBalancingAlgorithm, equal_theta_gain, equal_thetas_fast_gain, startupDelay):
+        loadBalancingAlgorithm, cloning, equal_theta_gain, equal_thetas_fast_gain, startupDelay):
     startupDelayRng = random.Random()
     startupDelayFunc = lambda: \
         getattr(startupDelayRng, startupDelay[0])(*startupDelay[1:])
     assert startupDelayFunc() # ensure the PRNG works
     startupDelayRng.seed(1)
 
-    sim = SimulatorKernel(outputDirectory = outdir)
+    cloner = Cloner()
+    sim = SimulatorKernel(cloner=cloner, outputDirectory=outdir)
+
     servers = []
     clients = []
     if loadBalancingAlgorithm == 'co-op':
         loadBalancer = CoOperativeLoadBalancer(sim, controlPeriod=1.0)
     else:
-        loadBalancer = LoadBalancer(sim, controlPeriod = 1.0)
+        loadBalancer = LoadBalancer(sim, controlPeriod=1.0)
         loadBalancer.algorithm = loadBalancingAlgorithm
+        sim.cloner.cloning = cloning
         loadBalancer.equal_theta_gain = equal_theta_gain
         loadBalancer.equal_thetas_fast_gain = equal_thetas_fast_gain
 
@@ -297,11 +310,11 @@ def runSingleSimulation(outdir, autoScalerControllerFactory, replicaControllerFa
     toReport.append(( "numRequests", str(len(responseTimes)).rjust(7) ))
     toReport.append(( "numRequestsWithOptional", str(numRequestsWithOptional).rjust(7) ))
     toReport.append(( "optionalRatio", "{:.4f}".format(numRequestsWithOptional / len(responseTimes)) ))
-    toReport.append(( "avgResponseTime", "{:.3f}".format(avg(responseTimes)) ))
-    toReport.append(( "p95ResponseTime", "{:.3f}".format(np.percentile(responseTimes, 95)) ))
-    toReport.append(( "p99ResponseTime", "{:.3f}".format(np.percentile(responseTimes, 99)) ))
-    toReport.append(( "maxResponseTime", "{:.3f}".format(max(responseTimes)) ))
-    toReport.append(( "stddevResponseTime", "{:.3f}".format(np.std(responseTimes)) ))
+    toReport.append(( "avgResponseTime", "{:.4f}".format(avg(responseTimes)) ))
+    toReport.append(( "p95ResponseTime", "{:.4f}".format(np.percentile(responseTimes, 95)) ))
+    toReport.append(( "p99ResponseTime", "{:.4f}".format(np.percentile(responseTimes, 99)) ))
+    toReport.append(( "maxResponseTime", "{:.4f}".format(max(responseTimes)) ))
+    toReport.append(( "stddevResponseTime", "{:.4f}".format(np.std(responseTimes)) ))
 
     print(*[k for k,v in toReport], sep = ', ')
     print(*[v for k,v in toReport], sep = ', ')

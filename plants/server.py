@@ -44,7 +44,7 @@ class Server:
         ## list of active requests (server model variable)
         self.activeRequests = deque()
         ## max number of active jobs
-        self.maxActiveJobs = 15
+        self.maxActiveJobs = 1000000
         ## list of request waiting to access server
         self.waitingRequests = []
         ## how often to report metrics
@@ -73,6 +73,16 @@ class Server:
         self.random = xxx_random.Random()
         self.random.seed(seed)
 
+        np.random.seed(seed)
+
+        self.utilization = 0.0
+        self.utilCounter = 0
+
+        self.preCanceled = 0
+        self.avgClearRate = 0.0
+        self.canceledReqs = 0
+        self.avgCancellationTime = 0.0
+
         # Initialize reporting
         self.runReportLoop()
 
@@ -96,6 +106,11 @@ class Server:
     def runReportLoop(self):
         # Compute utilization
         utilization = (self.getActiveTime() - self.lastActiveTime) / self.reportPeriod
+
+        self.utilization = (self.utilization*self.utilCounter + utilization) / (self.utilCounter + 1)
+        self.utilCounter +=1
+        #print "util: " + str(self.utilization)
+
         self.lastActiveTime = self.getActiveTime()
 
         # Report
@@ -123,9 +138,10 @@ class Server:
     #   <li>completion, time at which the request finished</li>
     # </ul>
     def request(self, request):
+        #print "Got to request in server with reqId " + str(request.requestId) + "," + str(request.isClone)
         # Activate scheduler, if its not active
         if len(self.activeRequests) == 0:
-            #print "scheduler was not active"
+            #print "scheduler was not active at time " + str(self.sim.now) + " in " + str(self)
             self.sim.add(0, self.onScheduleRequests)
         #print "Backend: " + str(request.originalRequest.chosenBackend)
         request.arrival = self.sim.now
@@ -145,17 +161,56 @@ class Server:
         self.sim.output(str(self) + '-arl', ','.join(["{0:.5f}".format(value) \
             for value in valuesToOutput]))
 
+        if self.sim.now > 999.9:
+            print "avg run time: " + str(self.avgCancellationTime) + "," + str(request.chosenBackendIndex)
+            print "avg util: " + str(self.utilization) + "," + str(request.chosenBackendIndex)
+
         #print "request() to %s at time %f"%(self.name, self.sim.now)
 
-    def drawServiceTime(self, withOptional):
-        serviceTime, variance = (self.serviceTimeY, self.serviceTimeYVariance) \
-            if withOptional else \
-            (self.serviceTimeN, self.serviceTimeNVariance)
+    def drawServiceTime(self, activeRequest):
+        if not hasattr(activeRequest, 'serviceTime'): # 1==1
+            #print "Request service time gets set: " + str(activeRequest.requestId)
+            meanServiceTime, variance = (self.serviceTimeY, self.serviceTimeYVariance) \
+                if activeRequest.withOptional else \
+                (self.serviceTimeN, self.serviceTimeNVariance)
 
-        serviceTime = \
-            max(self.random.normalvariate(serviceTime, variance), self.minimumServiceTime)
+            #serviceTime = max(self.random.normalvariate(meanServiceTime, variance), self.minimumServiceTime)
+            #serviceTime = np.random.exponential(meanServiceTime)
+            serviceTime = np.random.uniform(0.000001, meanServiceTime*2.0)
 
-        return serviceTime
+            activeRequest.serviceTime = serviceTime
+            #print "service time set to " + str(serviceTime)
+            #self.sim.cloner.setCloneServiceTimes(activeRequest, serviceTime)
+
+            return serviceTime
+        else:
+            #print "Request service time already set: " + str(activeRequest.requestId)
+            return activeRequest.serviceTime
+
+    def printCancellationInfo(self, activeRequest):
+        if not hasattr(activeRequest, 'remainingTime'):
+            self.preCanceled += 1
+            clearRate = 0.0
+            cancellationTime = 0.0
+            #runTime =  0.0
+            #print str(self.preCanceled) + "," + str(activeRequest.chosenBackendIndex)
+        else:
+            clearRate = 1 - (activeRequest.remainingTime / activeRequest.serviceTime)
+            cancellationTime = (activeRequest.serviceTime - activeRequest.remainingTime)#/activeRequest.serviceTime
+            #runTime = self.sim.now - activeRequest.arrival
+
+        self.avgClearRate = (self.canceledReqs * self.avgClearRate + clearRate) / (self.canceledReqs + 1)
+        self.avgCancellationTime = (self.canceledReqs * self.avgCancellationTime + cancellationTime) / (self.canceledReqs + 1)
+        self.canceledReqs += 1
+        # print "chosenbackend: " + str(activeRequest.chosenBackend)
+        # print clearRate
+
+        #print str(self.avgClearRate) + "," + str(activeRequest.chosenBackendIndex)
+        #if self.sim.now > 199.5:
+        #    print "avg cancel: " + str(self.avgCancellationTime) + "," + str(activeRequest.chosenBackendIndex)
+        #    print "avg util: " + str(self.utilization) + "," + str(activeRequest.chosenBackendIndex)
+
+        #print str(self.canceledReqs) + "," + str(activeRequest.chosenBackendIndex)
 
     ## Event handler for scheduling active requests.
     # This function is the core of the processor-sharing with time-slice model.
@@ -175,6 +230,29 @@ class Server:
         currentQueueLength = self.getTotalQueueLength()
         # Select next active request
         activeRequest = self.activeRequests.popleft()
+        # Check if this request already is cancelled!
+        if self.sim.cloner.isCanceled(activeRequest):
+            #print "request is canceled: " + str(activeRequest.requestId) + "," + str(activeRequest.isClone)
+
+            self.printCancellationInfo(activeRequest)
+
+            # Track utilization
+            if self.__activeTimeStarted is not None:
+                self.__activeTime += self.sim.now - self.__activeTimeStarted
+                self.__activeTimeStarted = None
+
+            activeRequest.onCanceled()
+
+            # Append the next request waiting to run (if there is one)
+            if (len(self.waitingRequests) > 0) and (len(self.activeRequests) < self.maxActiveJobs):
+                waitingRequest = self.waitingRequests.pop(0)
+                self.activeRequests.append(waitingRequest)
+
+            # Forget about this request, continue with scheduler
+            if len(self.activeRequests) > 0:
+                self.sim.add(0, self.onScheduleRequests)
+            return
+
         # Track utilization
         if self.__activeTimeStarted is None:
             self.__activeTimeStarted = self.sim.now
@@ -186,14 +264,13 @@ class Server:
             if not hasattr(activeRequest, 'withOptional'):
                 # Pick whether to serve it with optional content or not
                 if self.controller:
-                    #print "Opt content not decided for request " + str(activeRequest)
                     activeRequest.withOptional, activeRequest.theta = self.controller.withOptional(currentQueueLength)
                 else:
                     activeRequest.withOptional, activeRequest.theta = True, 1
             #else:
                 #print "Opt content decided for request " + str(activeRequest)
 
-            activeRequest.remainingTime = self.drawServiceTime(activeRequest.withOptional)
+            activeRequest.remainingTime = self.drawServiceTime(activeRequest)
 
         # Schedule it to run for a bit
         timeToExecuteActiveRequest = min(self.timeSlice, activeRequest.remainingTime)
@@ -203,10 +280,9 @@ class Server:
         if activeRequest.remainingTime == 0:
             # Leave this request in front (onCompleted will pop it)
             self.activeRequests.appendleft(activeRequest)
-
             # Run onComplete when done
-            self.sim.add(timeToExecuteActiveRequest, \
-                lambda: self.onCompleted(activeRequest))
+            #print "Req " + str(activeRequest.requestId) + "," + str(activeRequest.isClone) + " completes at " + str(self.sim.now+timeToExecuteActiveRequest)
+            self.sim.add(timeToExecuteActiveRequest, lambda: self.onCompleted(activeRequest))
             #self.sim.log(self, "request {0} will execute for {1} to completion", \
             #	activeRequest, timeToExecuteActiveRequest)
         else:
@@ -224,63 +300,70 @@ class Server:
     # onScheduleRequests() to pick a new request to schedule.
     # @param request request that has received enough service time
     def onCompleted(self, request):
+        #print str(self.sim.now) + ": got to onCompleted() for reqId " + str(request.requestId)
+        #print request.serviceTime
+
         # Track utilization
         self.__activeTime += self.sim.now - self.__activeTimeStarted
         self.__activeTimeStarted = None
 
         # Remove request from active list
         activeRequest = self.activeRequests.popleft()
-        if activeRequest != request:
-            raise Exception("Weird! Expected request {0} but got {1} instead". \
-                    format(request, activeRequest)) # pragma: no cover
+        if (activeRequest.requestId != request.requestId) or (activeRequest.isClone != request.isClone):
+            raise Exception("Weird! Expected request {0},{1} but got {2},{3} instead". \
+                    format(request, request.isClone, activeRequest, activeRequest.isClone)) # pragma: no cover
 
-        # And completed it
-        request.completion = self.sim.now
-        self.latestLatencies.append(request.completion - request.arrival)
-        if self.controller:
-            self.controller.reportData(False, request.completion - request.arrival,
-              self.getTotalQueueLength(), self.serviceTimeY, self.serviceTimeN,
-            request.withOptional, request.completion - request.queueDeparture, request.avgServiceTimeSetpoint)
-            #print "got here 1"
-            request.packetRequest = self.controller.decidePacketRequest()
-            #print "decided for request nbr " + str(request) + ": " + str(request.packetRequest)
+        if not self.sim.cloner.isCanceled(activeRequest):
+            #print "request is not canceled! " + str(activeRequest.requestId) + "," + str(activeRequest.isClone)
 
-        # TODO: This should be determined by service controller!
-        #print "got here 3"
-        #request.packetRequest = 1
-        #print "got here 4"
-        request.onCompleted()
-        #print "got here 5"
+            # And completed it
+            request.completion = self.sim.now
+            self.latestLatencies.append(request.completion - request.arrival)
+            if self.controller:
+                self.controller.reportData(False, request.completion - request.arrival,
+                  self.getTotalQueueLength(), self.serviceTimeY, self.serviceTimeN,
+                request.withOptional, request.completion - request.queueDeparture, request.avgServiceTimeSetpoint)
+                #print "got here 1"
+                request.packetRequest = self.controller.decidePacketRequest()
+            #print "got here 2"
+            request.onCompleted()
+            #print "got here 3"
+
+
+            # Report
+            valuesToOutput = [ \
+                self.sim.now, \
+                request.arrival, \
+                request.completion - request.arrival, \
+            ]
+            #print "got here 4"
+
+            self.sim.output(str(self)+'-rt', ','.join(["{0:.5f}".format(value) \
+                for value in valuesToOutput]))
+
+            # Report queue length
+            valuesToOutput = [ \
+                self.sim.now, \
+                self.getTotalQueueLength(), \
+            ]
+            self.sim.output(str(self) + '-arl', ','.join(["{0:.5f}".format(value) \
+                for value in valuesToOutput]))
+        else:
+            #print "request is canceled! " + str(activeRequest.requestId) + "," + str(activeRequest.isClone)
+            self.printCancellationInfo(activeRequest)
+            activeRequest.onCanceled()
 
         # Append the next request waiting to run (if there is one)
         if (len(self.waitingRequests) > 0) and (len(self.activeRequests) < self.maxActiveJobs):
             waitingRequest = self.waitingRequests.pop(0)
             self.activeRequests.append(waitingRequest)
 
-        # Report
-        valuesToOutput = [ \
-            self.sim.now, \
-            request.arrival, \
-            request.completion - request.arrival, \
-        ]
-        self.sim.output(str(self)+'-rt', ','.join(["{0:.5f}".format(value) \
-            for value in valuesToOutput]))
-
-        # Report queue length
-        valuesToOutput = [ \
-            self.sim.now, \
-            self.getTotalQueueLength(), \
-        ]
-        self.sim.output(str(self) + '-arl', ','.join(["{0:.5f}".format(value) \
-            for value in valuesToOutput]))
-
-        #print "got here 6"
-
         # Continue with scheduler
         if len(self.activeRequests) > 0:
             self.sim.add(0, self.onScheduleRequests)
 
-        #print "got here at time " + str(self.sim.now) + " for " + str(request)
+        #if request.isClone:
+        #    raise Exception("Clone detected!")
 
 
     ## Returns the total queue length (active + waiting requests)

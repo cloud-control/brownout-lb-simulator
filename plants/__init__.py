@@ -7,6 +7,7 @@ from clients import ClosedLoopClient, OpenLoopClient
 from loadbalancer import LoadBalancer
 from cooploadbalancer import CoOperativeLoadBalancer
 from server import Server
+from cloner import Cloner
 
 __all__ = [
         "AutoScaler",
@@ -16,4 +17,5 @@ __all__ = [
         "LoadBalancer",
         "Server",
         "CoOperativeLoadBalancer",
+        "Cloner",
         ]

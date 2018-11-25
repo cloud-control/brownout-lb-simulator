@@ -9,7 +9,7 @@ import sys
 class SimulatorKernel:
     ## Constructor
     # @param outputDirectory folder where CSV files should be written to. None disables CSV files
-    def __init__(self, outputDirectory = '.'):
+    def __init__(self, cloner=None, outputDirectory = '.'):
         ## events indexed by time
         self.events = defaultdict(list)
         ## reverse index from event handlers to time index, to allow easy update
@@ -21,6 +21,7 @@ class SimulatorKernel:
         self.outputFiles = {}
         ## output directory
         self.outputDirectory = outputDirectory
+        self.cloner = cloner
 
     ## Adds a new event
     # @param delay non-negative float representing in how much time should the
@@ -31,6 +32,9 @@ class SimulatorKernel:
     def add(self, delay, what):
         self.events[self.now + delay].append(what)
         self.whatToTime[what] = self.now + delay
+        return what
+
+
 
     ## Update an existing event or add a new event
     # @param delay in how much time should the event be triggered
@@ -65,6 +69,8 @@ class SimulatorKernel:
 
             if self.now > until:
                 return
+            #print("SimKernel: Running new event ")
+            #print(str(event))
             event()
             numEvents += 1
         self.log(self, "Handled {0} events", numEvents)

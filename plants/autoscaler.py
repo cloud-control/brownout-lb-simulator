@@ -93,6 +93,7 @@ class AutoScaler:
 	def request(self, request):
 		newRequest = Request()
 		newRequest.originalRequest = request
+		newRequest.requestId = request.requestId
 		newRequest.onCompleted = lambda: self.onCompleted(newRequest)
 		self.loadBalancer.request(newRequest)
 
