@@ -10,7 +10,8 @@ class Request(object):
 	## List of allowed attributes (improves performance and reduces errors)
 	__slots__ = ('requestId', 'arrival', 'queueDeparture', 'completion', 'onCompleted', 'onCanceled', \
 		'originalRequest', 'theta', 'withOptional', 'chosenBackend', 'chosenBackendIndex',
-		'remainingTime', 'createdAt', 'packetRequest', 'avgServiceTimeSetpoint', 'serviceTime', 'illegalServers', 'isClone')
+		'remainingTime', 'createdAt', 'packetRequest', 'avgServiceTimeSetpoint', 'serviceTime', 'illegalServers',
+		'isClone', 'lastCheckpoint', 'processorShare', 'isCompleted', 'serverOnCompleted', 'hasWaited')
 	
 	## Constructor
 	def __init__(self):

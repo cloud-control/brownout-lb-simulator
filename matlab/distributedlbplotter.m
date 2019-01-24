@@ -1,7 +1,7 @@
 %% Clear everything and set exp dir
 %close all;
 clear;
-%clc;
+clc;
 
 experiment_dir = '/local/home/tommi/CloudControl/cloning/brownout-lb-simulator//results/trivial/static/';
 %experiment_dir = '/local/home/tommi/CloudControl/ICAC2018/sim-repo-2/brownout-lb-simulator/results/trivial/cc';

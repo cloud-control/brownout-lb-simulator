@@ -105,6 +105,10 @@ def main():
         type = float,
         help = '1 if cloning is activated, 0 otherwise',
         default = 0)
+    group.add_argument('--nbrClones',
+        type = int,
+        help = 'Specify nbr clones, 1 is default (aka no cloning)',
+        default = 1)
 
     # Add replica controller factories specific command-line arguments
     for rcf in replicaControllerFactories:
@@ -158,6 +162,7 @@ def main():
                         timeSlice = args.timeSlice,
                         loadBalancingAlgorithm = loadBalancingAlgorithm,
                         cloning=args.cloning,
+                        nbrClones=args.nbrClones,
                         equal_theta_gain = args.equal_theta_gain,
                         equal_thetas_fast_gain = args.equal_thetas_fast_gain,
                         startupDelay = args.startupDelay,
@@ -180,7 +185,7 @@ def main():
 # @param equal_thetas_fast_gain paramater for load-balancing algorithm (TODO: move into LoadBalancingAlgorithm)
 # @param startupDelay a tuple of the form (distribution, param1, param2)
 def runSingleSimulation(outdir, autoScalerControllerFactory, replicaControllerFactory, scenario, timeSlice,
-        loadBalancingAlgorithm, cloning, equal_theta_gain, equal_thetas_fast_gain, startupDelay):
+        loadBalancingAlgorithm, cloning, equal_theta_gain, equal_thetas_fast_gain, startupDelay, nbrClones):
     startupDelayRng = random.Random()
     startupDelayFunc = lambda: \
         getattr(startupDelayRng, startupDelay[0])(*startupDelay[1:])
@@ -197,7 +202,8 @@ def runSingleSimulation(outdir, autoScalerControllerFactory, replicaControllerFa
     else:
         loadBalancer = LoadBalancer(sim, controlPeriod=1.0)
         loadBalancer.algorithm = loadBalancingAlgorithm
-        sim.cloner.cloning = cloning
+        sim.cloner.setCloning(cloning)
+        sim.cloner.setNbrClones(nbrClones)
         loadBalancer.equal_theta_gain = equal_theta_gain
         loadBalancer.equal_thetas_fast_gain = equal_thetas_fast_gain
 
@@ -263,13 +269,13 @@ def runSingleSimulation(outdir, autoScalerControllerFactory, replicaControllerFa
                 nbrDiff -= 1
         sim.add(at, changeActiveServersHandler)
 
-    def addServer(at, y, n, autoScale = False):
+    def addServer(at, y, n, seed, autoScale = False):
         #print("at is " + str(at))
         def addServerHandler():
             #print("in handler: at is " + str(at))
             server = Server(sim, \
                 serviceTimeY = y, serviceTimeN = n, \
-                timeSlice = timeSlice)
+                timeSlice = timeSlice, seed=seed)
             newReplicaController = replicaControllerFactory.newInstance(sim, server, str(server) + "-ctl")
             server.controller = newReplicaController
             servers.append(server)

@@ -30,11 +30,22 @@ class SimulatorKernel:
     # @param what Event handler, can be a function, class method or lambda
     # @see Callable
     def add(self, delay, what):
+        if what is None:
+            print("Added none event at time " + str(self.now))
         self.events[self.now + delay].append(what)
         self.whatToTime[what] = self.now + delay
         return what
 
-
+    def delete(self, what):
+        if what in self.whatToTime:
+            oldTime = self.whatToTime[what]
+            events = self.events[oldTime]
+            events.remove(what)
+            if len(events) == 0:
+                del self.events[oldTime]
+            del self.whatToTime[what]
+        #else:
+        #    print("Did not find anything to delete!")
 
     ## Update an existing event or add a new event
     # @param delay in how much time should the event be triggered
@@ -43,13 +54,8 @@ class SimulatorKernel:
     # @note Deletes the previously existing event that is handled by what.
     # The current implementation stores at most one such event.
     def update(self, delay, what):
-        if what in self.whatToTime:
-            oldTime = self.whatToTime[what]
-            events = self.events[oldTime]
-            events.remove(what)
-            if len(events) == 0:
-                del self.events[oldTime]
-            del self.whatToTime[what]
+        #print("Got to update in SimKernel")
+        self.delete(what)
         self.add(delay, what)
 
     ## Run the simulation
@@ -62,6 +68,7 @@ class SimulatorKernel:
             #if int(prevNow / 100) < int(self.now / 100):
             #	self.log(self, "progressing, handled {0} events", numEvents)
             events = self.events[self.now]
+            #print(str(events))
             event = events.pop(0)
             del self.whatToTime[event]
             if len(events) == 0:

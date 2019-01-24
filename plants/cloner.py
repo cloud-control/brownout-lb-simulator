@@ -1,5 +1,5 @@
 from __future__ import division
-
+import csv
 import math
 import numpy as np
 import random as xxx_random # prevent accidental usage
@@ -16,62 +16,66 @@ class Cloner:
     ## Constructor.
     def __init__(self, seed=1):
 
-        self.seed = seed
+        self.seed = 65184
 
         self.cloneStd = 1.0
 
         self.cloning = 0
+        self.nbrClones = 1
 
         self.random = xxx_random.Random()
-        self.random.seed(seed)
+        self.random.seed(self.seed)
 
-        np.random.seed(seed)
+        np.random.seed(self.seed)
 
         self.minimumServiceTime = 0.0001
 
         self.activeRequests = {}
 
+        self.serviceCounter = 0
+        self.minServiceTime = 0.0
+
+        self.minSlowdown = 1.0
+        self.slowdownCounter = 0
+
+        self.backends = []
+
+        self.cdf = np.asarray(self.readCsv('/local/home/tommi/CloudControl/cloning/brownout-lb-simulator/matlab/umin.csv'))
+        self.x = np.asarray(self.readCsv('/local/home/tommi/CloudControl/cloning/brownout-lb-simulator/matlab/x.csv'))
+        self.dolly = np.asarray(self.readCsv('/local/home/tommi/CloudControl/cloning/brownout-lb-simulator/matlab/dolly.csv'))
+
+    def readCsv(self, filename):
+        floatvector = []
+        with open(filename, 'r') as f:
+            reader = csv.reader(f)
+            for v in reader:
+                floatvector.append(float(v[0]))
+        return floatvector
+
+    def setCloning(self, cloning):
+        self.cloning = cloning
+
+    def setNbrClones(self, nbrClones):
+        self.nbrClones = nbrClones
+
     def clone(self, request, queues, servers):
         if not self.cloning:
             return None
-
-
-
-        #targetIndex= [index for index, queue in enumerate(queues) if index != request.chosenBackendIndex]
-        #print queues
-        #print "------------------------"
-        #print targetIndex
-
-        #targetServer = servers[targetIndex[0]]
-
-        #print targetServer.activeRequests
-        #print targetServer.waitingRequests
-
-        shouldClone = True
-        propClones = 0.0
-
-        """if targetServer.activeRequests:
-            nbrActiveClones = sum(req.isClone == 1 for req in targetServer.activeRequests)
-            nbrClones = nbrActiveClones
-            propClones = nbrClones / (len(targetServer.activeRequests))
-
-            shouldClone = propClones < 0.1"""
+        self.backends = servers
 
         currentClones = self.getClones(request)
-
-        nbrClones = 0
+        nbrClones = 1
         if currentClones:
             nbrClones = len(currentClones)
 
-        if nbrClones < len(servers):
+        diff = self.nbrClones - nbrClones
+        if diff >= 1.0:
             shouldClone = True
+        elif (diff < 1.0) and (diff > 0.0):
+            shouldClone = self.random.uniform(0, 1) <= diff
         else:
             shouldClone = False
 
-        #shouldClone = self.random.random() < 1.1
-
-        #print propClones
-        #print shouldClone
         key = request.requestId
 
         if not shouldClone:
@@ -125,8 +129,12 @@ class Cloner:
         key = request.requestId
         if key in self.activeRequests:
             clones = self.activeRequests[request.requestId]
+            #print self.activeRequests
+            taskSize = self.drawHyperExpServiceTime()
+            #print "Req " + str(key) + ": " + str(taskSize)
+            serviceTimes = []
+            slowdowns = []
             for i in range(0, len(clones)):
-                #print i
                 if not hasattr(clones[i], 'serviceTime'):
                     #serviceTime = self.random.uniform(mean/corrfactor, mean*corrfactor)
                     minval = mean/corrfactor
@@ -134,11 +142,16 @@ class Cloner:
                     if corrfactor == 1.0:
                         serviceTime = mean
                     else:
-                        serviceTime = np.random.exponential(0.01)  # zero correlation between clones!
+                        #serviceTime = np.random.exponential(0.01)  # zero correlation between clones!
                         #if serviceTime < 0.00001:
                         #    print "Service time too small!: " + str(serviceTime)
-
-                        #serviceTime = self.drawCloneServiceTime(x_s, cdf)
+                        #serviceTime = self.drawCloneServiceTime(self.x, self.cdf)
+                        slowdown = self.drawDollySlowdown()
+                        #slowdown = 4.7
+                        serviceTime = slowdown*taskSize
+                        serviceTimes.append(serviceTime)
+                        slowdowns.append(slowdown)
+                        #print "clone req " + str(clones[i].requestId) + " service time " + str(serviceTime)
                         #print "------------------------------------------------------"
                         #print "Orig service time: " + str(mean)
                         #print "Clone service time: " + str(serviceTime)
@@ -154,6 +167,12 @@ class Cloner:
                     self.activeRequests[request.requestId][i].serviceTime = serviceTime
 
                     #print "setting service time for clone with reqid " + str(clones[i].requestId) + " to " + str(serviceTime)
+
+            self.minServiceTime = (self.minServiceTime * self.serviceCounter + min(serviceTimes)) / (self.serviceCounter + 1)
+            self.minSlowdown = (self.minSlowdown * self.serviceCounter + min(slowdowns)) / (self.serviceCounter + 1)
+            #print self.minServiceTime
+            self.serviceCounter += 1
+            #print self.serviceCounter
 
     def getClones(self, request):
         if not self.cloning:
@@ -181,12 +200,26 @@ class Cloner:
         if not self.cloning:
             return
 
+        #print request.isCompleted
+
         #print "Trying to cancel clones for req " + str(request.requestId)
         key = request.requestId
         if key in self.activeRequests:
             #print "Cancels clones for req id " + str(request.requestId)
             #for clone in self.activeRequests[key]:
                 #print clone.serviceTime
+
+            clones = self.activeRequests[request.requestId]
+            #print clones
+
+            for i in range(0, len(clones)):
+                clone = clones[i]
+                if not hasattr(clone, 'isCompleted'):
+                    #print clone.chosenBackend
+                    clone.chosenBackend.onCanceled(clone)
+                #else:
+                    #print "completed server: " + str(clone.chosenBackend)
+
             del self.activeRequests[key]
         #else:
             #print "Key not in list!"
@@ -205,6 +238,24 @@ class Cloner:
         cdf = h*integrate.cumtrapz(pdf)
 
         return x_s, cdf
+
+    def drawHyperExpServiceTime(self):
+        coeff = 10.0
+        hypermean = 1 / 4.7
+        p1 = 0.5 * (1.0 + math.sqrt((coeff - 1.0) / (coeff + 1.0)))
+        p2 = 1.0 - p1
+        mu1 = 2.0 * p1 / hypermean
+        mu2 = 2.0 * p2 / hypermean
+
+        if self.random.uniform(0, 1) <= p1:
+            return self.random.expovariate(mu1)
+        else:
+            return self.random.expovariate(mu2)
+
+    def drawDollySlowdown(self):
+        slowint = self.random.randint(0, 999)
+        slowdown = self.dolly.item(slowint)
+        return slowdown
 
     def drawCloneServiceTime(self, x_s, cdf):
 

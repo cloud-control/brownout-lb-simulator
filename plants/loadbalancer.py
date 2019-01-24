@@ -13,23 +13,21 @@ class LoadBalancer:
     ## Supported load-balancing algorithms.
     ALGORITHMS = ("weighted-RR theta-diff SQF SQF-plus FRF equal-thetas equal-queues equal-thetas-SQF clone-SQF " + \
         "FRF-EWMA predictive 2RC RR random fake-random theta-diff-plus ctl-simplify equal-thetas-fast theta-diff-plus-SQF " + \
-        "theta-diff-plus-fast SRTF equal-thetas-fast-mul co-op").split()
+        "theta-diff-plus-fast SRTF equal-thetas-fast-mul co-op clone-random extremum-clone-random RIQ-d central-queue").split()
 
     ## Constructor.
     # @param sim Simulator to attach to
     # @param controlPeriod control period
     # @param initialTheta initial dimmer value to consider before receiving any
     # replies from a server
-    def __init__(self, sim, controlPeriod = 1, initialTheta = 0.5, seed = 1):
+    def __init__(self, sim, controlPeriod = 1, initialTheta = 0.5, seed = 1, nbrClones = 1):
         ## control period (control parameter)
         #self.controlPeriod = controlPeriod # second
-        self.controlPeriod = 0.25
+        self.controlPeriod = 2.0
         ## initial value of measured theta (control initialization parameter)
         self.initialTheta = initialTheta
         ## what algorithm to use
         self.algorithm = 'theta-diff'
-
-        self.cloning = True
 
         ## Simulator to which the load-balancer is attached
         self.sim = sim
@@ -84,10 +82,20 @@ class LoadBalancer:
         # queue is drained.
         self.removedBackends = {}
 
-        self.cloning = 0
-
         self.reqNbr = 0
         self.backend_requests = []
+
+        self.idleIndexes = []
+
+        self.centralQueue = []
+
+        # extremum parameters
+        self.feedback = 0.0
+        self.high_pass = 0.0
+        self.prevFeedback = 0.0
+        self.perturbed_high_pass = 0.0
+        self.gradient = 0.0
+        self.theta_hat = 1.0
 
         # suppress output of cvxopt solver
         #solvers.options['show_progress'] = False
@@ -160,8 +168,12 @@ class LoadBalancer:
     ## Handles a request.
     # @param request the request to handle
     def request(self, request):
+        #print "Got to LB request"
         #self.sim.log(self, "Got request {0}", request)
-        request.arrival = self.sim.now
+        if not hasattr(request, 'arrival'):
+            request.arrival = self.sim.now
+        if not hasattr(request, 'isClone'):
+            request.isClone = False
         if self.algorithm in [ 'weighted-RR', 'theta-diff', 'theta-diff-plus', 'equal-thetas', 'ctl-simplify', 'equal-queues' ]:
             chosenBackendIndex = \
                 weightedChoice(zip(range(0, len(self.backends)), self.weights), self.random)
@@ -266,8 +278,78 @@ class LoadBalancer:
             # choose replica with shortest queue, choose randomly between the shortest
             chosenBackendIndex = self.random.choice(shortestIndexes)
             #print self.queueLengths
-            #print chosenBackendIndex
 
+        elif (self.algorithm == 'clone-random') or (self.algorithm == 'extremum-clone-random'):
+            #print "got to clone sqf LB-method"
+            if hasattr(request, 'illegalServers'):
+                legalIndexes = [index for index, queue in enumerate(self.queueLengths) if index not in request.illegalServers]
+                #print "Clone with reqid " + str(request.requestId) + " can be sent to " + str(legalServers)
+            else:
+                legalIndexes = range(0, len(self.backends))
+
+            # choose random replica among the legal ones
+            chosenBackendIndex = self.random.choice(legalIndexes)
+            #print request.requestId
+            #print chosenBackendIndex
+            #print self.queueLengths
+
+        elif self.algorithm == 'central-queue':
+            #print self.queueLengths
+
+            idleIndexes = [index for index, queue in enumerate(self.queueLengths) if queue == 0]
+            #print self.sim.now
+            #print idleIndexes
+
+
+            if hasattr(request, 'hasWaited') or request.isClone:
+                #print len(idleIndexes)
+                chosenBackendIndex = self.random.choice(idleIndexes)
+                #print str(request.requestId) + "," + str(request.isClone) + " will be sent to " + str(chosenBackendIndex)
+            else:
+                if (len(self.centralQueue) == 0) and (len(idleIndexes) > 0):
+                    # Dispatch the new request immediately
+                    chosenBackendIndex = self.random.choice(idleIndexes)
+                    #print str(request.requestId) + "," + str(request.isClone) + " will be sent to " + str(chosenBackendIndex)
+                    #print idleIndexes
+                    #print request.requestId
+                    #print chosenBackendIndex
+                else:
+                    # Do not dispatch now
+                    self.centralQueue.append(request)
+                    #print len(self.centralQueue)
+                    chosenBackendIndex = -1
+
+        elif self.algorithm == 'RIQ-d':
+            #print "got to clone sqf LB-method"
+            legalIndexes = []
+            if not request.isClone:
+                # First original request, get idle server indexes
+                d = 12
+                serverIndexes = self.random.sample(xrange(0, len(self.queueLengths)), d)
+                #print serverIndexes
+                servers = [(index, queue) for index, queue in enumerate(self.queueLengths) if index in serverIndexes]
+                #print servers
+                self.idleIndexes = [index for index, queue in servers if queue == 0]
+                #print self.idleIndexes
+                if len(self.idleIndexes) == 0:
+                    self.sim.cloner.setNbrClones(1)
+                    legalIndexes = serverIndexes
+                else:
+                    self.sim.cloner.setNbrClones(len(self.idleIndexes))
+                    #self.sim.cloner.setNbrClones(1)
+                    legalIndexes = self.idleIndexes
+                #print self.idleIndexes
+            if hasattr(request, 'illegalServers'):
+                legalIndexes = [index for index in self.idleIndexes if index not in request.illegalServers]
+                #print legalIndexes
+                #print "Clone with reqid " + str(request.requestId) + " can be sent to " + str(legalServers)
+            elif request.isClone:
+                legalIndexes = self.idleIndexes
+
+            # choose random replica among the legal ones
+            chosenBackendIndex = self.random.choice(legalIndexes)
+            #print chosenBackendIndex
+            #print self.queueLengths
 
         elif self.algorithm == 'SQF-plus':
             # choose replica with shortest queue
@@ -347,15 +429,17 @@ class LoadBalancer:
         else:
             raise Exception("Unknown load-balancing algorithm " + self.algorithm)
 
+        if chosenBackendIndex < 0:
+            # No server chosen, return
+            return
+
         request.queueDeparture = self.sim.now
         request.chosenBackend = self.backends[chosenBackendIndex]
         request.chosenBackendIndex = chosenBackendIndex
         self.queueLengths[chosenBackendIndex] += 1
         self.numRequestsPerReplica[chosenBackendIndex] += 1
 
-        if not hasattr(request, 'isClone'):
-            request.isClone = False
-        #print "Dispatching with req id " + str(request.requestId) + "," + str(request.isClone)
+        #print "Dispatching with req id " + str(request.requestId) + "," + str(request.isClone) + " to " + str(chosenBackendIndex)
         #print "ChosenBackendIndex is " + str(chosenBackendIndex)
         #print "self.queueLengths: " + str(self.queueLengths)
         if not request.isClone:
@@ -370,14 +454,14 @@ class LoadBalancer:
             newRequest.chosenBackendIndex = chosenBackendIndex
             newRequest.onCompleted = lambda: self.onCompleted(newRequest)
             newRequest.onCanceled = lambda: self.onCanceled(newRequest)
-            self.sim.add(0, lambda: self.tryCloneRequest(newRequest))
-            self.sim.add(0, lambda: self.backends[chosenBackendIndex].request(newRequest))
+            self.tryCloneRequest(newRequest)
+            self.backends[chosenBackendIndex].request(newRequest)
         else:
             request.avgServiceTimeSetpoint = 0.0
             request.onCompleted = lambda: self.onCompleted(request)
             request.onCanceled = lambda: self.onCanceled(request)
-            self.sim.add(0, lambda: self.tryCloneRequest(request))
-            self.sim.add(0, lambda: self.backends[chosenBackendIndex].request(request))
+            self.tryCloneRequest(request)
+            self.backends[chosenBackendIndex].request(request)
 
 
     def tryCloneRequest(self, request):
@@ -385,16 +469,16 @@ class LoadBalancer:
 
         #print self.sim.now
         #print "Cloning request with id " + str(request.requestId)
-        # Clone only once for now
+
         clone = self.sim.cloner.clone(request, self.queueLengths, self.backends)
         # Dispatch the new clone
         if clone:
             #print "Cloned request " + str(request.requestId)
-            self.sim.add(0, lambda: self.request(clone))
+            self.request(clone)
 
 
     def onCanceled(self, request):
-        #print "onCanceled with req id " + str(request.requestId) + "," + str(request.isClone)
+        #print "LB: onCanceled with req id " + str(request.requestId) + "," + str(request.isClone)
         chosenBackendIndex = self.backends.index(request.chosenBackend)
         #print "ChosenBackendIndex is " + str(chosenBackendIndex)
         #print "self.queueLengths before: " + str(self.queueLengths)
@@ -404,7 +488,7 @@ class LoadBalancer:
     ## Handles request completion.
     # Stores piggybacked dimmer values and calls orginator's onCompleted()
     def onCompleted(self, request):
-        #print "onCompletedwith req id " + str(request.requestId) + "," + str(request.isClone)
+        #print "LB: onCompleted with req id " + str(request.requestId) + "," + str(request.isClone)
 
         #print "self.queueLengths before" + str(self.queueLengths)
 
@@ -453,12 +537,27 @@ class LoadBalancer:
                 ewmaAlpha * (request.completion - request.arrival) + \
                 (1 - ewmaAlpha) * self.ewmaResponseTime[chosenBackendIndex]
 
+        request.isCompleted = True
         self.sim.cloner.cancelAllClones(request)
 
         # Call original onCompleted
         request.originalRequest.theta = request.theta
         request.originalRequest.withOptional = request.withOptional
         request.originalRequest.onCompleted()
+        #print "LB: OnComplete: " + str(request.requestId) + "," + str(request.isClone)
+        #print "LB: OnComplete: " + str(request.remainingTime)
+
+        #print self.algorithm
+
+        if self.algorithm == 'central-queue':
+            #print "Got to dispatching next req!"
+            #print self.queueLengths
+            # Dispatch next waiting request (if it exists)
+            if len(self.centralQueue) > 0:
+                waitingRequest = self.centralQueue.pop(0)
+                waitingRequest.hasWaited = True
+                #print "Dispatching waiting req " + str(waitingRequest.requestId)
+                self.sim.add(0, lambda: self.request(waitingRequest))
 
     ## Run control loop.
     # Takes as input the dimmers and computes new weights. Also outputs
@@ -470,6 +569,55 @@ class LoadBalancer:
         if self.algorithm == 'weighted-RR':
             # Nothing to do here
             pass
+
+        elif self.algorithm == 'extremum-clone-random':
+            alpha = 0.99
+            if self.lastLatencies:
+                allLastLatencies = []
+                for i in range(0, len(self.backends)):
+                    if self.lastLatencies[i]:
+                        for j in range(0, len(self.lastLatencies[i])):
+                            allLastLatencies.append(self.lastLatencies[i][j])
+                allServiced = len(allLastLatencies)
+                if allServiced > 2:
+                    allLastLatencies.sort()
+                    allLastLatencies.pop(0)
+                    allLastLatencies.pop(-1)
+                    totalRespAvg = sum(allLastLatencies)/ allServiced
+                    self.feedback = alpha*self.feedback + (1.0-alpha)*totalRespAvg
+
+            a = 0.3#*self.sim.cloner.nbrClones
+            period = 0.062831 * 1.0
+            w = period
+            wl = period / 3.0
+            wh = wl
+            k = -0.01
+
+            self.high_pass = (1 - self.controlPeriod * wh) * self.high_pass + self.feedback - self.prevFeedback
+
+            self.perturbed_high_pass = a * math.sin(w * self.sim.now) * self.high_pass
+
+            self.gradient = (1 - self.controlPeriod * wl) * self.gradient + wl * self.perturbed_high_pass
+
+            self.theta_hat = self.theta_hat + k * self.gradient
+
+            self.prevFeedback = self.feedback
+
+            nbrClones = self.theta_hat + a * math.sin(w * self.sim.now)
+
+            # Saturate number of clones
+            if nbrClones < 1.0:
+                nbrClones = 1.0
+                self.theta_hat = nbrClones - a * math.sin(w * self.sim.now)
+            elif nbrClones > len(self.backends):
+                nbrClones = len(self.backends)
+                self.theta_hat = nbrClones - a * math.sin(w * self.sim.now)
+            self.sim.cloner.setNbrClones(nbrClones)
+
+            print "feedback: " + str(self.feedback)
+            print "gradient: " + str(self.gradient)
+            print "optimal nbr: " + str(self.theta_hat)
+
         elif self.algorithm == 'theta-diff':
             modifiedLastLastThetas = self.lastLastThetas # used to do the quick fix later
             # (by Martina:) a quick and dirty fix for this behavior that when the dimmer
@@ -646,8 +794,8 @@ class LoadBalancer:
         self.numLastRequestsPerReplica = self.numRequestsPerReplica[:]
 
     def printProgress(self):
-        modder = int(self.sim.now) % 50
-        modder2 = int(self.sim.now * 10) % 10
+        modder = int(self.sim.now) % 500
+        modder2 = int(self.sim.now * 100) % 100
 
         if modder == 0 and modder2 == 0:
             print self.sim.now

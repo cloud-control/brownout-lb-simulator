@@ -50,6 +50,7 @@ class OpenLoopClient:
 		# If rate is changed from nonzero to zero, event will still be in simulator
 		if self.rate > 0:
 			interval = self.random.expovariate(self.rate)
+			#interval = self.random.uniform(0.00001, (1 / self.rate)*2.0)
 			self.sim.update(interval, self.issueRequest)
 
 	## Called when a request completes
@@ -58,6 +59,8 @@ class OpenLoopClient:
 		self.numCompletedRequests += 1
 		if request.withOptional:
 			self.numCompletedRequestsWithOptional += 1
+		#print request.requestId
+		#print str(self.sim.now - request.createdAt)
 		self.responseTimes.append(self.sim.now - request.createdAt)
 		
 	def setRate(self, rate):
