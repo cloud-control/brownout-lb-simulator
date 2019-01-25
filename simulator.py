@@ -60,6 +60,14 @@ def main():
     parser.add_argument('--scenario',
         help = 'Specify a scenario in which to test the system',
         default = os.path.join(os.path.dirname(sys.argv[0]), 'scenarios', 'replica-steady-1.py'))
+    parser.add_argument('--printout',
+        type = int,
+        help = 'Get printout on simulation progress',
+        default = 1)
+    parser.add_argument('--printsim',
+        type = int,
+        help = "Insert simulation number to print, usable from MC top script to manually keep track of iterations",
+        default=-1)
 
     group = parser.add_argument_group('ac', 'General autoscaler controller options')
     group.add_argument('--ac',
@@ -160,6 +168,7 @@ def main():
                         replicaControllerFactory = replicaControllerFactory,
                         scenario = args.scenario,
                         timeSlice = args.timeSlice,
+                        printout = args.printout,
                         loadBalancingAlgorithm = loadBalancingAlgorithm,
                         cloning=args.cloning,
                         nbrClones=args.nbrClones,
@@ -172,7 +181,10 @@ def main():
                         format(autoScalerControllerFactory, replicaControllerFactory, e))
 
     elapsed_time = time.time() - start_time
-    print("Elapsed time (seconds): " + str(elapsed_time))
+    s = "Elapsed time (seconds): " + str(elapsed_time)
+    if args.printsim >= 0:
+        s = "Simulation {} completed, ".format(args.printsim) + s
+    print(s)
 
 ## Runs a single simulation
 # @param outdir folder in which results should be written
@@ -185,7 +197,7 @@ def main():
 # @param equal_thetas_fast_gain paramater for load-balancing algorithm (TODO: move into LoadBalancingAlgorithm)
 # @param startupDelay a tuple of the form (distribution, param1, param2)
 def runSingleSimulation(outdir, autoScalerControllerFactory, replicaControllerFactory, scenario, timeSlice,
-        loadBalancingAlgorithm, cloning, equal_theta_gain, equal_thetas_fast_gain, startupDelay, nbrClones):
+        printout, loadBalancingAlgorithm, cloning, equal_theta_gain, equal_thetas_fast_gain, startupDelay, nbrClones):
     startupDelayRng = random.Random()
     startupDelayFunc = lambda: \
         getattr(startupDelayRng, startupDelay[0])(*startupDelay[1:])
@@ -200,7 +212,7 @@ def runSingleSimulation(outdir, autoScalerControllerFactory, replicaControllerFa
     if loadBalancingAlgorithm == 'co-op':
         loadBalancer = CoOperativeLoadBalancer(sim, controlPeriod=1.0)
     else:
-        loadBalancer = LoadBalancer(sim, controlPeriod=1.0)
+        loadBalancer = LoadBalancer(sim, controlPeriod=1.0, printout=printout)
         loadBalancer.algorithm = loadBalancingAlgorithm
         sim.cloner.setCloning(cloning)
         sim.cloner.setNbrClones(nbrClones)
@@ -322,8 +334,9 @@ def runSingleSimulation(outdir, autoScalerControllerFactory, replicaControllerFa
     toReport.append(( "maxResponseTime", "{:.4f}".format(max(responseTimes)) ))
     toReport.append(( "stddevResponseTime", "{:.4f}".format(np.std(responseTimes)) ))
 
-    print(*[k for k,v in toReport], sep = ', ')
-    print(*[v for k,v in toReport], sep = ', ')
+    if printout:
+        print(*[k for k,v in toReport], sep = ', ')
+        print(*[v for k,v in toReport], sep = ', ')
 
     sim.output('final-results', ', '.join([k for k,v in toReport]))
     sim.output('final-results', ', '.join([v for k,v in toReport]))
