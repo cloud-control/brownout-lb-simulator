@@ -112,7 +112,7 @@ class Server:
         utilization = (self.getActiveTime() - self.lastActiveTime) / self.reportPeriod
 
         self.utilization = alpha*self.utilization + (1-alpha)*utilization
-        print "util: " + str(self.utilization)
+        #print "util: " + str(self.utilization)
 
         self.lastActiveTime = self.getActiveTime()
 
