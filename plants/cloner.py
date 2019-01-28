@@ -109,20 +109,9 @@ class Cloner:
         #print "Clone " + str(clone.requestId) + " illegal server length: " + str(len(clone.illegalServers))
         return clone
 
-    def setCloneServiceTimes(self, request, mean):
+    def setCloneServiceTimes(self, request):
         if not self.cloning:
             return
-
-        def inRange(minval, maxval, val):
-            if val > maxval:
-                return False
-            if val < minval:
-                return False
-            return True
-
-        corrfactor = 10000.0
-        mu = 0.01
-        sigma = 1
 
         #x_s, cdf = self.calculateCDF(mu, sigma, mean)
 
@@ -137,30 +126,26 @@ class Cloner:
             for i in range(0, len(clones)):
                 if not hasattr(clones[i], 'serviceTime'):
                     #serviceTime = self.random.uniform(mean/corrfactor, mean*corrfactor)
-                    minval = mean/corrfactor
-                    maxval = mean*corrfactor
-                    if corrfactor == 1.0:
-                        serviceTime = mean
-                    else:
-                        #serviceTime = np.random.exponential(0.01)  # zero correlation between clones!
-                        #if serviceTime < 0.00001:
-                        #    print "Service time too small!: " + str(serviceTime)
-                        #serviceTime = self.drawCloneServiceTime(self.x, self.cdf)
-                        slowdown = self.drawDollySlowdown()
-                        #slowdown = 4.7
-                        serviceTime = slowdown*taskSize
-                        serviceTimes.append(serviceTime)
-                        slowdowns.append(slowdown)
-                        #print "clone req " + str(clones[i].requestId) + " service time " + str(serviceTime)
-                        #print "------------------------------------------------------"
-                        #print "Orig service time: " + str(mean)
-                        #print "Clone service time: " + str(serviceTime)
-                        #print "------------------------------------------------------"
-                        #serviceTime = -1.0
-                        #while not inRange(minval, maxval, serviceTime):
-                            #serviceTime = np.random.exponential(0.01)
 
-                        #print "Service time for clone of req id " + str(request.requestId) + " is " + str(serviceTime)
+                    #serviceTime = np.random.exponential(0.01)  # zero correlation between clones!
+                    #if serviceTime < 0.00001:
+                    #    print "Service time too small!: " + str(serviceTime)
+                    #serviceTime = self.drawCloneServiceTime(self.x, self.cdf)
+                    slowdown = self.drawDollySlowdown()
+                    #slowdown = 4.7
+                    serviceTime = slowdown*taskSize
+                    serviceTimes.append(serviceTime)
+                    slowdowns.append(slowdown)
+                    #print "clone req " + str(clones[i].requestId) + " service time " + str(serviceTime)
+                    #print "------------------------------------------------------"
+                    #print "Orig service time: " + str(mean)
+                    #print "Clone service time: " + str(serviceTime)
+                    #print "------------------------------------------------------"
+                    #serviceTime = -1.0
+                    #while not inRange(minval, maxval, serviceTime):
+                        #serviceTime = np.random.exponential(0.01)
+
+                    #print "Service time for clone of req id " + str(request.requestId) + " is " + str(serviceTime)
 
                     #serviceTime = np.random.exponential(0.01) # zero correlation between clones!
 

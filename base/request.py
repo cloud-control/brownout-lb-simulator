@@ -8,9 +8,9 @@ class Request(object):
 	## Variable used for giving IDs to requests for pretty-printing
 	lastRequestId = 1
 	## List of allowed attributes (improves performance and reduces errors)
-	__slots__ = ('requestId', 'arrival', 'queueDeparture', 'completion', 'onCompleted', 'onCanceled', \
-		'originalRequest', 'theta', 'withOptional', 'chosenBackend', 'chosenBackendIndex',
-		'remainingTime', 'createdAt', 'packetRequest', 'avgServiceTimeSetpoint', 'serviceTime', 'illegalServers',
+	__slots__ = ('requestId', 'arrival', 'completion', 'onCompleted', 'onCanceled', \
+		'originalRequest', 'chosenBackend', 'chosenBackendIndex',
+		'remainingTime', 'createdAt', 'serviceTime', 'illegalServers',
 		'isClone', 'lastCheckpoint', 'processorShare', 'isCompleted', 'serverOnCompleted', 'hasWaited')
 	
 	## Constructor

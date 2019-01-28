@@ -2,7 +2,7 @@ from __future__ import print_function
 
 from collections import defaultdict, deque
 import os
-import sys
+import logging
 
 ## Simulation kernel.
 # Implements an event-driven simulator
@@ -21,7 +21,27 @@ class SimulatorKernel:
         self.outputFiles = {}
         ## output directory
         self.outputDirectory = outputDirectory
+        self.logFile = outputDirectory + '/log.txt'
+        self.shouldLog = False
+
         self.cloner = cloner
+
+    def setupLogging(self, shouldLog):
+        self.shouldLog = shouldLog
+        if shouldLog:
+            logging.basicConfig(filename=self.logFile, level=logging.DEBUG)
+            self.logger = logging.getLogger('logger')
+            myhandler = logging.FileHandler(self.logFile)
+            myhandler.setLevel(logging.DEBUG)
+            self.logger.addHandler(myhandler)
+
+    def closeLogging(self):
+        if self.shouldLog:
+            print("Closing logging!")
+            handlers = self.logger.handlers[:]
+            for handler in handlers:
+                handler.close()
+                self.logger.removeHandler(handler)
 
     ## Adds a new event
     # @param delay non-negative float representing in how much time should the
@@ -92,8 +112,8 @@ class SimulatorKernel:
     # @param message the message, first input to String.format
     # @param *args,**kwargs additional arguments to pass to String.format
     def log(self, issuer, message, *args, **kwargs):
-        print("{0:.6f}".format(self.now), str(issuer), \
-            message.format(*args, **kwargs), file = sys.stderr)
+        if self.shouldLog:
+            self.logger.debug("{0:.6f}, ".format(self.now) + str(issuer)+": " + message.format(*args, **kwargs))
 
     ## Output simulation data.
     # This function is designed to simplify outputting metrics from a simulated

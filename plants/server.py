@@ -1,6 +1,7 @@
 from collections import defaultdict, deque
 import random as xxx_random # prevent accidental usage
 import numpy as np
+import scipy.stats
 
 from base.utils import *
 
@@ -21,26 +22,15 @@ class Server:
     # @param timeSlice time slice; a request longer that this will observe
     # context-switching
     # @note The constructor adds an event into the simulator
-    def __init__(self, sim, seed = 1,
-            timeSlice = 0.01, \
-            serviceTimeY = 0.07, serviceTimeN = 0.001, \
-            serviceTimeYVariance = 0.01, serviceTimeNVariance = 0.001, \
-            minimumServiceTime = 0.0001):
-        ## time slice for scheduling requests (server model parameter)
-        #self.timeSlice = timeSlice
-        self.timeSlice = 0.0001
-        ## service time with optional content (server model parameter)
-        self.serviceTimeY = serviceTimeY
-        ## service time without optional content (server model parameter)
-        self.serviceTimeN = serviceTimeN
-        ## service time variance with optional content (server model parameter)
-        self.serviceTimeYVariance = serviceTimeYVariance
-        #self.serviceTimeYVariance = 0.00000001
-        ## service time variance without optional content (server model parameter)
-        self.serviceTimeNVariance = serviceTimeNVariance
-        #self.serviceTimeNVariance = 0.00000001
-        ## minimum service time, despite variance (server model parameter)
-        self.minimumServiceTime = minimumServiceTime
+    def __init__(self, sim, serviceTimeDistribution=None, seed = 1, ):
+
+        self.serviceTimeDistribution = serviceTimeDistribution
+
+        if self.serviceTimeDistribution is None:
+            self.sxModel = True
+        else:
+            self.sxModel = False
+
         ## list of active requests (server model variable)
         self.activeRequests = deque()
         ## max number of active jobs
@@ -51,8 +41,6 @@ class Server:
         self.reportPeriod = 500
         ## latencies during the last report interval
         self.latestLatencies = []
-        ## reference to controller
-        self.controller = None
 
         ## The amount of time this server is active. Useful to compute utilization
         # Since we are in a simulator, this value is hard to use correctly. Use getActiveTime() instead.
@@ -68,12 +56,6 @@ class Server:
 
         ## Reference to simulator
         self.sim = sim
-
-        ## Random number generator
-        self.random = xxx_random.Random()
-        self.random.seed(seed)
-        #print seed
-        np.random.seed(seed)
 
         self.utilization = 0.0
         self.utilCounter = 0
@@ -112,11 +94,9 @@ class Server:
         utilization = (self.getActiveTime() - self.lastActiveTime) / self.reportPeriod
 
         self.utilization = alpha*self.utilization + (1-alpha)*utilization
-        print "util: " + str(self.utilization)
+        #print "util: " + str(self.utilization)
 
         self.lastActiveTime = self.getActiveTime()
-
-        #print str(self) + ": " + str(self.getTotalQueueLength())
 
         # Report
         valuesToOutput = [ \
@@ -184,7 +164,6 @@ class Server:
         #print "Got to request in server with reqId " + str(request.requestId) + "," + str(request.isClone)
 
         request.arrival = self.sim.now
-        self.controller.reportData(True, 0, 0, 0, 0, 0, 0, request.avgServiceTimeSetpoint)
         # Start to serve request if possible
         if len(self.activeRequests) < self.maxActiveJobs:
             self.startRunningRequest(request)
@@ -207,28 +186,14 @@ class Server:
         #print "request() to %s at time %f"%(self.name, self.sim.now)
 
     def drawServiceTime(self, activeRequest):
-        activeRequest.withOptional = True
-        activeRequest.theta = 1.0
         if not hasattr(activeRequest, 'serviceTime'): # 1==1
             #print "Request service time gets set: " + str(activeRequest.requestId)
-            #meanServiceTime, variance = (self.serviceTimeY, self.serviceTimeYVariance) \
-            #    if activeRequest.withOptional else \
-            #    (self.serviceTimeN, self.serviceTimeNVariance)
 
-            a = self.serviceTimeY
-            b = self.serviceTimeN
+            if self.sxModel:
+                self.sim.cloner.setCloneServiceTimes(activeRequest)
+            else:
+                activeRequest.serviceTime = self.serviceTimeDistribution.rvs(1)
 
-            #serviceTime = max(self.random.normalvariate(meanServiceTime, variance), self.minimumServiceTime)
-            #serviceTime = np.random.exponential(meanServiceTime)
-            #serviceTime = self.random.expovariate(1.0/meanServiceTime)
-            #serviceTime = self.random.uniform(a, b)
-            serviceTime = 0.0
-            #print "serviceTime: " + str(serviceTime) + ", " + str(self) + ", req: " + str(activeRequest.requestId)
-            #serviceTime = np.random.uniform(0.000001, meanServiceTime*2.0)
-
-            #activeRequest.serviceTime = serviceTime
-            #print "service time set to " + str(serviceTime)
-            self.sim.cloner.setCloneServiceTimes(activeRequest, serviceTime)
             return activeRequest.serviceTime
         else:
             #print "Request service time already set: " + str(activeRequest.requestId)
@@ -311,12 +276,7 @@ class Server:
             # And completed it
             request.completion = self.sim.now
             self.latestLatencies.append(request.completion - request.arrival)
-            if self.controller:
-                self.controller.reportData(False, request.completion - request.arrival,
-                  self.getTotalQueueLength(), self.serviceTimeY, self.serviceTimeN,
-                request.withOptional, request.completion - request.queueDeparture, request.avgServiceTimeSetpoint)
-                #print "got here 1"
-                request.packetRequest = self.controller.decidePacketRequest()
+
             #print "got here 2"
             request.onCompleted()
             #print "got here 3"

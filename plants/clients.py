@@ -24,9 +24,6 @@ class OpenLoopClient:
 		## Variable that measure the number of requests completed for this user
 		# (metric)
 		self.numCompletedRequests = 0
-		## Variable that measure the number of requests completed for this user
-		# with optional content (metric)
-		self.numCompletedRequestsWithOptional = 0
 		## Store all response times (metric)
 		self.responseTimes = []
 
@@ -57,8 +54,6 @@ class OpenLoopClient:
 	# @param request the request that has been completed
 	def onCompleted(self, request):
 		self.numCompletedRequests += 1
-		if request.withOptional:
-			self.numCompletedRequestsWithOptional += 1
 		#print request.requestId
 		#print str(self.sim.now - request.createdAt)
 		self.responseTimes.append(self.sim.now - request.createdAt)
@@ -124,8 +119,6 @@ class ClosedLoopClient:
 	# @param request the request that has been completed
 	def onCompleted(self, request):
 		self.numCompletedRequests += 1
-		if request.withOptional:
-			self.numCompletedRequestsWithOptional += 1
 		self.responseTimes.append(self.sim.now - request.createdAt)
 		self.think()
 
