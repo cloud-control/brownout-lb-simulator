@@ -7,13 +7,12 @@ from __future__ import division, print_function
 
 import argparse
 import numpy as np
-import random
 import os
 import sys
 import time
 
 from plants import ClosedLoopClient, OpenLoopClient, LoadBalancer, Server, Cloner
-from base import Request, SimulatorKernel
+from base import SimulatorKernel
 from base.utils import *
 
 ## Custom type for argparse to represent a random distribution
@@ -170,9 +169,6 @@ def runSingleSimulation(sim, scenario, loadBalancingAlgorithm, cloning, nbrClone
     def changeActiveServers(at, nbrActive, serverSpeeds):
         def changeActiveServersHandler():
             oldActiveServers = len(loadBalancer.backends)
-            #print("Old active servers was " + str(oldActiveServers))
-
-            #print(serverSpeeds)
 
             nbrDiff = nbrActive - oldActiveServers
 
@@ -195,9 +191,7 @@ def runSingleSimulation(sim, scenario, loadBalancingAlgorithm, cloning, nbrClone
         sim.add(at, changeActiveServersHandler)
 
     def addServer(at, serviceTimeDistribution=None):
-        #print("at is " + str(at))
         def addServerHandler():
-            #print("in handler: at is " + str(at))
             server = Server(sim, serviceTimeDistribution=serviceTimeDistribution)
             servers.append(server)
             loadBalancer.addBackend(server)

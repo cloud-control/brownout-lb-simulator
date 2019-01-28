@@ -134,7 +134,7 @@ class SimulatorKernel:
         outputFile.write(outputLine + "\n")
 
         # kills performance, but reduces experimenter's impatience :D
-        outputFile.flush()
+        #outputFile.flush()
 
     ## Pretty-print the simulator kernel's name
     def __str__(self):

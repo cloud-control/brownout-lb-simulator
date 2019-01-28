@@ -19,12 +19,9 @@ class LoadBalancer:
     # @param initialTheta initial dimmer value to consider before receiving any
     # replies from a server
     def __init__(self, sim, seed = 1, printout = 1):
-        ## control period (control parameter)
-        #self.controlPeriod = controlPeriod # second
-        self.controlPeriod = 2.0
+        self.progressPeriod = 1000.0
         ## what algorithm to use
-        self.algorithm = 'theta-diff'
-
+        self.algorithm = 'random'
         ## Simulator to which the load-balancer is attached
         self.sim = sim
         ## Separate random number generator
@@ -32,22 +29,8 @@ class LoadBalancer:
         self.random.seed(seed)
         ## list of back-end servers to which requests can be directed
         self.backends = []
-        ## weights determining how to load-balance requests (control output)
-        self.weights = []
-        ## latencies measured during last control period (metric)
-        self.lastLatencies = []
-        self.lastLastLatencies = []
         ## queue length of each replica (control input for SQF algorithm)
         self.queueLengths = []
-        ## number of requests, with or without optional content, served since
-        # the load-balancer came online (metric)
-        self.numRequests = 0
-        self.lastNumRequests = 0
-        ## number of requests served by each replica (metric).
-        self.numRequestsPerReplica = []
-        ## number of requests served by each replica before the last control period (metric).
-        self.numLastRequestsPerReplica = []
-        self.iteration = 1
         ## Backends that were removed. They are still tracked to ensure
         # their request queue is properly drained. The keys are the removed
         # backends, whereas the value is an object containing removal-relevant information,
@@ -56,14 +39,13 @@ class LoadBalancer:
         self.removedBackends = {}
 
         self.reqNbr = 0
-        self.backend_requests = []
 
         self.idleIndexes = []
 
         self.centralQueue = []
 
-        # Launch control loop
-        self.sim.add(0, self.runControlLoop)
+        # Launch progress loop
+        self.sim.add(0, self.runProgressLoop)
 
         self.printout = printout
 
@@ -72,8 +54,6 @@ class LoadBalancer:
     def addBackend(self, backend):
         self.backends.append(backend)
         self.queueLengths.append(0)
-        self._resetDecisionVariables(True)
-
 
     ## Remove a backend
     # @param backend backend server to remove
@@ -83,7 +63,6 @@ class LoadBalancer:
         queueLength = self.queueLengths[backendIndex]
         del self.backends[backendIndex]
         del self.queueLengths[backendIndex]
-        self._resetDecisionVariables(False)
 
         if queueLength > 0:
             removedBackendInfo = dict(
@@ -94,29 +73,9 @@ class LoadBalancer:
         else:
             if onShutdownCompleted:	onShutdownCompleted()
 
-    ## Reset the decision variables
-    def _resetDecisionVariables(self, serverAdded):
-        n = len(self.backends)
-
-        if serverAdded:
-            self.lastLatencies.append([])
-            self.lastQueueLengths.append(0)
-            self.numRequestsPerReplica.append(0)
-            self.numLastRequestsPerReplica.append(0)
-            self.backend_requests.append(0)
-        else:
-            del self.lastLatencies[-1]
-            del self.lastQueueLengths[-1]
-            del self.numRequestsPerReplica[-1]
-            del self.numLastRequestsPerReplica[-1]
-            del self.backend_requests[-1]
-
-        assert len(self.queueLengths) == n
-
     ## Handles a request.
     # @param request the request to handle
     def request(self, request):
-        self.sim.log(self, "Got to LB request ffs")
         #self.sim.log(self, "Got request {0}", request)
         if not hasattr(request, 'arrival'):
             request.arrival = self.sim.now
@@ -130,7 +89,6 @@ class LoadBalancer:
         elif self.algorithm == 'RR':
             # round robin
             chosenBackendIndex = self.reqNbr % len(self.backends)
-            self.backend_requests[chosenBackendIndex] += 1
 
             self.reqNbr += 1
 
@@ -141,34 +99,25 @@ class LoadBalancer:
             chosenBackendIndex = self.random.choice(shortestIndexes)
 
         elif self.algorithm == 'clone-SQF':
-            #print "got to clone sqf LB-method"
             if hasattr(request, 'illegalServers'):
                 legalServers = [queue for index, queue in enumerate(self.queueLengths) if index not in request.illegalServers]
-                #print legalServers
                 shortestQueue = min(legalServers)
                 shortestIndexes = [i for i, x in enumerate(self.queueLengths) if (x == shortestQueue) and i not in request.illegalServers]
-                #print "Clone with reqid " + str(request.requestId) + " can be sent to " + str(legalServers)
             else:
                 shortestQueue = min(self.queueLengths)
                 shortestIndexes = [i for i, x in enumerate(self.queueLengths) if (x == shortestQueue)]
 
             # choose replica with shortest queue, choose randomly between the shortest
             chosenBackendIndex = self.random.choice(shortestIndexes)
-            #print self.queueLengths
 
-        elif (self.algorithm == 'clone-random') or (self.algorithm == 'extremum-clone-random'):
-            #print "got to clone sqf LB-method"
+        elif self.algorithm == 'clone-random':
             if hasattr(request, 'illegalServers'):
                 legalIndexes = [index for index, queue in enumerate(self.queueLengths) if index not in request.illegalServers]
-                #print "Clone with reqid " + str(request.requestId) + " can be sent to " + str(legalServers)
             else:
                 legalIndexes = range(0, len(self.backends))
 
             # choose random replica among the legal ones
             chosenBackendIndex = self.random.choice(legalIndexes)
-            #print request.requestId
-            #print chosenBackendIndex
-            #print self.queueLengths
 
         elif self.algorithm == 'central-queue':
             #print self.queueLengths
@@ -237,11 +186,7 @@ class LoadBalancer:
         request.chosenBackend = self.backends[chosenBackendIndex]
         request.chosenBackendIndex = chosenBackendIndex
         self.queueLengths[chosenBackendIndex] += 1
-        self.numRequestsPerReplica[chosenBackendIndex] += 1
 
-        #print "Dispatching with req id " + str(request.requestId) + "," + str(request.isClone) + " to " + str(chosenBackendIndex)
-        #print "ChosenBackendIndex is " + str(chosenBackendIndex)
-        #print "self.queueLengths: " + str(self.queueLengths)
         if not request.isClone:
             newRequest = Request()
             newRequest.originalRequest = request
@@ -260,45 +205,23 @@ class LoadBalancer:
             self.tryCloneRequest(request)
             self.backends[chosenBackendIndex].request(request)
 
-
     def tryCloneRequest(self, request):
-        #print "got to tryCloneRequest"
-
-        #print self.sim.now
-        #print "Cloning request with id " + str(request.requestId)
-
         clone = self.sim.cloner.clone(request, self.queueLengths, self.backends)
-        # Dispatch the new clone
+
         if clone:
-            #print "Cloned request " + str(request.requestId)
+            #self.sim.log(self, "Cloned request " + str(request.requestId))
             self.request(clone)
 
-
     def onCanceled(self, request):
-        #print "LB: onCanceled with req id " + str(request.requestId) + "," + str(request.isClone)
+        #self.sim.log(self, "onCanceled with req id " + str(request.requestId) + "," + str(request.isClone))
         chosenBackendIndex = self.backends.index(request.chosenBackend)
-        #print "ChosenBackendIndex is " + str(chosenBackendIndex)
-        #print "self.queueLengths before: " + str(self.queueLengths)
+        #self.sim.log(self, "ChosenBackendIndex is " + str(chosenBackendIndex))
         self.queueLengths[chosenBackendIndex] -= 1
-        #print "self.queueLengths after: " + str(self.queueLengths)
 
     ## Handles request completion.
     # Stores piggybacked dimmer values and calls orginator's onCompleted()
     def onCompleted(self, request):
-        #print "LB: onCompleted with req id " + str(request.requestId) + "," + str(request.isClone)
-
-        #print "self.queueLengths before" + str(self.queueLengths)
-
-        #print "In loadbalancers onCompleted()"
-        #print "Request: " + str(request.requestId) + "," + str(request.isClone)
-        #print "got here 3"
-
-        self.numRequests += 1
-        #print "got here 4"
-        #print "got here 5"
-
-        #request = request.originalRequest
-        #request.theta = theta
+        #self.sim.log(self, "onCompleted with req id " + str(request.requestId) + "," + str(request.isClone))
 
         # Store stats
         request.completion = self.sim.now
@@ -313,26 +236,20 @@ class LoadBalancer:
                 if onShutdownCompleted: onShutdownCompleted()
         else:
             chosenBackendIndex = self.backends.index(request.chosenBackend)
-            #print "ChosenBackendIndex is " + str(chosenBackendIndex)
+            #self.sim.log(self, "ChosenBackendIndex is " + str(chosenBackendIndex))
             responseTime = request.completion - request.arrival
-            self.lastLatencies[chosenBackendIndex].append(responseTime)
 
             # Store response time
             valuesToOutput = [responseTime, chosenBackendIndex]
             self.sim.output(str(self) + '-allReqs', ','.join(["{0:.5f}".format(value) for value in valuesToOutput]))
 
             self.queueLengths[chosenBackendIndex] -= 1
-            #print "self.queueLengths after" + str(self.queueLengths)
 
         request.isCompleted = True
         self.sim.cloner.cancelAllClones(request)
 
         # Call original onCompleted
         request.originalRequest.onCompleted()
-        #print "LB: OnComplete: " + str(request.requestId) + "," + str(request.isClone)
-        #print "LB: OnComplete: " + str(request.remainingTime)
-
-        #print self.algorithm
 
         if self.algorithm == 'central-queue':
             #print "Got to dispatching next req!"
@@ -344,35 +261,11 @@ class LoadBalancer:
                 #print "Dispatching waiting req " + str(waitingRequest.requestId)
                 self.sim.add(0, lambda: self.request(waitingRequest))
 
-    ## Run control loop.
-    # Takes as input the dimmers and computes new weights. Also outputs
-    # CVS-formatted statistics through the Simulator's output routine.
-    def runControlLoop(self):
-
+    def runProgressLoop(self):
         if self.printout:
-            self.printProgress()
-
-        self.lastNumRequests = self.numRequests
-        self.iteration += 1
-        self.sim.add(self.controlPeriod, self.runControlLoop)
-
-        valuesToOutput = [ self.sim.now ] + \
-            [ avg(latencies) for latencies in self.lastLatencies ] + \
-            [ max(latencies + [0]) for latencies in self.lastLatencies ] + \
-            [ self.numRequests]
-        self.sim.output(self, ','.join(["{0:.5f}".format(value) \
-            for value in valuesToOutput]))
-
-        self.lastQueueLengths = self.queueLengths[:]
-        self.lastLatencies = [ [] for _ in self.backends ]
-        self.numLastRequestsPerReplica = self.numRequestsPerReplica[:]
-
-    def printProgress(self):
-        modder = int(self.sim.now) % 500
-        modder2 = int(self.sim.now * 100) % 100
-
-        if modder == 0 and modder2 == 0:
             print self.sim.now
+
+        self.sim.add(self.progressPeriod, self.runProgressLoop)
 
     ## Pretty-print load-balancer's name.
     def __str__(self):
