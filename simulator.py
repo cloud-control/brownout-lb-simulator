@@ -52,9 +52,18 @@ def main():
     parser.add_argument('--scenario',
         help = 'Specify a scenario in which to test the system',
         default = os.path.join(os.path.dirname(sys.argv[0]), 'scenarios', 'replica-steady-1.py'))
+
     parser.add_argument('--logging',
                         help='Specify if logging should be activated',
                         default=0)
+    parser.add_argument('--printout',
+        type = int,
+        help = 'Get printout on simulation progress',
+        default = 1)
+    parser.add_argument('--printsim',
+        type = int,
+        help = "Insert simulation number to print, usable from MC top script to manually keep track of iterations",
+        default=-1)
 
     # Add load-balancer specific command-line arguments
     group = parser.add_argument_group('lb', 'Load-balancer options')
@@ -98,27 +107,30 @@ def main():
                 cloning=args.cloning,
                 nbrClones=args.nbrClones,
                 logging=args.logging,
+                printout=args.printout,
             )
         except Exception as e:
-            print("Simulation aborted, closing logging:")
-            print(e.message)
+            print("Caught exception: {0}".format(e))
             sim.closeLogging()
 
         #print("Caught exception {0}".format(e))
 
     elapsed_time = time.time() - start_time
-    print("Elapsed time (seconds): " + str(elapsed_time))
+    s = "Elapsed time (seconds): " + str(elapsed_time)
+    if args.printsim >= 0:
+        s = "Simulation {} completed, ".format(args.printsim) + s
+    print(s)
 
 ## Runs a single simulation
 # @param outdir folder in which results should be written
 # @param scenario file containing the scenario
 # @param loadBalancingAlgorithm load-balancing algorithm name
-def runSingleSimulation(sim, scenario, loadBalancingAlgorithm, cloning, nbrClones, logging):
+def runSingleSimulation(sim, scenario, loadBalancingAlgorithm, cloning, nbrClones, logging, printout):
 
     servers = []
     clients = []
 
-    loadBalancer = LoadBalancer(sim)
+    loadBalancer = LoadBalancer(sim, printout)
     loadBalancer.algorithm = loadBalancingAlgorithm
     sim.cloner.setCloning(cloning)
     sim.cloner.setNbrClones(nbrClones)
@@ -177,7 +189,7 @@ def runSingleSimulation(sim, scenario, loadBalancingAlgorithm, cloning, nbrClone
 
             timeDiff = 0.01
             while nbrDiff > 0:
-                addServer(at=timeDiff*i, y=serverSpeeds[i][0], n=serverSpeeds[i][1])
+                addServer(at=timeDiff*i)
                 i += 1
                 nbrDiff -= 1
         sim.add(at, changeActiveServersHandler)
@@ -218,8 +230,9 @@ def runSingleSimulation(sim, scenario, loadBalancingAlgorithm, cloning, nbrClone
     toReport.append(( "maxResponseTime", "{:.4f}".format(max(responseTimes)) ))
     toReport.append(( "stddevResponseTime", "{:.4f}".format(np.std(responseTimes)) ))
 
-    print(*[k for k,v in toReport], sep = ', ')
-    print(*[v for k,v in toReport], sep = ', ')
+    if printout:
+        print(*[k for k,v in toReport], sep = ', ')
+        print(*[v for k,v in toReport], sep = ', ')
 
     sim.output('final-results', ', '.join([k for k,v in toReport]))
     sim.output('final-results', ', '.join([v for k,v in toReport]))

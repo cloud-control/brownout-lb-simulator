@@ -1,4 +1,5 @@
 from __future__ import division
+import os
 import csv
 import math
 import numpy as np
@@ -6,6 +7,7 @@ import random as xxx_random # prevent accidental usage
 import scipy.stats as st
 from scipy import integrate
 from scipy.stats import norm
+
 
 from base import Request
 from base.utils import *
@@ -40,9 +42,9 @@ class Cloner:
 
         self.backends = []
 
-        self.cdf = np.asarray(self.readCsv('/local/home/tommi/CloudControl/cloning/brownout-lb-simulator/matlab/umin.csv'))
-        self.x = np.asarray(self.readCsv('/local/home/tommi/CloudControl/cloning/brownout-lb-simulator/matlab/x.csv'))
-        self.dolly = np.asarray(self.readCsv('/local/home/tommi/CloudControl/cloning/brownout-lb-simulator/matlab/dolly.csv'))
+        self.cdf = np.asarray(self.readCsv('matlab/umin.csv'))
+        self.x = np.asarray(self.readCsv('matlab/x.csv'))
+        self.dolly = np.asarray(self.readCsv('matlab/dolly.csv'))
 
     def readCsv(self, filename):
         floatvector = []

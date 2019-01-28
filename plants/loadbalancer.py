@@ -18,7 +18,7 @@ class LoadBalancer:
     # @param controlPeriod control period
     # @param initialTheta initial dimmer value to consider before receiving any
     # replies from a server
-    def __init__(self, sim, seed = 1):
+    def __init__(self, sim, seed = 1, printout = 1):
         ## control period (control parameter)
         #self.controlPeriod = controlPeriod # second
         self.controlPeriod = 2.0
@@ -64,6 +64,8 @@ class LoadBalancer:
 
         # Launch control loop
         self.sim.add(0, self.runControlLoop)
+
+        self.printout = printout
 
     ## Adds a new back-end server and initializes decision variables.
     # @param backend the server to add
@@ -347,7 +349,8 @@ class LoadBalancer:
     # CVS-formatted statistics through the Simulator's output routine.
     def runControlLoop(self):
 
-        self.printProgress()
+        if self.printout:
+            self.printProgress()
 
         self.lastNumRequests = self.numRequests
         self.iteration += 1
