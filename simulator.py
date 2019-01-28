@@ -112,10 +112,8 @@ def main():
             print("Caught exception: {0}".format(e))
             sim.closeLogging()
 
-        #print("Caught exception {0}".format(e))
-
     elapsed_time = time.time() - start_time
-    s = "Elapsed time (seconds): " + str(elapsed_time)
+    s = "Elapsed time (seconds): {:.3f}".format(elapsed_time)
     if args.printsim >= 0:
         s = "Simulation {} completed, ".format(args.printsim) + s
     print(s)
@@ -210,7 +208,8 @@ def runSingleSimulation(sim, scenario, loadBalancingAlgorithm, cloning, nbrClone
 
     if 'simulateUntil' not in otherParams:
         raise Exception("Scenario does not define end-of-simulation")
-    sim.run(until = otherParams['simulateUntil'])
+    simulationTime = otherParams['simulateUntil']
+    sim.run(until = simulationTime)
 
     # Report end results
     responseTimes = reduce(lambda x,y: x+y, [client.responseTimes for client in clients], []) + openLoopClient.responseTimes
@@ -224,12 +223,24 @@ def runSingleSimulation(sim, scenario, loadBalancingAlgorithm, cloning, nbrClone
     toReport.append(( "maxResponseTime", "{:.4f}".format(max(responseTimes)) ))
     toReport.append(( "stddevResponseTime", "{:.4f}".format(np.std(responseTimes)) ))
 
+    # Calculate utils
+    utils = {}
+    for server in loadBalancer.backends:
+        utils[server.serverId] = "{:.4f}".format(server.activeTime / simulationTime)
+        #toReport.append((str(server) + " util:", "{:.4f}".format(server.activeTime / simulationTime)))
+
+    sim.output('final-results', ', '.join([k for k,v in toReport]))
+    sim.output('final-results', ', '.join([v for k,v in toReport]))
+
     if printout:
         print(*[k for k,v in toReport], sep = ', ')
         print(*[v for k,v in toReport], sep = ', ')
 
-    sim.output('final-results', ', '.join([k for k,v in toReport]))
-    sim.output('final-results', ', '.join([v for k,v in toReport]))
+    for key in sorted(utils.iterkeys()):
+        s = "server %s util: %s" % (key, utils[key])
+        if printout:
+            print(s)
+        sim.output('final-results', s)
 
 if __name__ == "__main__":
     main() # pragma: no cover
