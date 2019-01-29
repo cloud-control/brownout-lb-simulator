@@ -7,9 +7,9 @@ PROCESSES = 4
 # Add simulation commands as strings
 simulations = []
 
-for k in range(200):
-    simulations.append("./simulator.py --rc static --lb RIQ-d \
-        --scenario scenarios/clone-test.py --cloning 1 --nbrClones 1 --printout 0 --outdir result/run{}".format(k))
+for k in range(50):
+    simulations.append("./simulator.py  --lb RIQ-d --scenario scenarios/clone-test.py --cloning 1 --nbrClones 1 \
+        --printout 0 --outdir result/run{}".format(k))
 
 # Run the simulations
 pool = Pool(processes=PROCESSES)
