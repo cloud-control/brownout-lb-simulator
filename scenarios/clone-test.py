@@ -3,10 +3,6 @@ import numpy as np
 import sys
 from base.numerical_dist import NumericalDistribution
 
-print(dist)
-print(serviceRate)
-print(arrivalRateFrac)
-
 nbrServers = 12
 for i in range(0, nbrServers):
 
@@ -27,8 +23,6 @@ for i in range(0, nbrServers):
     #dist.random_state = np.random.RandomState(seed=i*3)
 
     addServer(at=0.0, serviceTimeDistribution=serviceTimeDistribution)
-
-print("Got here 3")
 
 setRate(at = 0, rate = arrivalRateFrac*serviceRate*nbrServers)
 
