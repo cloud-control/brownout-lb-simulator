@@ -64,16 +64,27 @@ def main():
         help = "Insert simulation number to print, usable from MC top script to manually keep track of iterations",
         default=-1)
 
+    # Add scenario specific arguments
+    group_s = parser.add_argument_group('scen', 'Scenario options')
+    group_s.add_argument('--serviceRate',
+        type = float,
+        help = 'Enables setting the service rate from command line',
+        default = -1)
+    group_s.add_argument('--arrivalRate',
+        type = float,
+        help = 'Enables setting the arrival rate fraction from command line',
+        default = 0.3)
+
     # Add load-balancer specific command-line arguments
-    group = parser.add_argument_group('lb', 'Load-balancer options')
-    group.add_argument('--lb',
+    group_lb = parser.add_argument_group('lb', 'Load-balancer options')
+    group_lb.add_argument('--lb',
         help = 'Load-balancer algorithm or ALL: ' + ' '.join(LoadBalancer.ALGORITHMS),
         default = 'ALL')
-    group.add_argument('--cloning',
+    group_lb.add_argument('--cloning',
         type = float,
         help = '1 if cloning is activated, 0 otherwise',
         default = 0)
-    group.add_argument('--nbrClones',
+    group_lb.add_argument('--nbrClones',
         type = int,
         help = 'Specify nbr clones, 1 is default (aka no cloning)',
         default = 1)
@@ -107,6 +118,8 @@ def main():
                 nbrClones=args.nbrClones,
                 logging=args.logging,
                 printout=args.printout,
+                serviceRate=args.serviceRate,
+                arrivalRate=args.arrivalRate
             )
         except Exception as e:
             print("Caught exception: {0}".format(e))
@@ -122,12 +135,13 @@ def main():
 # @param outdir folder in which results should be written
 # @param scenario file containing the scenario
 # @param loadBalancingAlgorithm load-balancing algorithm name
-def runSingleSimulation(sim, scenario, loadBalancingAlgorithm, cloning, nbrClones, logging, printout):
+def runSingleSimulation(sim, scenario, loadBalancingAlgorithm, cloning, nbrClones, logging, printout, serviceRate,
+                        arrivalRate):
 
     servers = []
     clients = []
 
-    loadBalancer = LoadBalancer(sim, printout)
+    loadBalancer = LoadBalancer(sim, printout=printout)
     loadBalancer.algorithm = loadBalancingAlgorithm
     sim.cloner.setCloning(cloning)
     sim.cloner.setNbrClones(nbrClones)
