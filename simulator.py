@@ -70,6 +70,10 @@ def main():
         type = str,
         help = 'Define service rate distribution',
         default = 'expon')
+    group_s.add_argument('--path',
+                         type=str,
+                         help='Define service rate distribution path',
+                         default='')
     group_s.add_argument('--serviceRate',
         type = float,
         help = 'Enables setting the service rate from command line',
@@ -123,6 +127,7 @@ def main():
                 logging=args.logging,
                 printout=args.printout,
                 dist=args.dist,
+                distpath = args.path,
                 serviceRate=args.serviceRate,
                 arrivalRateFrac=args.arrivalRateFrac
             )
@@ -140,7 +145,7 @@ def main():
 # @param outdir folder in which results should be written
 # @param scenario file containing the scenario
 # @param loadBalancingAlgorithm load-balancing algorithm name
-def runSingleSimulation(sim, scenario, loadBalancingAlgorithm, cloning, nbrClones, logging, printout, dist, serviceRate,
+def runSingleSimulation(sim, scenario, loadBalancingAlgorithm, cloning, nbrClones, logging, printout, dist, distpath, serviceRate,
                         arrivalRateFrac):
 
     servers = []

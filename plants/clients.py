@@ -60,6 +60,7 @@ class OpenLoopClient:
 		
 	def setRate(self, rate):
 		self.rate = rate
+		print "self.rate is " + str(self.rate)
 		self.scheduleRequest()
 
 	## Pretty-print client's name
