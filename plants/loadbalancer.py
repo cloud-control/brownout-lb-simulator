@@ -19,7 +19,7 @@ class LoadBalancer:
     # @param initialTheta initial dimmer value to consider before receiving any
     # replies from a server
     def __init__(self, sim, seed = 1, printout = 1):
-        self.progressPeriod = 1000.0
+        self.progressPeriod = 1000000.0
         ## what algorithm to use
         self.algorithm = 'random'
         ## Simulator to which the load-balancer is attached

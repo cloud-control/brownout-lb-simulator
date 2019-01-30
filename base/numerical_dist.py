@@ -7,18 +7,16 @@ import random as xxx_random
 class NumericalDistribution:
 
     def __init__(self, cdf_location=None, seed=1):
-        #print "Got here 1"
         cdf = np.asarray(self.readCsv(cdf_location))
-        #print cdf
         self.cdf_x = cdf[:, 0]
-        #print self.cdf_x
         self.cdf_y = cdf[:, 1]
-        #print self.cdf_y
-        self.h = 0.00001
-        self.icdfSize = 99999
-        self.icdf = {}
-        self.invertCdf()
-        #print "Got here 2"
+
+        # Uncomment here if to use pre-inverted cdf
+        #self.icdf = {}
+        #self.invertCdf()
+        #self.h = 0.00001
+        #self.icdfSize = 99999
+
         self.random = xxx_random.Random()
         self.random.seed(seed)
 
@@ -29,8 +27,12 @@ class NumericalDistribution:
             self.icdf[point] = invertedPoint
 
     def rvs(self):
-        key = float(self.random.randint(0, self.icdfSize-1)*self.h)
-        return self.icdf[key]
+        # Uncomment here if to use pre-inverted cdf
+        #key = float(self.random.randint(0, self.icdfSize-1)*self.h)
+        #return self.icdf[key]
+
+        point = self.random.random()
+        return self.invertPoint(point)
 
     def invertPoint(self, point):
         N = self.cdf_x.size
