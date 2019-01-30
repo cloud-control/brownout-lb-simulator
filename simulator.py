@@ -66,13 +66,17 @@ def main():
 
     # Add scenario specific arguments
     group_s = parser.add_argument_group('scen', 'Scenario options')
+    group_s.add_argument('--dist',
+        type = str,
+        help = 'Define service rate distribution',
+        default = 'expon')
     group_s.add_argument('--serviceRate',
         type = float,
         help = 'Enables setting the service rate from command line',
-        default = -1)
-    group_s.add_argument('--arrivalRate',
+        default = 1.0)
+    group_s.add_argument('--arrivalRateFrac',
         type = float,
-        help = 'Enables setting the arrival rate fraction from command line',
+        help = 'Enables setting the arrival rate fraction of servers*serviceRate from command line',
         default = 0.3)
 
     # Add load-balancer specific command-line arguments
@@ -118,8 +122,9 @@ def main():
                 nbrClones=args.nbrClones,
                 logging=args.logging,
                 printout=args.printout,
+                dist=args.dist,
                 serviceRate=args.serviceRate,
-                arrivalRate=args.arrivalRate
+                arrivalRateFrac=args.arrivalRateFrac
             )
         except Exception as e:
             print("Caught exception: {0}".format(e))
@@ -135,8 +140,8 @@ def main():
 # @param outdir folder in which results should be written
 # @param scenario file containing the scenario
 # @param loadBalancingAlgorithm load-balancing algorithm name
-def runSingleSimulation(sim, scenario, loadBalancingAlgorithm, cloning, nbrClones, logging, printout, serviceRate,
-                        arrivalRate):
+def runSingleSimulation(sim, scenario, loadBalancingAlgorithm, cloning, nbrClones, logging, printout, dist, serviceRate,
+                        arrivalRateFrac):
 
     servers = []
     clients = []

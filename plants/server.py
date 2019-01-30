@@ -1,3 +1,4 @@
+import random
 from collections import deque
 
 ## Represents a brownout compliant server.
@@ -91,6 +92,7 @@ class Server:
             if self.sxModel:
                 self.sim.cloner.setCloneServiceTimes(activeRequest)
             else:
+                #activeRequest.serviceTime = random.expovariate(1.0)
                 activeRequest.serviceTime = float(self.serviceTimeDistribution.rvs())
 
             return activeRequest.serviceTime
