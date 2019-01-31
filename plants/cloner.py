@@ -72,7 +72,7 @@ class Cloner:
 
         for i in range(0, len(clones)):
             clone = clones[i]
-            if not hasattr(clone, 'isCompleted'):
+            if not hasattr(clone, 'isCompleted') and hasattr(clone, 'chosenBackend'):
                 clone.chosenBackend.onCanceled(clone)
 
         self.deleteClones(request)

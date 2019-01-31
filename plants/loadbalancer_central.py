@@ -4,16 +4,16 @@ import random as xxx_random # prevent accidental usage
 from base import Request
 
 
-## Simulates a load-balancer.
+## Simulates a load-balancer with a central queue.
 # The load-balancer is assumed to take zero time for its decisions.
-class LoadBalancer:
+class LoadBalancerCentralQueue:
     ## Supported load-balancing algorithms.
-    ALGORITHMS = "SQF clone-SQF random RR clone-random RIQ-d central-queue".split()
+    ALGORITHMS = "central-queue".split()
 
     def __init__(self, sim, seed = 1, printout = 1):
         self.progressPeriod = 1000000.0
         ## what algorithm to use
-        self.algorithm = 'random'
+        self.algorithm = 'central-queue'
         ## Simulator to which the load-balancer is attached
         self.sim = sim
         ## Separate random number generator
@@ -30,11 +30,7 @@ class LoadBalancer:
         # queue is drained.
         self.removedBackends = {}
 
-        self.reqNbr = 0
-
-        self.idleIndexes = []
-
-        self.centralQueue = []
+        self.waitingQueue = []
 
         # Launch progress loop
         self.sim.add(0, self.runProgressLoop)
@@ -65,94 +61,33 @@ class LoadBalancer:
         else:
             if onShutdownCompleted:	onShutdownCompleted()
 
-    ## Handles a request.
-    # @param request the request to handle
     def request(self, request):
-        #self.sim.log(self, "Got request {0}", request)
+        #print "New req arriving to simulator"
         if not hasattr(request, 'arrival'):
             request.arrival = self.sim.now
         if not hasattr(request, 'isClone'):
             request.isClone = False
 
-        if self.algorithm == 'random':
-            chosenBackendIndex = \
-                self.random.choice(range(0, len(self.backends)))
+        self.waitingQueue.append(request)
+        self.forwardRequest()
 
-        elif self.algorithm == 'RR':
-            # round robin
-            chosenBackendIndex = self.reqNbr % len(self.backends)
+    def forwardRequest(self, clonedRequest=None):
 
-            self.reqNbr += 1
-
-        elif self.algorithm == 'SQF':
-            # choose replica with shortest queue, choose randomly between the shortest
-            shortestQueue = min(self.queueLengths)
-            shortestIndexes = [i for i, x in enumerate(self.queueLengths) if x == shortestQueue]
-            chosenBackendIndex = self.random.choice(shortestIndexes)
-
-        elif self.algorithm == 'clone-SQF':
-            if hasattr(request, 'illegalServers'):
-                legalServers = [queue for index, queue in enumerate(self.queueLengths) if index not in request.illegalServers]
-                shortestQueue = min(legalServers)
-                shortestIndexes = [i for i, x in enumerate(self.queueLengths) if (x == shortestQueue) and i not in request.illegalServers]
-            else:
-                shortestQueue = min(self.queueLengths)
-                shortestIndexes = [i for i, x in enumerate(self.queueLengths) if (x == shortestQueue)]
-
-            # choose replica with shortest queue, choose randomly between the shortest
-            chosenBackendIndex = self.random.choice(shortestIndexes)
-
-        elif self.algorithm == 'clone-random':
-            if hasattr(request, 'illegalServers'):
-                legalIndexes = [index for index, queue in enumerate(self.queueLengths) if index not in request.illegalServers]
-            else:
-                legalIndexes = range(0, len(self.backends))
-
-            # choose random replica among the legal ones
-            chosenBackendIndex = self.random.choice(legalIndexes)
-
-        elif self.algorithm == 'RIQ-d':
-            #print "got to clone sqf LB-method"
-            legalIndexes = []
-            if not request.isClone:
-                # First original request, get idle server indexes
-                d = 12
-                serverIndexes = self.random.sample(xrange(0, len(self.queueLengths)), d)
-                #print serverIndexes
-                servers = [(index, queue) for index, queue in enumerate(self.queueLengths) if index in serverIndexes]
-                #print servers
-                self.idleIndexes = [index for index, queue in servers if queue == 0]
-                #print self.idleIndexes
-                if len(self.idleIndexes) == 0:
-                    self.sim.cloner.setNbrClones(1)
-                    legalIndexes = serverIndexes
-                else:
-                    self.sim.cloner.setNbrClones(len(self.idleIndexes))
-                    #self.sim.cloner.setNbrClones(1)
-                    legalIndexes = self.idleIndexes
-                #print self.idleIndexes
-            if hasattr(request, 'illegalServers'):
-                legalIndexes = [index for index in self.idleIndexes if index not in request.illegalServers]
-                #print legalIndexes
-                #print "Clone with reqid " + str(request.requestId) + " can be sent to " + str(legalServers)
-            elif request.isClone:
-                legalIndexes = self.idleIndexes
-
-            # choose random replica among the legal ones
-            chosenBackendIndex = self.random.choice(legalIndexes)
-            #print chosenBackendIndex
-            #print self.queueLengths
-
-        else:
-            raise Exception("Unknown load-balancing algorithm " + self.algorithm)
-
-        if chosenBackendIndex < 0:
-            # No server chosen, return
+        idleIndex = self.getRandomIdleIndex()
+        if idleIndex < 0:
             return
+        #print "idle index chosen: " + str(idleIndex)
 
-        request.chosenBackend = self.backends[chosenBackendIndex]
-        request.chosenBackendIndex = chosenBackendIndex
-        self.queueLengths[chosenBackendIndex] += 1
+        if clonedRequest:
+            self.sendRequest(clonedRequest, idleIndex)
+        elif len(self.waitingQueue) > 0:
+            request = self.waitingQueue.pop(0)
+            self.sendRequest(request, idleIndex)
+
+    def sendRequest(self, request, idleIndex):
+        request.chosenBackend = self.backends[idleIndex]
+        request.chosenBackendIndex = idleIndex
+        self.queueLengths[idleIndex] += 1
 
         if not request.isClone:
             newRequest = Request()
@@ -161,23 +96,34 @@ class LoadBalancer:
 
             newRequest.isClone = request.isClone
             newRequest.chosenBackend = request.chosenBackend
-            newRequest.chosenBackendIndex = chosenBackendIndex
+            newRequest.chosenBackendIndex = idleIndex
             newRequest.onCompleted = lambda: self.onCompleted(newRequest)
             newRequest.onCanceled = lambda: self.onCanceled(newRequest)
             self.tryCloneRequest(newRequest)
-            self.backends[chosenBackendIndex].request(newRequest)
+            self.backends[idleIndex].request(newRequest)
         else:
             request.onCompleted = lambda: self.onCompleted(request)
             request.onCanceled = lambda: self.onCanceled(request)
             self.tryCloneRequest(request)
-            self.backends[chosenBackendIndex].request(request)
+            self.backends[idleIndex].request(request)
+
+    def getRandomIdleIndex(self):
+        idleIndexes = [i for i, x in enumerate(self.queueLengths) if (x == 0)]
+        #print "idle indexes: " + str(idleIndexes)
+
+        if len(idleIndexes) > 0:
+            return self.random.choice(idleIndexes)
+        else:
+            #print "All servers busy, sending -1 as index!"
+            return -1
 
     def tryCloneRequest(self, request):
         clone = self.sim.cloner.clone(request)
 
         if clone:
             #self.sim.log(self, "Cloned request " + str(request.requestId))
-            self.request(clone)
+            #print "Forwarding clone"
+            self.forwardRequest(clone)
 
     def onCanceled(self, request):
         #self.sim.log(self, "onCanceled with req id " + str(request.requestId) + "," + str(request.isClone))
@@ -189,7 +135,7 @@ class LoadBalancer:
     # Stores piggybacked dimmer values and calls orginator's onCompleted()
     def onCompleted(self, request):
         #self.sim.log(self, "onCompleted with req id " + str(request.requestId) + "," + str(request.isClone))
-
+        #print "Request completion"
         # Store stats
         request.completion = self.sim.now
         if request.chosenBackend in self.removedBackends:
@@ -217,6 +163,9 @@ class LoadBalancer:
 
         # Call original onCompleted
         request.originalRequest.onCompleted()
+
+        # Forward new requests to the empty server(s)
+        self.forwardRequest()
 
     def runProgressLoop(self):
         if self.printout:

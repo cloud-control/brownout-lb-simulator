@@ -11,7 +11,7 @@ import os
 import sys
 import time
 
-from plants import ClosedLoopClient, OpenLoopClient, LoadBalancer, Server, Cloner
+from plants import ClosedLoopClient, OpenLoopClient, LoadBalancer, Server, Cloner, LoadBalancerCentralQueue
 from base import SimulatorKernel
 from base.utils import *
 
@@ -151,7 +151,10 @@ def runSingleSimulation(sim, scenario, loadBalancingAlgorithm, cloning, nbrClone
     servers = []
     clients = []
 
-    loadBalancer = LoadBalancer(sim, printout=printout)
+    if loadBalancingAlgorithm == "central-queue":
+        loadBalancer = LoadBalancerCentralQueue(sim, printout=printout)
+    else:
+        loadBalancer = LoadBalancer(sim, printout=printout)
     loadBalancer.algorithm = loadBalancingAlgorithm
     sim.cloner.setCloning(cloning)
     sim.cloner.setNbrClones(nbrClones)
@@ -249,7 +252,7 @@ def runSingleSimulation(sim, scenario, loadBalancingAlgorithm, cloning, nbrClone
     toReport.append(( "serviceRate", "{:.4f}".format(serviceRate)))
     toReport.append(( "arrivalRateFrac", "{:.4f}".format(arrivalRateFrac)))
     for k, server in enumerate(loadBalancer.backends):
-        toReport.append(( "Server utilization {}".format(k), "{:.4f}".format(server.activeTime / simulationTime)))
+        toReport.append(( "s{} util".format(k), "{:.4f}".format(server.activeTime / simulationTime)))
 
     # Calculate utils
     #utils = {}
