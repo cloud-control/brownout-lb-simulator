@@ -246,12 +246,16 @@ def runSingleSimulation(sim, scenario, loadBalancingAlgorithm, cloning, nbrClone
     toReport.append(( "p99ResponseTime", "{:.4f}".format(np.percentile(responseTimes, 99)) ))
     toReport.append(( "maxResponseTime", "{:.4f}".format(max(responseTimes)) ))
     toReport.append(( "stddevResponseTime", "{:.4f}".format(np.std(responseTimes)) ))
+    toReport.append(( "serviceRate", "{:.4f}".format(serviceRate)))
+    toReport.append(( "arrivalRateFrac", "{:.4f}".format(arrivalRateFrac)))
+    for k, server in enumerate(loadBalancer.backends):
+        toReport.append(( "Server utilization {}".format(k), "{:.4f}".format(server.activeTime / simulationTime)))
 
     # Calculate utils
-    utils = {}
-    for server in loadBalancer.backends:
-        utils[server.serverId] = "{:.4f}".format(server.activeTime / simulationTime)
-        #toReport.append((str(server) + " util:", "{:.4f}".format(server.activeTime / simulationTime)))
+    #utils = {}
+    #for server in loadBalancer.backends:
+    #    utils[server.serverId] = "{:.4f}".format(server.activeTime / simulationTime)
+    #    toReport.append((str(server) + " util:", "{:.4f}".format(server.activeTime / simulationTime)))
 
     sim.output('final-results', ', '.join([k for k,v in toReport]))
     sim.output('final-results', ', '.join([v for k,v in toReport]))
@@ -260,11 +264,11 @@ def runSingleSimulation(sim, scenario, loadBalancingAlgorithm, cloning, nbrClone
         print(*[k for k,v in toReport], sep = ', ')
         print(*[v for k,v in toReport], sep = ', ')
 
-    for key in sorted(utils.iterkeys()):
-        s = "server %s util: %s" % (key, utils[key])
-        if printout:
-            print(s)
-        sim.output('final-results', s)
+    #for key in sorted(utils.iterkeys()):
+    #    s = "server %s util: %s" % (key, utils[key])
+    #    if printout:
+    #        print(s)
+    #    sim.output('final-results', s)
 
 if __name__ == "__main__":
     main() # pragma: no cover
