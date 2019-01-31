@@ -102,6 +102,8 @@ def main():
     # Find load-balancing algorithm
     if args.lb == 'ALL':
         loadBalancingAlgorithms = LoadBalancer.ALGORITHMS
+    elif 'IQ' in args.lb:
+        loadBalancingAlgorithms = [args.lb]
     elif args.lb in LoadBalancer.ALGORITHMS:
         loadBalancingAlgorithms = [args.lb]
     else:
@@ -155,6 +157,12 @@ def runSingleSimulation(sim, scenario, loadBalancingAlgorithm, cloning, nbrClone
         loadBalancer = LoadBalancerCentralQueue(sim, printout=printout)
     else:
         loadBalancer = LoadBalancer(sim, printout=printout)
+    if 'IQ-' in loadBalancingAlgorithm:
+        index = loadBalancingAlgorithm.index('-')
+        intstr = loadBalancingAlgorithm[index+1:]
+        loadBalancer.setD(int(intstr))
+        loadBalancingAlgorithm = loadBalancingAlgorithm[:index]
+
     loadBalancer.algorithm = loadBalancingAlgorithm
     sim.cloner.setCloning(cloning)
     sim.cloner.setNbrClones(nbrClones)

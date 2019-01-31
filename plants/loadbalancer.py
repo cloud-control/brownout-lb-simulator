@@ -8,7 +8,7 @@ from base import Request
 # The load-balancer is assumed to take zero time for its decisions.
 class LoadBalancer:
     ## Supported load-balancing algorithms.
-    ALGORITHMS = "SQF clone-SQF random RR clone-random RIQ-d central-queue".split()
+    ALGORITHMS = "SQF clone-SQF random RR clone-random IQ RIQ central-queue".split()
 
     def __init__(self, sim, seed = 1, printout = 1):
         self.progressPeriod = 1000000.0
@@ -31,6 +31,8 @@ class LoadBalancer:
         self.removedBackends = {}
 
         self.reqNbr = 0
+
+        self.d = 0
 
         self.idleIndexes = []
 
@@ -64,6 +66,9 @@ class LoadBalancer:
             self.removedBackends[backend] = removedBackendInfo
         else:
             if onShutdownCompleted:	onShutdownCompleted()
+
+    def setD(self, d):
+        self.d = d
 
     ## Handles a request.
     # @param request the request to handle
@@ -111,37 +116,42 @@ class LoadBalancer:
             # choose random replica among the legal ones
             chosenBackendIndex = self.random.choice(legalIndexes)
 
-        elif self.algorithm == 'RIQ-d':
-            #print "got to clone sqf LB-method"
+        elif self.algorithm == 'RIQ':
             legalIndexes = []
             if not request.isClone:
                 # First original request, get idle server indexes
-                d = 12
-                serverIndexes = self.random.sample(xrange(0, len(self.queueLengths)), d)
-                #print serverIndexes
+                serverIndexes = self.random.sample(xrange(0, len(self.queueLengths)), self.d)
                 servers = [(index, queue) for index, queue in enumerate(self.queueLengths) if index in serverIndexes]
-                #print servers
                 self.idleIndexes = [index for index, queue in servers if queue == 0]
-                #print self.idleIndexes
+
                 if len(self.idleIndexes) == 0:
                     self.sim.cloner.setNbrClones(1)
                     legalIndexes = serverIndexes
                 else:
                     self.sim.cloner.setNbrClones(len(self.idleIndexes))
-                    #self.sim.cloner.setNbrClones(1)
                     legalIndexes = self.idleIndexes
-                #print self.idleIndexes
+
             if hasattr(request, 'illegalServers'):
                 legalIndexes = [index for index in self.idleIndexes if index not in request.illegalServers]
-                #print legalIndexes
-                #print "Clone with reqid " + str(request.requestId) + " can be sent to " + str(legalServers)
             elif request.isClone:
                 legalIndexes = self.idleIndexes
 
             # choose random replica among the legal ones
             chosenBackendIndex = self.random.choice(legalIndexes)
-            #print chosenBackendIndex
-            #print self.queueLengths
+
+        elif self.algorithm == 'IQ':
+
+            self.sim.cloner.setNbrClones(1)  # No cloning should be performed here
+            serverIndexes = self.random.sample(xrange(0, len(self.queueLengths)), self.d)
+            servers = [(index, queue) for index, queue in enumerate(self.queueLengths) if index in serverIndexes]
+            self.idleIndexes = [index for index, queue in servers if queue == 0]
+            if len(self.idleIndexes) == 0:
+                legalIndexes = serverIndexes
+            else:
+                legalIndexes = self.idleIndexes
+
+            # choose random replica among the legal ones
+            chosenBackendIndex = self.random.choice(legalIndexes)
 
         else:
             raise Exception("Unknown load-balancing algorithm " + self.algorithm)
