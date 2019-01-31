@@ -62,7 +62,6 @@ class LoadBalancerCentralQueue:
             if onShutdownCompleted:	onShutdownCompleted()
 
     def request(self, request):
-        #print "New req arriving to simulator"
         if not hasattr(request, 'arrival'):
             request.arrival = self.sim.now
         if not hasattr(request, 'isClone'):
@@ -76,7 +75,6 @@ class LoadBalancerCentralQueue:
         idleIndex = self.getRandomIdleIndex()
         if idleIndex < 0:
             return
-        #print "idle index chosen: " + str(idleIndex)
 
         if clonedRequest:
             self.sendRequest(clonedRequest, idleIndex)
@@ -109,12 +107,10 @@ class LoadBalancerCentralQueue:
 
     def getRandomIdleIndex(self):
         idleIndexes = [i for i, x in enumerate(self.queueLengths) if (x == 0)]
-        #print "idle indexes: " + str(idleIndexes)
 
         if len(idleIndexes) > 0:
             return self.random.choice(idleIndexes)
         else:
-            #print "All servers busy, sending -1 as index!"
             return -1
 
     def tryCloneRequest(self, request):
@@ -122,7 +118,6 @@ class LoadBalancerCentralQueue:
 
         if clone:
             #self.sim.log(self, "Cloned request " + str(request.requestId))
-            #print "Forwarding clone"
             self.forwardRequest(clone)
 
     def onCanceled(self, request):
@@ -135,7 +130,6 @@ class LoadBalancerCentralQueue:
     # Stores piggybacked dimmer values and calls orginator's onCompleted()
     def onCompleted(self, request):
         #self.sim.log(self, "onCompleted with req id " + str(request.requestId) + "," + str(request.isClone))
-        #print "Request completion"
         # Store stats
         request.completion = self.sim.now
         if request.chosenBackend in self.removedBackends:
