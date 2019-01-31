@@ -206,7 +206,7 @@ class LoadBalancer:
             self.backends[chosenBackendIndex].request(request)
 
     def tryCloneRequest(self, request):
-        clone = self.sim.cloner.clone(request, self.queueLengths, self.backends)
+        clone = self.sim.cloner.clone(request)
 
         if clone:
             #self.sim.log(self, "Cloned request " + str(request.requestId))
