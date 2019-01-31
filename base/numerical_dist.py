@@ -10,6 +10,7 @@ class NumericalDistribution:
         cdf = np.asarray(self.readCsv(cdf_location))
         self.cdf_x = cdf[:, 0]
         self.cdf_y = cdf[:, 1]
+        self.max_cdf = self.cdf_y[-1]
 
         # Uncomment here if to use pre-inverted cdf
         #self.icdf = {}
@@ -31,7 +32,7 @@ class NumericalDistribution:
         #key = float(self.random.randint(0, self.icdfSize-1)*self.h)
         #return self.icdf[key]
 
-        point = self.random.random()
+        point = self.random.random()*self.max_cdf
         return self.invertPoint(point)
 
     def invertPoint(self, point):
