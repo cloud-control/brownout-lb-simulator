@@ -12,7 +12,8 @@ simulations = []
 arrival_rates = np.linspace(0.1, 0.9, SIMS)
 for k in range(SIMS):
     simulations.append("./simulator.py  --lb RIQ-d --scenario scenarios/clone-test.py --cloning 1 --nbrClones 1 \
-        --printout 0 --dist expon --serviceRate 1.0 --arrivalRateFrac {} --outdir result/run{}".format(arrival_rates[k], k))
+        --printout 0 --printRespTime 0 --dist SXmodel --serviceRate 1.0 --arrivalRateFrac {} --outdir result/run{} \
+        ".format(arrival_rates[k], k))
 
 # Run the simulations
 pool = Pool(processes=PROCESSES)

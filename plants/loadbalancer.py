@@ -10,7 +10,7 @@ class LoadBalancer:
     ## Supported load-balancing algorithms.
     ALGORITHMS = "SQF clone-SQF random RR clone-random IQ RIQ central-queue".split()
 
-    def __init__(self, sim, seed = 1, printout = 1):
+    def __init__(self, sim, seed = 1, printout = 1, printRespTime = 1):
         self.progressPeriod = 1000000.0
         ## what algorithm to use
         self.algorithm = 'random'
@@ -42,6 +42,7 @@ class LoadBalancer:
         self.sim.add(0, self.runProgressLoop)
 
         self.printout = printout
+        self.printRespTime = printRespTime
 
     ## Adds a new back-end server and initializes decision variables.
     # @param backend the server to add
@@ -214,11 +215,12 @@ class LoadBalancer:
         else:
             chosenBackendIndex = self.backends.index(request.chosenBackend)
             #self.sim.log(self, "ChosenBackendIndex is " + str(chosenBackendIndex))
-            responseTime = request.completion - request.arrival
 
-            # Store response time
-            valuesToOutput = [responseTime, chosenBackendIndex]
-            self.sim.output(str(self) + '-allReqs', ','.join(["{0:.5f}".format(value) for value in valuesToOutput]))
+            if self.printRespTime:
+                responseTime = request.completion - request.arrival
+                # Store response time
+                valuesToOutput = [responseTime, chosenBackendIndex]
+                self.sim.output(str(self) + '-allReqs', ','.join(["{0:.5f}".format(value) for value in valuesToOutput]))
 
             self.queueLengths[chosenBackendIndex] -= 1
 

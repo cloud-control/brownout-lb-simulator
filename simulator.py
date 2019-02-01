@@ -59,6 +59,11 @@ def main():
         type = int,
         help = 'Get printout on simulation progress',
         default = 1)
+    parser.add_argument('--printRespTime',
+        type = int,
+        help = 'Log the response times for each request',
+        default = 1)
+
     parser.add_argument('--printsim',
         type = int,
         help = "Insert simulation number to print, usable from MC top script to manually keep track of iterations",
@@ -128,6 +133,7 @@ def main():
                 nbrClones=args.nbrClones,
                 logging=args.logging,
                 printout=args.printout,
+                printRespTime=args.printRespTime,
                 dist=args.dist,
                 distpath = args.path,
                 serviceRate=args.serviceRate,
@@ -147,16 +153,16 @@ def main():
 # @param outdir folder in which results should be written
 # @param scenario file containing the scenario
 # @param loadBalancingAlgorithm load-balancing algorithm name
-def runSingleSimulation(sim, scenario, loadBalancingAlgorithm, cloning, nbrClones, logging, printout, dist, distpath, serviceRate,
-                        arrivalRateFrac):
+def runSingleSimulation(sim, scenario, loadBalancingAlgorithm, cloning, nbrClones, logging, printout, printRespTime,
+                        dist, distpath, serviceRate, arrivalRateFrac):
 
     servers = []
     clients = []
 
     if loadBalancingAlgorithm == "central-queue":
-        loadBalancer = LoadBalancerCentralQueue(sim, printout=printout)
+        loadBalancer = LoadBalancerCentralQueue(sim, printout=printout, printRespTime=printRespTime)
     else:
-        loadBalancer = LoadBalancer(sim, printout=printout)
+        loadBalancer = LoadBalancer(sim, printout=printout, printRespTime=printRespTime)
     if 'IQ-' in loadBalancingAlgorithm:
         index = loadBalancingAlgorithm.index('-')
         intstr = loadBalancingAlgorithm[index+1:]
