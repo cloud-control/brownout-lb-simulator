@@ -118,7 +118,8 @@ def main():
         quit()
 
     for loadBalancingAlgorithm in loadBalancingAlgorithms:
-        outdir = os.path.join(args.outdir, loadBalancingAlgorithm)
+        #outdir = os.path.join(args.outdir, loadBalancingAlgorithm) Better if we denote paths individually
+        outdir = args.outdir
         if not os.path.exists(outdir): # Not cool, Python!
             os.makedirs(outdir)
         cloner = Cloner()
