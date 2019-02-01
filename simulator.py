@@ -248,6 +248,9 @@ def runSingleSimulation(sim, scenario, loadBalancingAlgorithm, cloning, nbrClone
     otherParams = {}
     execfile(scenario)
 
+    if 'cluster' in loadBalancingAlgorithm:
+        sim.add(0, loadBalancer.setClusters)
+
     if 'simulateUntil' not in otherParams:
         raise Exception("Scenario does not define end-of-simulation")
     simulationTime = otherParams['simulateUntil']

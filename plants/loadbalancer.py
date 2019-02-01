@@ -8,7 +8,7 @@ from base import Request
 # The load-balancer is assumed to take zero time for its decisions.
 class LoadBalancer:
     ## Supported load-balancing algorithms.
-    ALGORITHMS = "SQF clone-SQF random RR clone-random IQ RIQ central-queue".split()
+    ALGORITHMS = "SQF clone-SQF random RR clone-random IQ RIQ central-queue cluster-SQF cluster-random".split()
 
     def __init__(self, sim, seed = 1, printout = 1, printRespTime = 1):
         self.progressPeriod = 1000000.0
@@ -36,7 +36,8 @@ class LoadBalancer:
 
         self.idleIndexes = []
 
-        self.centralQueue = []
+        self.clusterIndexes = []
+        self.prevChosenBackendIndex = 0
 
         # Launch progress loop
         self.sim.add(0, self.runProgressLoop)
@@ -70,6 +71,19 @@ class LoadBalancer:
 
     def setD(self, d):
         self.d = d
+
+    def setClusters(self):
+        nbrClones = self.sim.cloner.nbrClones
+        nbrServers = len(self.queueLengths)
+
+        if nbrServers % nbrClones != 0:
+            raise ValueError("Clone clusters not evenly divisible!")
+
+        nbrClusters = int(nbrServers/nbrClones)
+
+        for i in range(0, nbrClusters):
+            index = i*nbrClones
+            self.clusterIndexes.append(index)
 
     ## Handles a request.
     # @param request the request to handle
@@ -153,6 +167,25 @@ class LoadBalancer:
 
             # choose random replica among the legal ones
             chosenBackendIndex = self.random.choice(legalIndexes)
+
+        elif self.algorithm == 'cluster-SQF':
+            if not request.isClone:
+                clusterServers= [(index, queue) for index, queue in enumerate(self.queueLengths) if index in self.clusterIndexes]
+                shortestClusterServer = min(clusterServers, key=lambda cs: cs[1])
+                shortestClusterIndexes = [cs[0] for cs in clusterServers if cs[1] == shortestClusterServer[1]]
+                chosenBackendIndex = self.random.choice(shortestClusterIndexes)
+                self.prevChosenBackendIndex = chosenBackendIndex
+            else:
+                chosenBackendIndex = self.prevChosenBackendIndex + 1
+                self.prevChosenBackendIndex = chosenBackendIndex
+
+        elif self.algorithm == 'cluster-random':
+            if not request.isClone:
+                chosenBackendIndex = self.random.choice(self.clusterIndexes)
+                self.prevChosenBackendIndex = chosenBackendIndex
+            else:
+                chosenBackendIndex = self.prevChosenBackendIndex + 1
+                self.prevChosenBackendIndex = chosenBackendIndex
 
         else:
             raise Exception("Unknown load-balancing algorithm " + self.algorithm)
