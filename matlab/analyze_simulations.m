@@ -1,63 +1,16 @@
+%%
 
-%% Old reading
-% Each run subfolder must contain the same amount of folders
-
-basepath = '/home/johanr/Projects/brownout-lb-simulator/result_RIQvsIQ';
-
-subfolders = dir(basepath);
-subfolders(1:2) = [];
-
-strats = dir([basepath '/' subfolders(1).name]);
-strats(1:2) = [];
-
-m = length(subfolders);
-n = length(strats);
-paths = cell(m, n);
-
-for i = 1:m
-    for j = 1:n
-        paths{i, j} = [basepath  '/run' num2str(i-1)  '/'  ...
-            strats(j).name '/sim-final-results.csv'];
-   end
-end
-
-data = read_paths(paths, strats);
-
-%% New reading
-% Each run subfolder must contain the same amount of folders
-
-basepath = '/home/johanr/Projects/brownout-lb-simulator/result_RIQvsIQ6';
-
-strats = dir(basepath);
-strats(1:2) = [];
-
-m = length(strats)
-
-paths = cell(m, 1)
-for i = 1:m
-    runs =  dir([basepath '/' subfolders(i).name]);
-    runs(1:2) = [];
-    n = length(runs)
-    
-    subpaths = cell(n,1)
-    for j = 1:n
-        subpaths{j} = [basepath '/' strats(i).name  '/run' num2str(j-1) ...
-            '/sim-final-results.csv'];
-    end
-    
-    paths{i} = subpaths
-end
-
-data = read_paths(paths, strats);
+basepath = '/home/johanr/Projects/brownout-lb-simulator/result_cloud01';
+data = read_data(basepath);
 
 %% Plot data
 
 XMIN = 0.1
 XMAX = 0.9
 YMIN = 0
-YMAX = 20
+YMAX = 10
 
-COMPARE = [2, 5]
+COMPARE = [6, 12]
 
 
 % Plot all

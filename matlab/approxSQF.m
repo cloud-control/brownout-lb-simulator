@@ -4,6 +4,4 @@ nbrServers = 12;
 lambda = util*nbrServers;
 mu = 1;
 
-
-
-meanRT = SQFapprox(lambda, mu, nbrServers)
+meanRT = SQFapprox_ps(lambda, mu, nbrServers)
