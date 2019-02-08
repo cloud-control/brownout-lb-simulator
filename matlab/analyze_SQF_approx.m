@@ -10,11 +10,17 @@ lambda = util*nbrServers;
 Ca = sqrt(lambda) ./ (lambda); %Assuming poisson
 
 % Cs hyperexponential
-p1 = 0.95; p2 = 0.05;
+%p1 = 0.95; p2 = 0.05;
+%mu1 = 8.95; mu2 = 0.45;
+%mu_hypo = p1/mu1 + p2/mu2;
+%sig_hypo = sqrt(2*(p1/mu1^2 + p2/mu2^2) - (p1/mu1 + p2/mu2)^2);
+%Cs_sxmodel = sqrt(14.7736) %sqrt(10); %sig_hypo/mu_hypo;
+
+% For testing
+p1 = 0.; p2 = 0.05;
 mu1 = 8.95; mu2 = 0.45;
-mu_hypo = p1/mu1 + p2/mu2;
-sig_hypo = sqrt(2*(p1/mu1^2 + p2/mu2^2) - (p1/mu1 + p2/mu2)^2);
-Cs_sxmodel = sqrt(14.7736); %sqrt(10); %sig_hypo/mu_hypo;
+mu_hypo = 
+sig_hypo = 
 
 
 m = length(lambda);
