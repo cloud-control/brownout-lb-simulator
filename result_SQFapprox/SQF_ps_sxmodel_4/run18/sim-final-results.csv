@@ -1,0 +1,2 @@
+loadBalancingAlgorithm, numRequests, avgResponseTime, p95ResponseTime, p99ResponseTime, maxResponseTime, stddevResponseTime, serviceRate, arrivalRateFrac, s0 util, s1 util, s2 util, s3 util
+SQF                 ,  342859, 2.5444, 7.8246, 39.0289, 614.9141, 10.9520, 1.0000, 0.8579, 0.8513, 0.8563, 0.8580, 0.8712
