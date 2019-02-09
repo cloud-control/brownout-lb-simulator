@@ -87,6 +87,10 @@ def main():
         type = float,
         help = 'Enables setting the arrival rate fraction of servers*serviceRate from command line',
         default = 0.3)
+    group_s.add_argument('--nbrOfServers',
+         type = int,
+         help = 'Set the number of servers used',
+         default = 12)
 
     # Add load-balancer specific command-line arguments
     group_lb = parser.add_argument_group('lb', 'Load-balancer options')
@@ -138,7 +142,8 @@ def main():
                 dist=args.dist,
                 distpath = args.path,
                 serviceRate=args.serviceRate,
-                arrivalRateFrac=args.arrivalRateFrac
+                arrivalRateFrac=args.arrivalRateFrac,
+                nbrOfServers=args.nbrOfServers
             )
         except Exception as e:
             print("Caught exception: {0}".format(e))
@@ -155,7 +160,7 @@ def main():
 # @param scenario file containing the scenario
 # @param loadBalancingAlgorithm load-balancing algorithm name
 def runSingleSimulation(sim, scenario, loadBalancingAlgorithm, cloning, nbrClones, logging, printout, printRespTime,
-                        dist, distpath, serviceRate, arrivalRateFrac):
+                        dist, distpath, serviceRate, arrivalRateFrac, nbrOfServers):
 
     servers = []
     clients = []

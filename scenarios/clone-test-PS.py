@@ -2,7 +2,7 @@ import scipy.stats
 import numpy as np
 from base.numerical_dist import NumericalDistribution
 
-nbrServers = 12
+nbrServers = nbrOfServers #12
 for i in range(0, nbrServers):
 
     if dist == "fromPath":
