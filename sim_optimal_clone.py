@@ -4,7 +4,7 @@ from multiprocessing import Pool
 
 # Parameters
 MC_SIMS = 20
-SERVERS = 1:12
+SERVERS = range(1, 13)
 LAMBDA_FRAC = np.arange(0.05, 0.96, 0.01)
 PROCESSES = 24
 
@@ -12,7 +12,6 @@ PROCESSES = 24
 simulations = []
 
 count = 0
-arrival_rates = np.linspace(0.1, 0.9, SIMS)
 for k in range(MC_SIMS):
     for servers in SERVERS:
         for frac in LAMBDA_FRAC:
