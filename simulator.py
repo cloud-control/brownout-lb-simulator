@@ -79,9 +79,9 @@ def main():
         help = 'Define service rate distribution',
         default = 'expon')
     group_s.add_argument('--path',
-                         type=str,
-                         help='Define service rate distribution path',
-                         default='')
+         type=str,
+         help='Define service rate distribution path',
+         default='')
     group_s.add_argument('--serviceRate',
         type = float,
         help = 'Enables setting the service rate from command line',
@@ -94,6 +94,10 @@ def main():
          type = int,
          help = 'Set the number of servers used',
          default = 12)
+    group_s.add_argument('--uniformArrivals',
+        type = int,
+        help = 'Use uniform arrival rates',
+        default = 0)
 
     # Add load-balancer specific command-line arguments
     group_lb = parser.add_argument_group('lb', 'Load-balancer options')
@@ -147,6 +151,7 @@ def main():
                 serviceRate=args.serviceRate,
                 arrivalRateFrac=args.arrivalRateFrac,
                 nbrOfServers=args.nbrOfServers,
+                uniformArrivals=args.uniformArrivals,
                 setSeed=args.setSeed
             )
         except Exception as e:
@@ -164,7 +169,7 @@ def main():
 # @param scenario file containing the scenario
 # @param loadBalancingAlgorithm load-balancing algorithm name
 def runSingleSimulation(sim, scenario, loadBalancingAlgorithm, cloning, nbrClones, logging, printout, printRespTime,
-                        dist, distpath, serviceRate, arrivalRateFrac, nbrOfServers, setSeed):
+                        dist, distpath, serviceRate, arrivalRateFrac, nbrOfServers, uniformArrivals, setSeed):
 
     servers = []
     clients = []
@@ -184,7 +189,7 @@ def runSingleSimulation(sim, scenario, loadBalancingAlgorithm, cloning, nbrClone
     sim.cloner.setNbrClones(nbrClones)
     sim.setupLogging(logging)
 
-    openLoopClient = OpenLoopClient(sim, loadBalancer, seed=setSeed)
+    openLoopClient = OpenLoopClient(sim, loadBalancer, uniformArrivals=uniformArrivals, seed=setSeed)
 
     # Define verbs for scenarios
     def addClients(at, n):
