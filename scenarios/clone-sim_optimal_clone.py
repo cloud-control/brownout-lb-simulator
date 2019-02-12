@@ -24,4 +24,4 @@ changeMC(at=0.0, newMC=1)
 setRate(at = 0, rate = arrivalRateFrac*serviceRate*nbrServers)
 
 
-endOfSimulation(at = 1000000/(arrivalRateFrac*nbrServers))5
+endOfSimulation(at = 1000000/(arrivalRateFrac*nbrServers))
