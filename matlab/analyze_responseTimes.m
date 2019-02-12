@@ -1,39 +1,44 @@
-path = '/local/home/tommi/CloudControl/cloning/brownout-lb-simulator/mintest';
 
-RT = dir(path);
-RT(1:2) = [];
-m = size(RT, 1);
+%% For the G/G/1-equivalent example.
+path = '/home/johanr/Projects/brownout-lb-simulator/result_gg1Example';
 
-data = cell(m, 2);
+data = read_respTimes(path);
 
-for k = 1:m
-    table = readtable([ path '/' RT(k).name], 'Delimiter', ',');
-    data{k, 1} = table.Var1;
-    data{k, 2} = RT(k).name;
+[m, n] = size(data)
+
+vec = linspace(0,10,1000);
+cdfs = cell(m, n-1);
+for i = 1:m
+    for k = 1:n-1
+        [cdfs{i, k}, ~] = histcounts(data{i, k+1}, vec, 'Normalization', 'cdf');
+    end
 end
 
-vec = linspace(0,10,10000);
-cdfs = cell(m, 1);
-for k = 1:m
-    [cdfs{k}, ~] = histcounts(data{k}, vec, 'Normalization', 'cdf');
-end
 
-%%
-CHOOSE = [2 4];
-
+%% Plot all
 figure(1)
 clf()
 subplot(1,2,1)
 hold on;
-plot(vec(1:end-1), cdfs{CHOOSE(1)}, 'g', 'LineWidth', 1);
-plot(vec(1:end-1), cdfs{CHOOSE(2)}, 'r--', 'LineWidth', 1);
+for k = 1:n-1
+    plot(vec(1:end-1), cdfs{1, k}, 'g', 'LineWidth', 1);
+    plot(vec(1:end-1), cdfs{3, k}, 'r--', 'LineWidth', 1);
+end
 axis([0 10 0 1])
-legend(data(CHOOSE, 2))
+legend(data{1, 1}, data{3, 1})
 
-CHOOSE = [1 3];
 subplot(1,2,2)
 hold on;
-plot(vec(1:end-1), cdfs{CHOOSE(1)}, 'g', 'LineWidth', 1);
-plot(vec(1:end-1), cdfs{CHOOSE(2)}, 'r--', 'LineWidth', 1);
+for k = 1:n-1
+    plot(vec(1:end-1), cdfs{2, k}, 'g', 'LineWidth', 1);
+    plot(vec(1:end-1), cdfs{4, k}, 'r--', 'LineWidth', 1);
+end
 axis([0 10 0 1])
-legend(data(CHOOSE, 2))
+legend(data{2, 1}, data{4, 1})
+
+
+%% Save to CSV format
+
+for k = 1:4
+    csvwrite([data{k,1}, '.csv'], [vec(1:end-1)' cdfs{k, 1}']);
+end
