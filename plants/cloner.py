@@ -9,8 +9,8 @@ from base import Request
 # Simulates a request cloner.
 class Cloner:
 
-    def __init__(self):
-        self.seed = 65184
+    def __init__(self, setSeed=123):
+        self.seed = setSeed
 
         self.cloning = 0
         self.nbrClones = 1

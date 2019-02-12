@@ -63,11 +63,14 @@ def main():
         type = int,
         help = 'Log the response times for each request',
         default = 1)
-
     parser.add_argument('--printsim',
         type = int,
         help = "Insert simulation number to print, usable from MC top script to manually keep track of iterations",
         default=-1)
+    parser.add_argument('--setSeed',
+        type = int,
+        help = "Set the seed",
+        default = 65184)
 
     # Add scenario specific arguments
     group_s = parser.add_argument_group('scen', 'Scenario options')
@@ -87,6 +90,10 @@ def main():
         type = float,
         help = 'Enables setting the arrival rate fraction of servers*serviceRate from command line',
         default = 0.3)
+    group_s.add_argument('--nbrOfServers',
+         type = int,
+         help = 'Set the number of servers used',
+         default = 12)
 
     # Add load-balancer specific command-line arguments
     group_lb = parser.add_argument_group('lb', 'Load-balancer options')
@@ -122,7 +129,7 @@ def main():
         outdir = args.outdir
         if not os.path.exists(outdir): # Not cool, Python!
             os.makedirs(outdir)
-        cloner = Cloner()
+        cloner = Cloner(setSeed=args.setSeed)
         sim = SimulatorKernel(cloner=cloner, outputDirectory=outdir)
 
         try:
@@ -138,7 +145,9 @@ def main():
                 dist=args.dist,
                 distpath = args.path,
                 serviceRate=args.serviceRate,
-                arrivalRateFrac=args.arrivalRateFrac
+                arrivalRateFrac=args.arrivalRateFrac,
+                nbrOfServers=args.nbrOfServers,
+                setSeed=args.setSeed
             )
         except Exception as e:
             print("Caught exception: {0}".format(e))
@@ -155,7 +164,7 @@ def main():
 # @param scenario file containing the scenario
 # @param loadBalancingAlgorithm load-balancing algorithm name
 def runSingleSimulation(sim, scenario, loadBalancingAlgorithm, cloning, nbrClones, logging, printout, printRespTime,
-                        dist, distpath, serviceRate, arrivalRateFrac):
+                        dist, distpath, serviceRate, arrivalRateFrac, nbrOfServers, setSeed):
 
     servers = []
     clients = []
@@ -175,7 +184,7 @@ def runSingleSimulation(sim, scenario, loadBalancingAlgorithm, cloning, nbrClone
     sim.cloner.setNbrClones(nbrClones)
     sim.setupLogging(logging)
 
-    openLoopClient = OpenLoopClient(sim, loadBalancer)
+    openLoopClient = OpenLoopClient(sim, loadBalancer, seed=setSeed)
 
     # Define verbs for scenarios
     def addClients(at, n):
