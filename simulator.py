@@ -177,7 +177,7 @@ def runSingleSimulation(sim, scenario, loadBalancingAlgorithm, cloning, nbrClone
     if loadBalancingAlgorithm == "central-queue":
         loadBalancer = LoadBalancerCentralQueue(sim, printout=printout, printRespTime=printRespTime)
     else:
-        loadBalancer = LoadBalancer(sim, printout=printout, printRespTime=printRespTime)
+        loadBalancer = LoadBalancer(sim, printout=printout, printRespTime=printRespTime, seed=setSeed)
     if 'IQ-' in loadBalancingAlgorithm:
         index = loadBalancingAlgorithm.index('-')
         intstr = loadBalancingAlgorithm[index+1:]
