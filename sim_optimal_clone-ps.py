@@ -19,7 +19,7 @@ for k in MC_SIMS:
     for servers in SERVERS:
         for i, frac in enumerate(LAMBDA_FRAC):
 
-            if frac > max_frac[servers] + buffer:
+            if frac > max_frac[servers-1] + buffer:
                 continue
 
             count += 1
