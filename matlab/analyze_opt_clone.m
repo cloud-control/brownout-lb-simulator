@@ -36,6 +36,8 @@ minP95RTSer = zeros(lenRate, MC_SIMS);
 minStdRTVal = zeros(lenRate, MC_SIMS);
 minStdRTSer = zeros(lenRate, MC_SIMS);
 
+meanUtils = zeros(lenRate, NBR_OF_DIFF_SERVERS);
+
 for k = 1:lenRate
     rate = rates(k);
     ind = cellfun(@(x) endsWith(x, ['af' num2str(rate)]), data(:, 2));
@@ -44,19 +46,29 @@ for k = 1:lenRate
     disp([num2str(rate) ' ' num2str(size(data(ind, :), 1))])
     
     % bugcheck
-    %if size(data(ind, :), 1) ~= NBR_OF_DIFF_SERVERS
-    %    error("Wrong number of servers found!")
-    %end
+    if size(data(ind, :), 1) ~= NBR_OF_DIFF_SERVERS
+        error("Wrong number of servers found!")
+    end
     
     D = data(ind, :);
     [m, ~] = size(D);
     avgRT = zeros(MC_SIMS, m);
     p95RT = zeros(MC_SIMS, m);
     stdRT = zeros(MC_SIMS, m);
+    utils = zeros(MC_SIMS, m);
     for i = 1:m
         avgRT(:, i) = cellfun(@(x) str2num(x), D{i, 1}.avgResponseTime);
         p95RT(:, i) = cellfun(@(x) str2num(x), D{i, 1}.p95ResponseTime);
         stdRT(:, i) = cellfun(@(x) str2num(x), D{i, 1}.stddevResponseTime);
+        
+        util = [cellfun(@(x) str2num(x), table2cell(D{i,1}(:, 10:end)))];
+        % bugcheck
+        for j = 1:MC_SIMS
+           if length(unique(util(j, :))) ~= 1
+              error("Untilizations are not identical for servers!") 
+           end
+        end
+        utils(:, i) = util(:, 1);
     end
     
     [avg_val, avg_idx] = min(avgRT, [], 2);
@@ -69,11 +81,12 @@ for k = 1:lenRate
     minP95RTSer(k, :) = getServerIdx(D, p95_idx);
     minStdRTVal(k, :) = std_val;
     minStdRTSer(k, :) = getServerIdx(D, std_idx);
+    
+    meanUtils(k, :) = mean(utils,1);
 end
 
 
-
-%% Plot results
+%% Plot optimal servers
 
 U = rates*0.01 + 0.05
 conf = std(minAvgRTVal, [], 2) * 2.09 / sqrt(20)
@@ -125,12 +138,41 @@ xlim([0, 0.7])
 %ylim([0, 20])
 grid on;
 
+
+%% Plot Utilization
+
+U = rates*0.01 + 0.05;
+sIdx = [4, 5, 6, 7, 8, 9, 10, 11, 12, 1, 2, 3];
+
+y1 = meanUtils(:, sIdx(1));
+x1 = U;
+
+y2 = meanUtils(1:end-3, sIdx(4));
+x2 = U(1:end-3);
+
+y3 = meanUtils(1:end-21, sIdx(8));
+x3 = U(1:end-21);
+
+figure(1)
+clf()
+hold on;
+plot(x1, y1, "k", 'LineWidth', 2)
+plot(x2, y2, "b", 'LineWidth', 2)
+plot(x3, y3, "r", 'LineWidth', 2)
+xlim([0, 1])
+ylim([0, 1])
+
+
 %% Save to CSV
 
 csvwrite('minAvgRTSer_mean.csv', [U, mean(minAvgRTSer, 2)]);
 csvwrite('minAvgRTSer_min.csv', [U, min(minAvgRTSer, [], 2)]);
 csvwrite('minAvgRTSer_max.csv', [U, max(minAvgRTSer, [], 2)]);
-csvwrite('minAvgRTSer_RT.csv', [U, mean(minAvgRTVal, 2)]);
+csvwrite('minAvgRTVal_mean.csv', [U, mean(minAvgRTVal, 2)]);
+
+csvwrite('utils-1-sim.csv', [x1, y1]);
+csvwrite('utils-4-sim.csv', [x2, y2]);
+csvwrite('utils-8-sim.csv', [x3, y3]);
 
 %% Functions
 
