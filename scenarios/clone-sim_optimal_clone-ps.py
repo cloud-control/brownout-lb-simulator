@@ -20,7 +20,7 @@ for i in range(0, nbrServers):
 
     addServer(at=0.0, serviceTimeDistribution=serviceTimeDistribution)
 
-changeMC(at=0.0, newMC=1000000)
+changeMC(at=0.0, newMC=10000)
 setRate(at = 0, rate = arrivalRateFrac*serviceRate*nbrServers)
 
 

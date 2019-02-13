@@ -11,10 +11,17 @@ PROCESSES = 24
 # Add simulation commands as strings
 simulations = []
 
+max_frac = [0.7000, 0.7000, 0.7000, 0.6800, 0.6300, 0.5900, 0.5400, 0.5000, 0.4600, 0.4300, 0.4000, 0.3700]
+buffer = 0.01
+
 count = 0
 for k in MC_SIMS:
     for servers in SERVERS:
         for i, frac in enumerate(LAMBDA_FRAC):
+
+            if frac > max_frac[servers] + buffer:
+                continue
+
             count += 1
             simulations.append("./simulator.py  --lb clone-random --scenario scenarios/clone-sim_optimal_clone-ps.py --cloning 1 --nbrClones {} \
                 --printout 0 --printRespTime 0 --dist SXmodel --serviceRate 1.0 --arrivalRateFrac {} --nbrOfServers {} \
