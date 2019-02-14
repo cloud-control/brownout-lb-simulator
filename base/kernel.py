@@ -3,13 +3,14 @@ from __future__ import print_function
 from collections import defaultdict, deque
 import os
 import logging
+import time
 
 ## Simulation kernel.
 # Implements an event-driven simulator
 class SimulatorKernel:
     ## Constructor
     # @param outputDirectory folder where CSV files should be written to. None disables CSV files
-    def __init__(self, cloner=None, outputDirectory = '.'):
+    def __init__(self, cloner=None, outputDirectory = '.', maxRunTime=-1):
         ## events indexed by time
         self.events = defaultdict(list)
         ## reverse index from event handlers to time index, to allow easy update
@@ -25,6 +26,8 @@ class SimulatorKernel:
         self.shouldLog = False
 
         self.cloner = cloner
+        self.maxRunTime = maxRunTime
+        self.startTime = time.time()
 
     def setupLogging(self, shouldLog):
         self.shouldLog = shouldLog
@@ -98,6 +101,14 @@ class SimulatorKernel:
                 return
             #print("SimKernel: Running new event ")
             #print(str(event))
+
+
+            # Abort if runTime exceeds the predefined roof
+            if self.maxRunTime < time.time() - self.startTime and self.maxRunTime > 0:
+                print("Early termination, maxRunTime {} limit hit".format(self.maxRunTime))
+                print("Completed simulation time: {} of {}".format(self.now, until))
+                return
+
             event()
             numEvents += 1
         self.log(self, "Handled {0} events", numEvents)

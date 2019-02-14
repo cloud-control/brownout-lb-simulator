@@ -71,6 +71,10 @@ def main():
         type = int,
         help = "Set the seed",
         default = 65184)
+    parser.add_argument('--maxRunTime',
+        type = int,
+        help = "Set an upper runtime limit on each simulation",
+        default = -1)
 
     # Add scenario specific arguments
     group_s = parser.add_argument_group('scen', 'Scenario options')
@@ -134,7 +138,7 @@ def main():
         if not os.path.exists(outdir): # Not cool, Python!
             os.makedirs(outdir)
         cloner = Cloner(setSeed=args.setSeed)
-        sim = SimulatorKernel(cloner=cloner, outputDirectory=outdir)
+        sim = SimulatorKernel(cloner=cloner, outputDirectory=outdir, maxRunTime=args.maxRunTime)
 
         try:
             runSingleSimulation(
