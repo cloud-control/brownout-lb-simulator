@@ -7,9 +7,9 @@ READ_NEW = 0;
 if READ_NEW
     path = '/home/johanr/Projects/brownout-lb-simulator/result_opt_clone';
     data = read_mcData(path);
-    save('data-opt_clone.mat', 'data');
+    save('datafiles/data-opt_clone.mat', 'data');
 else
-    tmp = load('data-opt_clone.mat');
+    tmp = load('datafiles/data-opt_clone.mat');
     data = tmp.data;
 end
 
@@ -156,23 +156,30 @@ x3 = U(1:end-21);
 figure(1)
 clf()
 hold on;
-plot(x1, y1, "k", 'LineWidth', 2)
-plot(x2, y2, "b", 'LineWidth', 2)
-plot(x3, y3, "r", 'LineWidth', 2)
+%plot(x1, y1, "k", 'LineWidth', 2)
+%plot(x2, y2, "b", 'LineWidth', 2)
+%plot(x3, y3, "r", 'LineWidth', 2)
+for k = 1:12
+    plot(U, meanUtils(:, sIdx(k)))
+end
 xlim([0, 1])
 ylim([0, 1])
 
 
 %% Save to CSV
 
-csvwrite('minAvgRTSer_mean.csv', [U, mean(minAvgRTSer, 2)]);
-csvwrite('minAvgRTSer_min.csv', [U, min(minAvgRTSer, [], 2)]);
-csvwrite('minAvgRTSer_max.csv', [U, max(minAvgRTSer, [], 2)]);
-csvwrite('minAvgRTVal_mean.csv', [U, mean(minAvgRTVal, 2)]);
 
-csvwrite('utils-1-sim.csv', [x1, y1]);
-csvwrite('utils-4-sim.csv', [x2, y2]);
-csvwrite('utils-8-sim.csv', [x3, y3]);
+csvwrite('csvfiles/minAvgRTSer_mean.csv', [U, mean(minAvgRTSer, 2)]);
+csvwrite('csvfiles/minAvgRTSer_min.csv', [U, min(minAvgRTSer, [], 2)]);
+csvwrite('csvfiles/minAvgRTSer_max.csv', [U, max(minAvgRTSer, [], 2)]);
+csvwrite('csvfiles/minAvgRTVal_mean.csv', [U, mean(minAvgRTVal, 2)]);
+
+csvwrite('csvfiles/minAvgRTSer_minmax.csv', [ [U; flipud(U)], ...
+    [max(minAvgRTSer, [], 2); flipud(min(minAvgRTSer, [], 2))]]);
+
+csvwrite('csvfiles/utils-1-sim.csv', [x1, y1]);
+csvwrite('csvfiles/utils-4-sim.csv', [x2, y2]);
+csvwrite('csvfiles/utils-8-sim.csv', [x3, y3]);
 
 %% Functions
 
