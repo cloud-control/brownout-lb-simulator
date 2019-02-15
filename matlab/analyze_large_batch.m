@@ -129,6 +129,29 @@ for test = 1:m
     testData = [testData; tmp_struct];
 end
 
+%% Analytic results
+
+addpath("opt_clone_funcs")
+
+[optSer, meanRT] = analytic_central_queue(LAMBDA_FRAC, CLONES);
+
+[optSer, meanRT] = analytic_clusterRandom_FCFS(LAMBDA_FRAC, CLONES);
+
+[optSer, meanRT] = analytic_clusterRandom_PS(LAMBDA_FRAC, CLONES);
+
+% Both optimal clone amount / expected value RT at that amount
+
+% IQ12, RIQ12 not possible, special
+% JSQ-FCFS/PS, Random-FCFS/PS, RR-FCFS/PS not possible since not
+%   synchronized
+% Central-Queue, possible through M/G/k approximation
+% Cluster-JSQ-FCFS using approximation
+% Cluster-JSQ-PS using approximation
+% Cluster-Random-FCFS, exact M/G/1 approximation
+% Cluster-Random-PS, exact M/G/1-PS
+% Cluster-RR-FCFS, using Kingmans approximation
+% Cluster-RR-PS, no known approximation?
+
 %% Plot optimal servers
 
 sIdx = [2, 3, 4, 5, 6, 1];
@@ -197,6 +220,7 @@ for i = 1:n
         end
     end
 end
+
 
 %% Save to CSV
 

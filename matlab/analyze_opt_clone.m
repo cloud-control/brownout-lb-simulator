@@ -3,13 +3,21 @@
 % time to do!
 
 READ_NEW = 1;
+PS = 1;
 
-if READ_NEW
+if PS
     path = '/home/johanr/Projects/brownout-lb-simulator/result_opt_clone-ps';
+    filename = 'datafiles/data-opt_clone.mat-ps';
+else 
+    path = '/home/johanr/Projects/brownout-lb-simulator/result_opt_clone';
+    filename = 'datafiles/data-opt_clone.mat';
+end
+    
+if READ_NEW
     data = read_mcData(path);
-    save('datafiles/data-opt_clone.mat', 'data');
+    save(filename, 'data');
 else
-    tmp = load('datafiles/data-opt_clone.mat');
+    tmp = load(filename);
     data = tmp.data;
 end
 
@@ -165,30 +173,45 @@ for i = 1:length(show)
     end
 end
 
+x1 = U(:, 1);
+y1 = Y(:, 1);
+
+x2 = U(1:end-3, 1);
+y2 = Y(1:end-3, 2);
+
+x3 = U(1:end-21, 1);
+y3 = Y(1:end-21, 3);
+
+
 figure(4)
 clf()
 hold on;
-plot(U, Y(:, 1), "k", 'LineWidth', 2)
-plot(U, Y(:, 2), "b", 'LineWidth', 2)
-plot(U, Y(:, 3), "r", 'LineWidth', 2)
+plot(x1, y1, "k", 'LineWidth', 2)
+plot(x2, y2, "b", 'LineWidth', 2)
+plot(x3, y3, "r", 'LineWidth', 2)
 xlim([0, 1])
 ylim([0, 1])
 
 
 %% Save to CSV
 
-
-csvwrite('csvfiles/minAvgRTSer_mean.csv', [U, mean(minAvgRTSer, 2)]);
-csvwrite('csvfiles/minAvgRTSer_min.csv', [U, min(minAvgRTSer, [], 2)]);
-csvwrite('csvfiles/minAvgRTSer_max.csv', [U, max(minAvgRTSer, [], 2)]);
-csvwrite('csvfiles/minAvgRTVal_mean.csv', [U, mean(minAvgRTVal, 2)]);
+if PS
+    s = '-ps';
+else
+    s = '';
+end
+    
+csvwrite(['csvfiles/minAvgRTSer_mean' s '.csv'], [U, mean(minAvgRTSer, 2)]);
+csvwrite(['csvfiles/minAvgRTSer_min' s '.csv'], [U, min(minAvgRTSer, [], 2)]);
+csvwrite(['csvfiles/minAvgRTSer_max' s '.csv'], [U, max(minAvgRTSer, [], 2)]);
+csvwrite(['csvfiles/minAvgRTVal_mean' s '.csv'], [U, mean(minAvgRTVal, 2)]);
 
 csvwrite('csvfiles/minAvgRTSer_minmax.csv', [ [U; flipud(U)], ...
     [max(minAvgRTSer, [], 2); flipud(min(minAvgRTSer, [], 2))]]);
 
-csvwrite('csvfiles/utils-1-sim.csv', [x1, y1]);
-csvwrite('csvfiles/utils-4-sim.csv', [x2, y2]);
-csvwrite('csvfiles/utils-8-sim.csv', [x3, y3]);
+csvwrite(['csvfiles/utils-1-sim' s '.csv'], [x1, y1]);
+csvwrite(['csvfiles/utils-4-sim' s '.csv'], [x2, y2]);
+csvwrite(['csvfiles/utils-8-sim' s '.csv'], [x3, y3]);
 
 %% Functions
 
