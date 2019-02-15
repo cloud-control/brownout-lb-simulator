@@ -2,10 +2,10 @@
 % Only read the data once to create the .mat file, as it takes very long
 % time to do!
 
-READ_NEW = 0;
+READ_NEW = 1;
 
 if READ_NEW
-    path = '/home/johanr/Projects/brownout-lb-simulator/result_opt_clone';
+    path = '/home/johanr/Projects/brownout-lb-simulator/result_opt_clone-ps';
     data = read_mcData(path);
     save('datafiles/data-opt_clone.mat', 'data');
 else
@@ -36,7 +36,7 @@ minP95RTSer = zeros(lenRate, MC_SIMS);
 minStdRTVal = zeros(lenRate, MC_SIMS);
 minStdRTSer = zeros(lenRate, MC_SIMS);
 
-meanUtils = zeros(lenRate, NBR_OF_DIFF_SERVERS);
+meanUtils = cell(lenRate, 1);
 
 for k = 1:lenRate
     rate = rates(k);
@@ -46,9 +46,9 @@ for k = 1:lenRate
     disp([num2str(rate) ' ' num2str(size(data(ind, :), 1))])
     
     % bugcheck
-    if size(data(ind, :), 1) ~= NBR_OF_DIFF_SERVERS
-        error("Wrong number of servers found!")
-    end
+    %if size(data(ind, :), 1) ~= NBR_OF_DIFF_SERVERS
+    %    error("Wrong number of servers found!")
+    %end
     
     D = data(ind, :);
     [m, ~] = size(D);
@@ -82,7 +82,7 @@ for k = 1:lenRate
     minStdRTVal(k, :) = std_val;
     minStdRTSer(k, :) = getServerIdx(D, std_idx);
     
-    meanUtils(k, :) = mean(utils,1);
+    meanUtils{k} = mean(utils,1);
 end
 
 
@@ -105,7 +105,7 @@ plot(U, mean(minAvgRTVal, 2) + conf, 'k--', 'LineWidth', 2)
 plot(U, mean(minAvgRTVal, 2) - conf, 'k--', 'LineWidth', 2)
 title("For avg. Response Time")
 xlim([0, 0.7])
-ylim([0, 20])
+ylim([0, 10])
 grid on;
 
 figure(2)
@@ -143,25 +143,34 @@ grid on;
 
 U = rates*0.01 + 0.05;
 sIdx = [4, 5, 6, 7, 8, 9, 10, 11, 12, 1, 2, 3];
+show = [1, 4, 8]
 
-y1 = meanUtils(:, sIdx(1));
-x1 = U;
+Y = zeros(length(meanUtils), length(show));
 
-y2 = meanUtils(1:end-3, sIdx(4));
-x2 = U(1:end-3);
+for i = 1:length(show)
+    for k = 1:length(meanUtils)
+        u = meanUtils{k};
+        if length(u) >= show(i)
+            if length(u) == 12
+                Y(k, i) = u(sIdx(show(i)));
+            elseif length(u) == 11
+                Y(k, i) = u(sIdx(show(i))-1);
+            elseif length(u) == 10
+                Y(k, i) = u(sIdx(show(i))-2);
+            else
+                Y(k, i) = u(show(i));
+            end
+            
+        end
+    end
+end
 
-y3 = meanUtils(1:end-21, sIdx(8));
-x3 = U(1:end-21);
-
-figure(1)
+figure(4)
 clf()
 hold on;
-%plot(x1, y1, "k", 'LineWidth', 2)
-%plot(x2, y2, "b", 'LineWidth', 2)
-%plot(x3, y3, "r", 'LineWidth', 2)
-for k = 1:12
-    plot(U, meanUtils(:, sIdx(k)))
-end
+plot(U, Y(:, 1), "k", 'LineWidth', 2)
+plot(U, Y(:, 2), "b", 'LineWidth', 2)
+plot(U, Y(:, 3), "r", 'LineWidth', 2)
 xlim([0, 1])
 ylim([0, 1])
 

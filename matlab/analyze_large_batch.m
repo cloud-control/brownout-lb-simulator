@@ -9,12 +9,13 @@ if READ_NEW
     tests = dir(path);
     tests(1:2) = [];
     
-    m = length(tests)
+    m = length(tests);
     dataCell = cell(m, 2);
     
     for k = 1:m
+        k
         dataCell{k, 1} = read_mcData([path '/' tests(k).name]);
-        dataCell{k, 2} = tests(k).name
+        dataCell{k, 2} = tests(k).name;
     end
     
     save('datafiles/data-large_batch.mat', 'dataCell');
@@ -43,6 +44,11 @@ testData = struct(  'testName', [], ...
                     'totalReqs', [])
                     
 for test = 1:m
+    
+    if strcmp(dataCell{test, 2}, "RIQ12") || strcmp(dataCell{test, 2}, "IQ12")
+       continue 
+    end
+    
     data = dataCell{test, 1}
     
     % Find the best cloning for each arrival rate frac
@@ -72,9 +78,9 @@ for test = 1:m
         disp([num2str(rate) ' ' num2str(size(data(ind, :), 1))])
 
         % bugcheck
-        if size(data(ind, :), 1) ~= length(CLONES)
-            error("Wrong number of servers found!")
-        end
+        %if size(data(ind, :), 1) ~= length(CLONES)
+        %    error("Wrong number of servers found!")
+        %end
 
         D = data(ind, :);
         [m, ~] = size(D);
@@ -127,28 +133,61 @@ end
 
 sIdx = [2, 3, 4, 5, 6, 1];
 
+n = length(testData)-1
 m = length(LAMBDA_FRAC);
+
 figure(1)
 clf()
+sgtitle("Optimal clone clount")
 for k = 1:m
+    Y = zeros(n, MC_SIMS);
+    X = []
+    for i = 1:n
+        Y(i, :) = testData(i+1).minAvgRTSer(k, :);
+        X = [X, convertCharsToStrings(testData(i+1).testName)];
+    end
+    [~, idx] = sort(mean(Y, 2));
+    Y = Y(idx, :)
+    X = X(idx)
+
     subplot(m, 1, k)
     hold on;
-    boxplot(testData(2).minAvgRTSer(k, :), testData(2).testName)
+    boxplot(Y', X)
     title(sprintf("Using %s %.2f","\lambda_{frac} = " , LAMBDA_FRAC(k)))
     yticks(CLONES)
     set(gca, 'yscale', 'log')
     ylim([0.8, 15])
 end
 
-
-n = length(testData)-1
 figure(2)
+clf()
+sgtitle("Minimal response time over clone set")
+for k = 1:m
+    Y = zeros(n, MC_SIMS);
+    X = []
+    for i = 1:n
+        Y(i, :) = testData(i+1).minAvgRTVal(k, :);
+        X = [X, convertCharsToStrings(testData(i+1).testName)];
+    end
+
+    [~, idx] = sort(mean(Y, 2));
+    Y = Y(idx, :)
+    X = X(idx)
+    subplot(m, 1, k)
+    hold on;
+    boxplot(Y', X)
+    title(sprintf("Using %s %.2f","\lambda_{frac} = " , LAMBDA_FRAC(k)))
+    %set(gca, 'yscale', 'log')
+end
+    
+    
+figure(3)
 clf()
 sgtitle("Number of request over clone-count")
 for i = 1:n
     for k=1:m
-        subplot(n, m, k + (i-1)*n)
-        reqs = testData(i+1).totalReqs(:,:,k)
+        subplot(n, m, k + (i-1)*m)
+        reqs = testData(i+1).totalReqs(:,:,k);
         hold on;
         boxplot(reqs(:, sIdx), CLONES)
         title(sprintf("Using %s %.2f","\lambda_{frac} = " , LAMBDA_FRAC(k)))
