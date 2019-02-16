@@ -23,16 +23,24 @@ function [optSer, meanRT] = analytic_clusterRandom_FCFS(LAMBDA_FRAC, CLONES)
             utils(i,j) =  arrivalRate * X_M1 / K;
             
             p = utils(i, j);
+            
+            if K > 1
+                ph = p*(1+X_C2) / (2 + p*(X_C2-1));
 
-            ph = p*(1+X_C2) / (2 + p*(X_C2-1));
+                A = (K*ph)^K/(factorial(K)*(1 - ph));
+                for k = 0:K-1
+                   A = A + (K*ph)^k/factorial(k);
+                end
 
-            A = (K*ph)^K/(factorial(K)*(1 - ph));
-            for k = 0:K-1
-               A = A + (K*ph)^k/factorial(k);
+                P = (K*ph)^K / (factorial(K)*(1-ph)*A);
+                
+                meanRT = X_M1 +  X_M1 * P / (1 - ph^K);
+            else
+                % If K = 1, then the server system is equivalent to M/G/1
+                meanRT = X_M1 + p*X_M1*(1 + X_C2)/(2*(1-p));                      
             end
-
-            P = (K*ph)^K / (factorial(K)*(1-ph)*A);
-            meanRespTimes(i, j) = X_M1 +  X_M1 * P / (1 - ph^K);
+            
+            meanRespTimes(i, j) = meanRT;
             
         end
     end

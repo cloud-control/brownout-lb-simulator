@@ -32,7 +32,7 @@ MC_SIMS = 20
 
 m = size(dataCell, 1);
 
-testData = struct(  'testName', [], ...
+testData_FCFS = struct(  'testName', [], ...
                     'minAvgRTVal', [], ...
                     'minAvgRTSer', [], ...
                     'minP95RTVal', [], ... 
@@ -42,6 +42,18 @@ testData = struct(  'testName', [], ...
                     'meanUtils' , [], ...
                     'stdUtils', [], ...
                     'totalReqs', []);
+
+testData_PS = struct(  'testName', [], ...
+                    'minAvgRTVal', [], ...
+                    'minAvgRTSer', [], ...
+                    'minP95RTVal', [], ... 
+                    'minP95RTSer', [], ...
+                    'minStdRTVal', [], ...
+                    'minStdRTSer', [], ...
+                    'meanUtils' , [], ...
+                    'stdUtils', [], ...
+                    'totalReqs', []);
+                
 
 testData_RIQ = struct(  'testName', [], ...
                         'avgRTVal', [], ...
@@ -61,6 +73,10 @@ for test = 1:m
     rates = sort(unique(cellfun(@(x) str2num(x), vals)));
 
     lenRate = length(rates);
+    
+    if strcmp(dataCell{test,2}, "RR-FCFS") || strcmp(dataCell{test,2}, "RR-PS")
+        continue;
+    end
     
     
     % Special case if IQ/RIQ, since we do not have different cloning
@@ -158,17 +174,25 @@ for test = 1:m
         totalReqs(:,:,k) = reqs;
     end
     
-   tmp_struct = struct(  'testName', dataCell{test, 2}, ...
-                    'minAvgRTVal', minAvgRTVal, ...
-                    'minAvgRTSer', minAvgRTSer, ...
-                    'minP95RTVal', minP95RTVal, ... 
-                    'minP95RTSer', minP95RTSer, ...
-                    'minStdRTVal', minStdRTVal, ...
-                    'minStdRTSer', minStdRTSer, ...
-                    'meanUtils' , meanUtils, ...
-                    'stdUtils', stdUtils, ...
-                    'totalReqs', totalReqs);
-    testData = [testData; tmp_struct];
+    
+    tmp_struct = struct(  'testName', dataCell{test, 2}, ...
+        'minAvgRTVal', minAvgRTVal, ...
+        'minAvgRTSer', minAvgRTSer, ...
+        'minP95RTVal', minP95RTVal, ... 
+        'minP95RTSer', minP95RTSer, ...
+        'minStdRTVal', minStdRTVal, ...
+        'minStdRTSer', minStdRTSer, ...
+        'meanUtils' , meanUtils, ...
+        'stdUtils', stdUtils, ...
+        'totalReqs', totalReqs);
+
+    
+    if contains(dataCell{test,2}, "-PS")
+        testData_PS = [testData_PS; tmp_struct];
+    else
+        testData_FCFS = [testData_FCFS; tmp_struct];
+    end
+
 end
 
 %% Calculate analytic results and plot results
@@ -190,8 +214,13 @@ analytic_meanRT('clusterRandom-FCFS') = meanRT;
 analytic_optClone('clusterRandom-PS') = optClone;
 analytic_meanRT('clusterRandom-PS') = meanRT;
 
-% DOES NOT EXIST IN IMPLEMENTATION?
-[optClone, meanRT] = analytic_clusterRR_FCFS(LAMBDA_FRAC, CLONES);
+%[optClone, meanRT] = analytic_RR_FCFS(LAMBDA_FRAC, CLONES);
+%analytic_optClone('RR-FCFS') = optClone;
+%analytic_meanRT('RR-FCFS') = meanRT;
+
+%[optClone, meanRT] = analytic_RR_PS(LAMBDA_FRAC, CLONES);
+%analytic_optClone('RR-PS') = optClone;
+%analytic_meanRT('RR-PS') = meanRT;
 
 % Calculate Cluster-JSQ-FCFS, Can we make it better?
 [optClone, meanRT] = analytic_clusterJSQ_FCFS(LAMBDA_FRAC, CLONES);
@@ -202,7 +231,6 @@ analytic_meanRT('clusterJSQ-FCFS') = meanRT;
 [optClone, meanRT] = analytic_clusterJSQ_PS(LAMBDA_FRAC, CLONES);
 analytic_optClone('clusterJSQ-PS') = optClone;
 analytic_meanRT('clusterJSQ-PS') = meanRT;
- 
 
 % Implement and run in simulator?
 % Cluster-RR-FCFS, using Kingmans formula
@@ -214,90 +242,10 @@ analytic_meanRT('clusterJSQ-PS') = meanRT;
 % JSQ-FCFS/PS, Random-FCFS/PS, RR-FCFS/PS not possible since not
 %   synchronized
 
-sIdx = [2, 3, 4, 5, 6, 1];
-
-n = length(testData)-1
-m = length(LAMBDA_FRAC);
-
-figure(1)
-clf()
-sgtitle("Optimal clone clount")
-for k = 1:m
-    Y = zeros(n, MC_SIMS);
-    X = []
-    
-    Y_theory = [];
-    X_theory = [];
-    for i = 1:n
-        Y(i, :) = testData(i+1).minAvgRTSer(k, :);
-        X = [X, convertCharsToStrings(testData(i+1).testName)];
-        
-        if ~isempty(intersect(analytic_optClone.keys(), testData(i+1).testName))
-            optClone = analytic_optClone(testData(i+1).testName)
-            Y_theory = [Y_theory, optClone(k)];
-            X_theory = [X_theory, i];
-        else
-           X_theory = [X_theory, 0];
-           Y_theory = [Y_theory, 0];
-        end
-        
-    end
-    [~, idx] = sort(mean(Y, 2));
-    Y = Y(idx, :)
-    X = X(idx)
-    
-    Y_theory = Y_theory(idx);
-    %X_theory = X_theory(idx);
-
-    subplot(m, 1, k)
-    hold on;
-    boxplot(Y', X)
-    plot(1:11, Y_theory, 'go')
-    title(sprintf("Using %s %.2f","\lambda_{frac} = " , LAMBDA_FRAC(k)))
-    yticks(CLONES)
-    set(gca, 'yscale', 'log')
-    ylim([0.8, 15])
-end
-
-figure(2)
-clf()
-sgtitle("Minimal response time over clone set")
-for k = 1:m
-    Y = zeros(n, MC_SIMS);
-    X = []
-    Y_theory = [];
-    X_theory = [];
-    
-    for i = 1:n
-        Y(i, :) = testData(i+1).minAvgRTVal(k, :);
-        X = [X, convertCharsToStrings(testData(i+1).testName)];
-        
-        if ~isempty(intersect(analytic_meanRT.keys(), testData(i+1).testName))
-            meanRT = analytic_meanRT(testData(i+1).testName)
-            Y_theory = [Y_theory, meanRT(k)];
-            X_theory = [X_theory, i];
-        else
-           X_theory = [X_theory, 0];
-           Y_theory = [Y_theory, 0];
-        end
-        
-    end
-
-    [~, idx] = sort(mean(Y, 2));
-    Y = Y(idx, :)
-    X = X(idx)
-    
-    Y_theory = Y_theory(idx);
-    %X_theory = X_theory(idx);
-    
-    
-    subplot(m, 1, k)
-    hold on;
-    boxplot(Y', X)
-    plot(1:11, Y_theory, 'go')
-    title(sprintf("Using %s %.2f","\lambda_{frac} = " , LAMBDA_FRAC(k)))
-    %set(gca, 'yscale', 'log')
-end
+X_FCFS = plotting_large_batch(testData_FCFS, analytic_optClone, analytic_meanRT, ...
+    CLONES, LAMBDA_FRAC, MC_SIMS, '-FCFS');
+X_PS = plotting_large_batch(testData_PS, analytic_optClone, analytic_meanRT, ...
+    CLONES, LAMBDA_FRAC, MC_SIMS, '-PS');
 
 
 %% Plot amount of requests
@@ -377,6 +325,21 @@ legend(testData_RIQ(2).testName, testData_RIQ(3).testName, 'location', 'northwes
 
 
 %% Save to CSV
+
+
+    
+csvwrite(['csvfiles/minAvgRTSer_mean' s '.csv'], [U, mean(minAvgRTSer, 2)]);
+csvwrite(['csvfiles/minAvgRTSer_min' s '.csv'], [U, min(minAvgRTSer, [], 2)]);
+csvwrite(['csvfiles/minAvgRTSer_max' s '.csv'], [U, max(minAvgRTSer, [], 2)]);
+csvwrite(['csvfiles/minAvgRTVal_mean' s '.csv'], [U, mean(minAvgRTVal, 2)]);
+
+csvwrite('csvfiles/minAvgRTSer_minmax.csv', [ [U; flipud(U)], ...
+    [max(minAvgRTSer, [], 2); flipud(min(minAvgRTSer, [], 2))]]);
+
+csvwrite(['csvfiles/utils-1-sim' s '.csv'], [x1, y1]);
+csvwrite(['csvfiles/utils-4-sim' s '.csv'], [x2, y2]);
+csvwrite(['csvfiles/utils-8-sim' s '.csv'], [x3, y3]);
+
 
 
 %% Functions
