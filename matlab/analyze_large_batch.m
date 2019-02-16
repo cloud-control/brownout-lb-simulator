@@ -30,7 +30,7 @@ LAMBDA_FRAC = [0.1, 0.3, 0.5, 0.7];
 CLONES = [1, 2, 3, 4, 6, 12]; 
 MC_SIMS = 20
 
-m = size(dataCell, 1)
+m = size(dataCell, 1);
 
 testData = struct(  'testName', [], ...
                     'minAvgRTVal', [], ...
@@ -41,15 +41,19 @@ testData = struct(  'testName', [], ...
                     'minStdRTSer', [], ...
                     'meanUtils' , [], ...
                     'stdUtils', [], ...
-                    'totalReqs', [])
+                    'totalReqs', []);
+
+testData_RIQ = struct(  'testName', [], ...
+                        'avgRTVal', [], ...
+                        'p95RTVal', [], ... 
+                        'stdRTVal', [], ...
+                        'meanUtils' , [], ...
+                        'stdUtils', [], ...
+                        'totalReqs', []);
                     
 for test = 1:m
-    
-    if strcmp(dataCell{test, 2}, "RIQ12") || strcmp(dataCell{test, 2}, "IQ12")
-       continue 
-    end
-    
-    data = dataCell{test, 1}
+       
+    data = dataCell{test, 1};
     
     % Find the best cloning for each arrival rate frac
     split = cellfun(@(x) strsplit(x, 'af'), data(:, 2), 'UniformOutput', false);
@@ -57,6 +61,44 @@ for test = 1:m
     rates = sort(unique(cellfun(@(x) str2num(x), vals)));
 
     lenRate = length(rates);
+    
+    
+    % Special case if IQ/RIQ, since we do not have different cloning
+    % amounts
+    if strcmp(dataCell{test, 2}, "RIQ12") || strcmp(dataCell{test, 2}, "IQ12")
+        avgRTVal = zeros(lenRate, MC_SIMS);
+        p95RTVal = zeros(lenRate, MC_SIMS);
+        stdRTVal = zeros(lenRate, MC_SIMS);
+        meanUtils = zeros(lenRate, 1);
+        stdUtils = zeros(lenRate, 1);
+
+        totalReqs = zeros(MC_SIMS, 1, lenRate);
+       
+        for k = 1:lenRate
+            rate = rates(k);
+            ind = cellfun(@(x) endsWith(x, ['af' num2str(rate)]), data(:, 2));
+            D = data(ind, :);
+
+            avgRTVal(k, :) = cellfun(@(x) str2num(x), D{1, 1}.avgResponseTime);
+            p95RTVal(k, :) = cellfun(@(x) str2num(x), D{1, 1}.p95ResponseTime);
+            stdRTVal(k, :) = cellfun(@(x) str2num(x), D{1, 1}.stddevResponseTime);
+            meanUtils(k, :) = mean(mean([cellfun(@(x) str2num(x), table2cell(D{1,1}(:, 10:end)))], 2));
+            stdUtils(k, :) = std(mean([cellfun(@(x) str2num(x), table2cell(D{1,1}(:, 10:end)))], 2));
+            totalReqs(:,:,k) = [cellfun(@(x) str2num(x), D{1, 1}.numRequests)];
+        end
+
+       tmp_struct = struct(  'testName', dataCell{test, 2}, ...
+                        'avgRTVal', avgRTVal, ...
+                        'p95RTVal', p95RTVal, ... 
+                        'stdRTVal', stdRTVal, ...
+                        'meanUtils' , meanUtils, ...
+                        'stdUtils', stdUtils, ...
+                        'totalReqs', totalReqs);
+        testData_RIQ = [testData_RIQ; tmp_struct];
+        continue 
+    end
+    
+    % Normal case
 
     minAvgRTVal = zeros(lenRate, MC_SIMS);
     minAvgRTSer = zeros(lenRate, MC_SIMS);
@@ -276,6 +318,62 @@ for i = 1:n
         end
     end
 end
+
+
+%% Compare IQ/RIQ
+
+m = length(testData_RIQ);
+
+avgRT1 = mean(testData_RIQ(2).avgRTVal, 2);
+avgRT2 = mean(testData_RIQ(3).avgRTVal, 2);
+avgRT_bounds1 = 2.09 * std(testData_RIQ(2).avgRTVal, [], 2) / sqrt(20);
+avgRT_bounds2 = 2.09 * std(testData_RIQ(2).avgRTVal, [], 2) / sqrt(20);
+
+p95RT1 = mean(testData_RIQ(2).p95RTVal, 2);
+p95RT2 = mean(testData_RIQ(3).p95RTVal, 2);
+p95RT_bounds1 = 2.09 * std(testData_RIQ(2).p95RTVal, [], 2) / sqrt(20);
+p95RT_bounds2 = 2.09 * std(testData_RIQ(2).p95RTVal, [], 2) / sqrt(20);
+
+stdRT1 = mean(testData_RIQ(2).stdRTVal, 2);
+stdRT2 = mean(testData_RIQ(3).stdRTVal, 2);
+stdRT_bounds1 = 2.09 * std(testData_RIQ(2).stdRTVal, [], 2) / sqrt(20);
+stdRT_bounds2 = 2.09 * std(testData_RIQ(2).stdRTVal, [], 2) / sqrt(20);
+
+figure(4)
+clf()
+sgtitle("Comparasion between IQ and RIQ")
+subplot(3, 1, 1)
+title("Average Response Time")
+hold on;
+plot(LAMBDA_FRAC, avgRT1, 'b');
+plot(LAMBDA_FRAC, avgRT2, 'r');
+plot(LAMBDA_FRAC, avgRT1 + avgRT_bounds1, 'b--')
+plot(LAMBDA_FRAC, avgRT1 - avgRT_bounds1, 'b--')
+plot(LAMBDA_FRAC, avgRT2 + avgRT_bounds2, 'r--')
+plot(LAMBDA_FRAC, avgRT2 - avgRT_bounds2, 'r--')
+legend(testData_RIQ(2).testName, testData_RIQ(3).testName, 'location', 'northwest')
+
+subplot(3, 1, 2)
+title("p95 Response Time")
+hold on;
+plot(LAMBDA_FRAC, p95RT1, 'b');
+plot(LAMBDA_FRAC, p95RT2, 'r');
+plot(LAMBDA_FRAC, p95RT1 + p95RT_bounds1, 'b--')
+plot(LAMBDA_FRAC, p95RT1 - p95RT_bounds1, 'b--')
+plot(LAMBDA_FRAC, p95RT2 + p95RT_bounds2, 'r--')
+plot(LAMBDA_FRAC, p95RT2 - p95RT_bounds2, 'r--')
+legend(testData_RIQ(2).testName, testData_RIQ(3).testName, 'location', 'northwest')
+
+subplot(3, 1, 3)
+title("Std Response Time")
+hold on;
+plot(LAMBDA_FRAC, stdRT1, 'b');
+plot(LAMBDA_FRAC, stdRT2, 'r');
+plot(LAMBDA_FRAC, stdRT1 + stdRT_bounds1, 'b--')
+plot(LAMBDA_FRAC, stdRT1 - stdRT_bounds1, 'b--')
+plot(LAMBDA_FRAC, stdRT2 + stdRT_bounds2, 'r--')
+plot(LAMBDA_FRAC, stdRT2 - stdRT_bounds2, 'r--')
+legend(testData_RIQ(2).testName, testData_RIQ(3).testName, 'location', 'northwest')
 
 
 %% Save to CSV
