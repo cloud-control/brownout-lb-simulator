@@ -129,24 +129,37 @@ for test = 1:m
     testData = [testData; tmp_struct];
 end
 
-%% Analytic results
+%% Calculate analytic results and plot results
 
 addpath("opt_clone_funcs")
 
-[optSer, meanRT] = analytic_central_queue(LAMBDA_FRAC, CLONES);
+analytic_optClone = containers.Map();
+analytic_meanRT = containers.Map();
 
-[optSer, meanRT] = analytic_clusterRandom_FCFS(LAMBDA_FRAC, CLONES);
+[optClone, meanRT] = analytic_central_queue(LAMBDA_FRAC, CLONES);
+analytic_optClone('central-queue') = optClone;
+analytic_meanRT('central-queue') = meanRT;
 
-[optSer, meanRT] = analytic_clusterRandom_PS(LAMBDA_FRAC, CLONES);
+[optClone, meanRT] = analytic_clusterRandom_FCFS(LAMBDA_FRAC, CLONES);
+analytic_optClone('clusterRandom-FCFS') = optClone;
+analytic_meanRT('clusterRandom-FCFS') = meanRT;
+
+[optClone, meanRT] = analytic_clusterRandom_PS(LAMBDA_FRAC, CLONES);
+analytic_optClone('clusterRandom-PS') = optClone;
+analytic_meanRT('clusterRandom-PS') = meanRT;
 
 % DOES NOT EXIST IN IMPLEMENTATION?
-[optSer, meanRT] = analytic_clusterRR_FCFS(LAMBDA_FRAC, CLONES);
+[optClone, meanRT] = analytic_clusterRR_FCFS(LAMBDA_FRAC, CLONES);
 
 % Calculate Cluster-JSQ-FCFS, Can we make it better?
-[optSer, meanRT] = analytic_clusterJSQ_FCFS(LAMBDA_FRAC, CLONES);
+[optClone, meanRT] = analytic_clusterJSQ_FCFS(LAMBDA_FRAC, CLONES);
+analytic_optClone('clusterJSQ-FCFS') = optClone;
+analytic_meanRT('clusterJSQ-FCFS') = meanRT;
  
 % Calculate Cluster-JSQ-PS
-[optSer, meanRT] = analytic_clusterJSQ_PS(LAMBDA_FRAC, CLONES);
+[optClone, meanRT] = analytic_clusterJSQ_PS(LAMBDA_FRAC, CLONES);
+analytic_optClone('clusterJSQ-PS') = optClone;
+analytic_meanRT('clusterJSQ-PS') = meanRT;
  
 
 % Implement and run in simulator?
@@ -159,9 +172,6 @@ addpath("opt_clone_funcs")
 % JSQ-FCFS/PS, Random-FCFS/PS, RR-FCFS/PS not possible since not
 %   synchronized
 
-
-%% Plot optimal servers
-
 sIdx = [2, 3, 4, 5, 6, 1];
 
 n = length(testData)-1
@@ -173,17 +183,34 @@ sgtitle("Optimal clone clount")
 for k = 1:m
     Y = zeros(n, MC_SIMS);
     X = []
+    
+    Y_theory = [];
+    X_theory = [];
     for i = 1:n
         Y(i, :) = testData(i+1).minAvgRTSer(k, :);
         X = [X, convertCharsToStrings(testData(i+1).testName)];
+        
+        if ~isempty(intersect(analytic_optClone.keys(), testData(i+1).testName))
+            optClone = analytic_optClone(testData(i+1).testName)
+            Y_theory = [Y_theory, optClone(k)];
+            X_theory = [X_theory, i];
+        else
+           X_theory = [X_theory, 0];
+           Y_theory = [Y_theory, 0];
+        end
+        
     end
     [~, idx] = sort(mean(Y, 2));
     Y = Y(idx, :)
     X = X(idx)
+    
+    Y_theory = Y_theory(idx);
+    %X_theory = X_theory(idx);
 
     subplot(m, 1, k)
     hold on;
     boxplot(Y', X)
+    plot(1:11, Y_theory, 'go')
     title(sprintf("Using %s %.2f","\lambda_{frac} = " , LAMBDA_FRAC(k)))
     yticks(CLONES)
     set(gca, 'yscale', 'log')
@@ -196,21 +223,42 @@ sgtitle("Minimal response time over clone set")
 for k = 1:m
     Y = zeros(n, MC_SIMS);
     X = []
+    Y_theory = [];
+    X_theory = [];
+    
     for i = 1:n
         Y(i, :) = testData(i+1).minAvgRTVal(k, :);
         X = [X, convertCharsToStrings(testData(i+1).testName)];
+        
+        if ~isempty(intersect(analytic_meanRT.keys(), testData(i+1).testName))
+            meanRT = analytic_meanRT(testData(i+1).testName)
+            Y_theory = [Y_theory, meanRT(k)];
+            X_theory = [X_theory, i];
+        else
+           X_theory = [X_theory, 0];
+           Y_theory = [Y_theory, 0];
+        end
+        
     end
 
     [~, idx] = sort(mean(Y, 2));
     Y = Y(idx, :)
     X = X(idx)
+    
+    Y_theory = Y_theory(idx);
+    %X_theory = X_theory(idx);
+    
+    
     subplot(m, 1, k)
     hold on;
     boxplot(Y', X)
+    plot(1:11, Y_theory, 'go')
     title(sprintf("Using %s %.2f","\lambda_{frac} = " , LAMBDA_FRAC(k)))
     %set(gca, 'yscale', 'log')
 end
-    
+
+
+%% Plot amount of requests
     
 figure(3)
 clf()
