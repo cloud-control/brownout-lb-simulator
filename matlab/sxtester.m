@@ -209,37 +209,36 @@ minavgresps2 = -1*ones(1,50);
 
 clones = 1:10;
 for j = clones
-j
-nbrClones = j;
-mindollycdf = 1 - (1 - dollycdf).^nbrClones;
-mindollypdf = zeros(size(mindollycdf));
+    j
+    nbrClones = j;
+    mindollycdf = 1 - (1 - dollycdf).^nbrClones;
+    mindollypdf = zeros(size(mindollycdf));
 
-mindollypdf(1) = mindollycdf(1);
+    mindollypdf(1) = mindollycdf(1);
 
-for i=2:length(mindollycdf)
-    mindollypdf(i) = mindollycdf(i) - mindollycdf(i-1);
-end
+    for i=2:length(mindollycdf)
+        mindollypdf(i) = mindollycdf(i) - mindollycdf(i-1);
+    end
 
-cloneminmean = cumsum(x.*mindollypdf);
+    cloneminmean = cumsum(x.*mindollypdf);
 
-cloneminvar = cumsum((x.^2).*mindollypdf) - cumsum(x.*mindollypdf);
-cloneminquadexp = cumsum((x.^2).*mindollypdf);
+    cloneminvar = cumsum((x.^2).*mindollypdf) - cumsum(x.*mindollypdf);
+    cloneminquadexp = cumsum((x.^2).*mindollypdf);
 
-minmeans(j) = cloneminmean(end);
-minquadexp(j) = cloneminquadexp(end);
-mincoeffs(j) = cloneminvar(end)./(cloneminmean(end).^2);
+    minmeans(j) = cloneminmean(end);
+    minquadexp(j) = cloneminquadexp(end);
+    mincoeffs(j) = cloneminvar(end)./(cloneminmean(end).^2);
 
-% Use kingmans formula for G/G/1
-avgservicetime = hypermeanservicetime* cloneminmean(end)
-vartot = ((1+hypercoeff)*hypermeanservicetime.^2)*minquadexp(j) - (hypermeanservicetime*minmeans(j)).^2;
-servicecoeff = vartot/((hypermeanservicetime*minmeans(j)).^2)
-util = arrivalrate*avgservicetime*j
+    % Use kingmans formula for G/G/1
+    avgservicetime = hypermeanservicetime* cloneminmean(end)
+    vartot = ((1+hypercoeff)*hypermeanservicetime.^2)*minquadexp(j) - (hypermeanservicetime*minmeans(j)).^2;
+    servicecoeff = vartot/((hypermeanservicetime*minmeans(j)).^2)
+    util = arrivalrate*avgservicetime*j
 
-if util <= 1
-    minavgresps(j) = avgservicetime + avgservicetime*(util/(1-util))*(arrivalcoeff + servicecoeff)/2;
-    minavgresps2(j) = avgservicetime + (util*avgservicetime*(1+servicecoeff))/(2*(1-util));
-end
-
+    if util <= 1
+        minavgresps(j) = avgservicetime + avgservicetime*(util/(1-util))*(arrivalcoeff + servicecoeff)/2;
+        minavgresps2(j) = avgservicetime + (util*avgservicetime*(1+servicecoeff))/(2*(1-util));
+    end
 end
 
 minresp = min(minavgresps(minavgresps>0));
