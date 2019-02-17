@@ -92,6 +92,8 @@ class LoadBalancer:
         self.heteroslowdowns['22'] = 5.8858
         self.heteroslowdowns['4'] = 18.7640
         self.heteroslowdowns['44'] = 11.7715
+        self.heteroslowdowns['1122'] = 1 # Dummy weight
+        self.heteroslowdowns['1212'] = 1 # Dummy weight
 
 
     def setClusters(self):
