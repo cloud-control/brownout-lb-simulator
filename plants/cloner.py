@@ -91,7 +91,8 @@ class Cloner:
         slowdowns = []
         for i in range(0, len(clones)):
             if not hasattr(clones[i], 'serviceTime'):
-                slowdown = self.drawDollySlowdown()
+                slowdownFactor = clones[i].chosenBackend.dollySlowdown
+                slowdown = self.drawDollySlowdown(slowdownFactor)
                 serviceTime = slowdown*taskSize
                 self.activeRequests[request.requestId][i].serviceTime = serviceTime
                 serviceTimes.append(serviceTime)
@@ -168,10 +169,10 @@ class Cloner:
         else:
             return self.random.expovariate(mu2)
 
-    def drawDollySlowdown(self):
+    def drawDollySlowdown(self, slowdownFactor):
         slowint = self.random.randint(0, 999)
         slowdown = self.dolly.item(slowint)
-        return slowdown
+        return slowdown*slowdownFactor
 
     def readCsv(self, filename):
         floatvector = []

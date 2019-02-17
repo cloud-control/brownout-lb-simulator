@@ -2,13 +2,14 @@ from __future__ import division
 
 import random as xxx_random # prevent accidental usage
 from base import Request
+from base.utils import *
 
 
 ## Simulates a load-balancer.
 # The load-balancer is assumed to take zero time for its decisions.
 class LoadBalancer:
     ## Supported load-balancing algorithms.
-    ALGORITHMS = "SQF clone-SQF random RR clone-random IQ RIQ central-queue cluster-SQF cluster-random".split()
+    ALGORITHMS = "SQF clone-SQF random RR clone-random IQ RIQ central-queue cluster-SQF cluster-random cluster-w-random cluster-SED".split()
 
     def __init__(self, sim, seed = 1, printout = 1, printRespTime = 1):
         self.progressPeriod = 1000000.0
@@ -38,6 +39,14 @@ class LoadBalancer:
 
         self.clusterIndexes = []
         self.prevChosenBackendIndex = 0
+
+        self.clusterWeights = []
+
+        self.clusterServiceRates = []
+
+        self.heteroslowdowns = {}
+        self.setHeteroSlowdowns()
+
 
         # Launch progress loop
         self.sim.add(0, self.runProgressLoop)
@@ -72,6 +81,19 @@ class LoadBalancer:
     def setD(self, d):
         self.d = d
 
+    def setHeteroSlowdowns(self):
+        self.heteroslowdowns['1'] = 4.691
+        self.heteroslowdowns['11'] = 2.9429
+        self.heteroslowdowns['12'] = 3.6944
+        self.heteroslowdowns['21'] = 3.6944
+        self.heteroslowdowns['14'] = 4.2615
+        self.heteroslowdowns['41'] = 4.2615
+        self.heteroslowdowns['2'] = 9.3820
+        self.heteroslowdowns['22'] = 5.8858
+        self.heteroslowdowns['4'] = 18.7640
+        self.heteroslowdowns['44'] = 11.7715
+
+
     def setClusters(self):
         nbrClones = self.sim.cloner.nbrClones
         nbrServers = len(self.queueLengths)
@@ -84,6 +106,23 @@ class LoadBalancer:
         for i in range(0, nbrClusters):
             index = i*nbrClones
             self.clusterIndexes.append(index)
+
+        if self.algorithm == 'cluster-w-random' or self.algorithm == 'cluster-SED':
+            for i in range(0, nbrClusters):
+                index = self.clusterIndexes[i]
+                slowdownsstr = ''
+                for j in range(0, nbrClones):
+                    slowdownsstr = slowdownsstr + str((self.backends[index].dollySlowdown))
+                    index += 1
+                self.clusterServiceRates.append(1.0/((1.0/4.7)*self.heteroslowdowns[slowdownsstr]))
+
+            for i in range(0, nbrClusters):
+                self.clusterWeights.append(self.clusterServiceRates[i])
+
+            # Normalize weights
+            weightSum = sum(self.clusterWeights)
+            for i in range(0, nbrClusters):
+                self.clusterWeights[i] = self.clusterWeights[i]/weightSum
 
     ## Handles a request.
     # @param request the request to handle
@@ -182,6 +221,31 @@ class LoadBalancer:
         elif self.algorithm == 'cluster-random':
             if not request.isClone:
                 chosenBackendIndex = self.random.choice(self.clusterIndexes)
+                self.prevChosenBackendIndex = chosenBackendIndex
+            else:
+                chosenBackendIndex = self.prevChosenBackendIndex + 1
+                self.prevChosenBackendIndex = chosenBackendIndex
+
+        elif self.algorithm == 'cluster-w-random':
+            if not request.isClone:
+                chosenClusterIndex = weightedChoice(zip(range(0, len(self.clusterIndexes)), self.clusterWeights), self.random)
+                chosenBackendIndex = self.clusterIndexes[chosenClusterIndex]
+                self.prevChosenBackendIndex = chosenBackendIndex
+
+            else:
+                chosenBackendIndex = self.prevChosenBackendIndex + 1
+                self.prevChosenBackendIndex = chosenBackendIndex
+
+        elif self.algorithm == 'cluster-SED':
+            if not request.isClone:
+                clusterServers = [(index, queue) for index, queue in enumerate(self.queueLengths) if index in self.clusterIndexes]
+                weightedClusterServers = []
+                for cs in clusterServers:
+                    weightedQueue = (1 + cs[1])/self.clusterServiceRates[int(cs[0]/self.sim.cloner.nbrClones)]
+                    weightedClusterServers.append((cs[0], weightedQueue))
+                shortestWeightedClusterServer = min(weightedClusterServers, key=lambda cs: cs[1])
+                shortestWeightedClusterIndexes = [cs[0] for cs in weightedClusterServers if cs[1] == shortestWeightedClusterServer[1]]
+                chosenBackendIndex = self.random.choice(shortestWeightedClusterIndexes)
                 self.prevChosenBackendIndex = chosenBackendIndex
             else:
                 chosenBackendIndex = self.prevChosenBackendIndex + 1

@@ -248,9 +248,9 @@ def runSingleSimulation(sim, scenario, loadBalancingAlgorithm, cloning, nbrClone
                 nbrDiff -= 1
         sim.add(at, changeActiveServersHandler)
 
-    def addServer(at, serviceTimeDistribution=None):
+    def addServer(at, serviceTimeDistribution=None, dollySlowdown=1):
         def addServerHandler():
-            server = Server(sim, serviceTimeDistribution=serviceTimeDistribution)
+            server = Server(sim, serviceTimeDistribution=serviceTimeDistribution, dollySlowdown=dollySlowdown)
             servers.append(server)
             loadBalancer.addBackend(server)
 
