@@ -242,10 +242,18 @@ analytic_meanRT('clusterJSQ-PS') = meanRT;
 % JSQ-FCFS/PS, Random-FCFS/PS, RR-FCFS/PS not possible since not
 %   synchronized
 
+close all;
 X_FCFS = plotting_large_batch(testData_FCFS, analytic_optClone, analytic_meanRT, ...
-    CLONES, LAMBDA_FRAC, MC_SIMS, '-FCFS');
+    CLONES, LAMBDA_FRAC, MC_SIMS, [2, 4], '-FCFS');
 X_PS = plotting_large_batch(testData_PS, analytic_optClone, analytic_meanRT, ...
-    CLONES, LAMBDA_FRAC, MC_SIMS, '-PS');
+    CLONES, LAMBDA_FRAC, MC_SIMS, [2, 4], '-PS');
+
+%% Compare OptClone in mean and p95 response time
+
+[~, fit_FCFS] = plotting_optClone_meanVsP95(testData_FCFS, CLONES, LAMBDA_FRAC, MC_SIMS, [1, 2, 3, 4]);
+[~, fit_PS] = plotting_optClone_meanVsP95(testData_PS, CLONES, LAMBDA_FRAC, MC_SIMS, [1, 2, 3, 4]);
+
+
 
 
 %% Plot amount of requests
