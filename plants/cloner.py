@@ -94,6 +94,16 @@ class Cloner:
                 slowdownFactor = clones[i].chosenBackend.dollySlowdown
                 slowdown = self.drawDollySlowdown(slowdownFactor)
                 serviceTime = slowdown*taskSize
+                #serviceTime = 0.743
+                #serviceTime = slowdown*1.0/4.7
+                #serviceTime = self.random.expovariate(1.0)
+                #serviceTime = self.drawHyperExpServiceTime(p=0.0081, mu1=0.0764, mu2=0.5236)#m3=150
+                #serviceTime = self.drawHyperExpServiceTime(p=0.1000, mu1=0.2000, mu2=0.6000)#m3=100
+                #serviceTime = self.drawHyperExpServiceTime(p=0.6581, mu1=0.3675, mu2=1.6325)#m3=80
+                #serviceTime = 2.9427*taskSize
+                #serviceTime = 0.50
+                #serviceTime = taskSize*4.7
+                #serviceTime = 1.0 + self.random.expovariate(1.0)
                 self.activeRequests[request.requestId][i].serviceTime = serviceTime
                 serviceTimes.append(serviceTime)
                 slowdowns.append(slowdown)
@@ -156,18 +166,26 @@ class Cloner:
     def deleteClones(self, request):
         del self.activeRequests[request.requestId]
 
-    def drawHyperExpServiceTime(self):
-        coeff = 10.0
-        hypermean = 1.0 / 4.7
-        p1 = 0.5 * (1.0 + math.sqrt((coeff - 1.0) / (coeff + 1.0)))
-        p2 = 1.0 - p1
-        mu1 = 2.0 * p1 / hypermean
-        mu2 = 2.0 * p2 / hypermean
+    def drawHyperExpServiceTime(self, p=None, mu1=None, mu2=None):
 
-        if self.random.uniform(0, 1) <= p1:
-            return self.random.expovariate(mu1)
+        if p is None:
+            coeff = 2.0
+            hypermean = 1.0 / 4.7
+            #hypermean = 1.0
+            p1 = 0.5 * (1.0 + math.sqrt((coeff - 1.0) / (coeff + 1.0)))
+            p2 = 1.0 - p1
+            mu1 = 2.0 * p1 / hypermean
+            mu2 = 2.0 * p2 / hypermean
+
+            if self.random.uniform(0, 1) <= p1:
+                return self.random.expovariate(mu1)
+            else:
+                return self.random.expovariate(mu2)
         else:
-            return self.random.expovariate(mu2)
+            if self.random.uniform(0, 1) <= p:
+                return self.random.expovariate(mu1)
+            else:
+                return self.random.expovariate(mu2)
 
     def drawDollySlowdown(self, slowdownFactor):
         slowint = self.random.randint(0, 999)

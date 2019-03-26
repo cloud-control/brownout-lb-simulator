@@ -287,8 +287,11 @@ def runSingleSimulation(sim, scenario, loadBalancingAlgorithm, cloning, nbrClone
     toReport.append(( "stddevResponseTime", "{:.4f}".format(np.std(responseTimes)) ))
     toReport.append(( "serviceRate", "{:.4f}".format(serviceRate)))
     toReport.append(( "arrivalRateFrac", "{:.4f}".format(arrivalRateFrac)))
+    totalActiveTime = 0.0
     for k, server in enumerate(loadBalancer.backends):
         toReport.append(( "s{} util".format(k), "{:.4f}".format(server.activeTime / simulationTime)))
+        totalActiveTime = totalActiveTime + server.activeTime
+    toReport.append(("avg util", "{:.4f}".format(totalActiveTime/(simulationTime*len(loadBalancer.backends)))))
 
     # Calculate utils
     #utils = {}
