@@ -102,11 +102,11 @@ class Cloner:
                 slowdowns.append(slowdown)
 
         # Uncomment to print service time statistics
-        self.minServiceTime = (self.minServiceTime * self.serviceCounter + min(serviceTimes)) / (self.serviceCounter + 1)
-        self.minSlowdown = (self.minSlowdown * self.serviceCounter + min(slowdowns)) / (self.serviceCounter + 1)
-        print self.minServiceTime
-        self.serviceCounter += 1
-        print self.serviceCounter
+        #self.minServiceTime = (self.minServiceTime * self.serviceCounter + min(serviceTimes)) / (self.serviceCounter + 1)
+        #self.minSlowdown = (self.minSlowdown * self.serviceCounter + min(slowdowns)) / (self.serviceCounter + 1)
+        #print self.minServiceTime
+        #self.serviceCounter += 1
+        #print self.serviceCounter
 
     def shouldClone(self, request):
         currentNbrClones = self.getNbrClones(request)
