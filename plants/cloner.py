@@ -86,24 +86,27 @@ class Cloner:
         if not clones:
             return
 
-        taskSize = self.drawHyperExpServiceTime()
+        #taskSize =  self.drawShiftedExpServiceTime() #self.drawHyperExpServiceTime()
         serviceTimes = []
         slowdowns = []
         for i in range(0, len(clones)):
             if not hasattr(clones[i], 'serviceTime'):
                 slowdownFactor = clones[i].chosenBackend.dollySlowdown
-                slowdown = self.drawDollySlowdown(slowdownFactor)
+                slowdown = 1.0 #self.drawDollySlowdown(slowdownFactor)
+
+                taskSize =  self.drawShiftedExpServiceTime()
+
                 serviceTime = slowdown*taskSize
                 self.activeRequests[request.requestId][i].serviceTime = serviceTime
                 serviceTimes.append(serviceTime)
                 slowdowns.append(slowdown)
 
         # Uncomment to print service time statistics
-        #self.minServiceTime = (self.minServiceTime * self.serviceCounter + min(serviceTimes)) / (self.serviceCounter + 1)
-        #self.minSlowdown = (self.minSlowdown * self.serviceCounter + min(slowdowns)) / (self.serviceCounter + 1)
-        #print self.minServiceTime
-        #self.serviceCounter += 1
-        #print self.serviceCounter
+        self.minServiceTime = (self.minServiceTime * self.serviceCounter + min(serviceTimes)) / (self.serviceCounter + 1)
+        self.minSlowdown = (self.minSlowdown * self.serviceCounter + min(slowdowns)) / (self.serviceCounter + 1)
+        print self.minServiceTime
+        self.serviceCounter += 1
+        print self.serviceCounter
 
     def shouldClone(self, request):
         currentNbrClones = self.getNbrClones(request)
@@ -168,6 +171,13 @@ class Cloner:
             return self.random.expovariate(mu1)
         else:
             return self.random.expovariate(mu2)
+
+    def drawShiftedExpServiceTime(self):
+        alpha = 0.1
+        mu = 0.9
+
+        return alpha + self.random.expovariate(1.0 / mu)
+
 
     def drawDollySlowdown(self, slowdownFactor):
         slowint = self.random.randint(0, 999)
