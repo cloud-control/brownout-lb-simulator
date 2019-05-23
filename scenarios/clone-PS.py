@@ -23,5 +23,6 @@ for i in range(0, nbrServers):
 
 changeMC(at=0.0, newMC=10000)
 setRate(at = 0, rate = arrivalRateFrac*serviceRate*nbrServers)
+#endOfSimulation(at = 10000/(arrivalRateFrac*nbrServers))
 endOfSimulation(at = 1000000/(arrivalRateFrac*nbrServers))
 
