@@ -86,7 +86,6 @@ class Cloner:
         if not clones:
             return
 
-        #taskSize =  self.drawShiftedExpServiceTime() #self.drawHyperExpServiceTime()
         serviceTimes = []
         slowdowns = []
         for i in range(0, len(clones)):
@@ -94,7 +93,7 @@ class Cloner:
                 slowdownFactor = clones[i].chosenBackend.dollySlowdown
                 slowdown = 1.0 #self.drawDollySlowdown(slowdownFactor)
 
-                taskSize =  self.drawShiftedExpServiceTime()
+                taskSize = self.drawHyperExpServiceTime()
 
                 serviceTime = slowdown*taskSize
                 self.activeRequests[request.requestId][i].serviceTime = serviceTime
@@ -161,7 +160,7 @@ class Cloner:
 
     def drawHyperExpServiceTime(self):
         coeff = 10.0
-        hypermean = 1.0 / 4.7
+        hypermean = 1.0
         p1 = 0.5 * (1.0 + math.sqrt((coeff - 1.0) / (coeff + 1.0)))
         p2 = 1.0 - p1
         mu1 = 2.0 * p1 / hypermean
@@ -171,13 +170,6 @@ class Cloner:
             return self.random.expovariate(mu1)
         else:
             return self.random.expovariate(mu2)
-
-    def drawShiftedExpServiceTime(self):
-        alpha = 0.1
-        mu = 0.9
-
-        return alpha + self.random.expovariate(1.0 / mu)
-
 
     def drawDollySlowdown(self, slowdownFactor):
         slowint = self.random.randint(0, 999)
