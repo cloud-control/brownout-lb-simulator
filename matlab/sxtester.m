@@ -324,5 +324,3 @@ csvwrite('dolly-meanRTs-sqf-ps-clone-6.csv', [rates' meanRTs']);
 %stem(minavgresps, 'b')
 %hold on;
 %stem(minavgresps2, 'r')
-
-

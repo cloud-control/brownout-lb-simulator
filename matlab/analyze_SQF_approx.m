@@ -36,7 +36,7 @@ for i = 1:n
 end
 
 % Read the data from simulations
-basepath = '/home/johan/Projects/brownout-lb-simulator/result_SQFapprox';
+basepath = '/home/johanr/Projects/brownout-lb-simulator/result_SQFapprox';
 data = read_data(basepath);
 
 
@@ -48,7 +48,7 @@ mu = 1;
 lambda = util'*nbrServers;
 
 % Calculate coefficient of variation
-Ca = sqrt(lambda) ./ (lambda); %Assuming poisson
+Ca = 1; %Assuming exponential
 
 % Cs hyperexponential
 p1 = 0.95; p2 = 0.05;
@@ -69,7 +69,7 @@ for i = 1:n
 end
 
 % Read the data from simulations
-basepath = '/home/johan/Projects/brownout-lb-simulator/result_SQFapprox';
+basepath = '/home/johanr/Projects/brownout-lb-simulator/result_SQFapprox';
 data = read_data(basepath);
 
 
@@ -142,7 +142,7 @@ for i = 1:n
     end
 end
 % Read the data from simulations
-basepath = '/home/johan/Projects/brownout-lb-simulator/result_SQFapprox';
+basepath = '/home/johanr/Projects/brownout-lb-simulator/result_SQFapprox';
 data = read_data(basepath);
 
 

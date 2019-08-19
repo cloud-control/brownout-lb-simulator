@@ -9,14 +9,15 @@ class Server:
     lastServerId = 1
 
     ## Constructor.
-    def __init__(self, sim, serviceTimeDistribution=None, seed = 1, ):
-
+    def __init__(self, sim, serviceTimeDistribution=None, seed = 1, dollySlowdown=1):
         self.serviceTimeDistribution = serviceTimeDistribution
 
         if self.serviceTimeDistribution is None:
             self.sxModel = True
         else:
             self.sxModel = False
+
+        self.dollySlowdown = dollySlowdown
 
         ## list of active requests (server model variable)
         self.activeRequests = deque()

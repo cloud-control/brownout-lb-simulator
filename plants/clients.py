@@ -9,7 +9,7 @@ class OpenLoopClient:
 	# @param sim Simulator to attach client to
 	# @param server server-like entity to which requests are sent
 	# @param rate average arrival rate
-	def __init__(self, sim, server, rate = 0, seed = 1):
+	def __init__(self, sim, server, uniformArrivals = 0, rate = 0, seed = 1):
 		## average arrival rate (model parameter)
 		self.rate = rate
 
@@ -21,6 +21,8 @@ class OpenLoopClient:
 		self.random = xxx_random.Random()
 		self.random.seed(seed)
 
+		self.uniformArrivals = uniformArrivals
+
 		## Variable that measure the number of requests completed for this user
 		# (metric)
 		self.numCompletedRequests = 0
@@ -28,6 +30,7 @@ class OpenLoopClient:
 		self.responseTimes = []
 
 		self.scheduleRequest()
+
 
 	## Issues a new request to the server.
 	def issueRequest(self):
@@ -46,8 +49,11 @@ class OpenLoopClient:
 	def scheduleRequest(self):
 		# If rate is changed from nonzero to zero, event will still be in simulator
 		if self.rate > 0:
-			interval = self.random.expovariate(self.rate)
-			#interval = self.random.uniform(0.00001, (1 / self.rate)*2.0)
+			if self.uniformArrivals:
+				interval = self.random.uniform(0.00001, (1 / self.rate)*2.0)
+			else:
+				interval = self.random.expovariate(self.rate)
+
 			self.sim.update(interval, self.issueRequest)
 
 	## Called when a request completes

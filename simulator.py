@@ -71,6 +71,10 @@ def main():
         type = int,
         help = "Set the seed",
         default = 65184)
+    parser.add_argument('--maxRunTime',
+        type = int,
+        help = "Set an upper runtime limit on each simulation",
+        default = -1)
 
     # Add scenario specific arguments
     group_s = parser.add_argument_group('scen', 'Scenario options')
@@ -79,9 +83,9 @@ def main():
         help = 'Define service rate distribution',
         default = 'expon')
     group_s.add_argument('--path',
-                         type=str,
-                         help='Define service rate distribution path',
-                         default='')
+         type=str,
+         help='Define service rate distribution path',
+         default='')
     group_s.add_argument('--serviceRate',
         type = float,
         help = 'Enables setting the service rate from command line',
@@ -94,6 +98,10 @@ def main():
          type = int,
          help = 'Set the number of servers used',
          default = 12)
+    group_s.add_argument('--uniformArrivals',
+        type = int,
+        help = 'Use uniform arrival rates',
+        default = 0)
 
     # Add load-balancer specific command-line arguments
     group_lb = parser.add_argument_group('lb', 'Load-balancer options')
@@ -130,7 +138,7 @@ def main():
         if not os.path.exists(outdir): # Not cool, Python!
             os.makedirs(outdir)
         cloner = Cloner(setSeed=args.setSeed)
-        sim = SimulatorKernel(cloner=cloner, outputDirectory=outdir)
+        sim = SimulatorKernel(cloner=cloner, outputDirectory=outdir, maxRunTime=args.maxRunTime)
 
         try:
             runSingleSimulation(
@@ -147,6 +155,7 @@ def main():
                 serviceRate=args.serviceRate,
                 arrivalRateFrac=args.arrivalRateFrac,
                 nbrOfServers=args.nbrOfServers,
+                uniformArrivals=args.uniformArrivals,
                 setSeed=args.setSeed
             )
         except Exception as e:
@@ -164,7 +173,7 @@ def main():
 # @param scenario file containing the scenario
 # @param loadBalancingAlgorithm load-balancing algorithm name
 def runSingleSimulation(sim, scenario, loadBalancingAlgorithm, cloning, nbrClones, logging, printout, printRespTime,
-                        dist, distpath, serviceRate, arrivalRateFrac, nbrOfServers, setSeed):
+                        dist, distpath, serviceRate, arrivalRateFrac, nbrOfServers, uniformArrivals, setSeed):
 
     servers = []
     clients = []
@@ -172,7 +181,7 @@ def runSingleSimulation(sim, scenario, loadBalancingAlgorithm, cloning, nbrClone
     if loadBalancingAlgorithm == "central-queue":
         loadBalancer = LoadBalancerCentralQueue(sim, printout=printout, printRespTime=printRespTime)
     else:
-        loadBalancer = LoadBalancer(sim, printout=printout, printRespTime=printRespTime)
+        loadBalancer = LoadBalancer(sim, printout=printout, printRespTime=printRespTime, seed=setSeed)
     if 'IQ-' in loadBalancingAlgorithm:
         index = loadBalancingAlgorithm.index('-')
         intstr = loadBalancingAlgorithm[index+1:]
@@ -184,7 +193,7 @@ def runSingleSimulation(sim, scenario, loadBalancingAlgorithm, cloning, nbrClone
     sim.cloner.setNbrClones(nbrClones)
     sim.setupLogging(logging)
 
-    openLoopClient = OpenLoopClient(sim, loadBalancer, seed=setSeed)
+    openLoopClient = OpenLoopClient(sim, loadBalancer, uniformArrivals=uniformArrivals, seed=setSeed)
 
     # Define verbs for scenarios
     def addClients(at, n):
@@ -239,9 +248,9 @@ def runSingleSimulation(sim, scenario, loadBalancingAlgorithm, cloning, nbrClone
                 nbrDiff -= 1
         sim.add(at, changeActiveServersHandler)
 
-    def addServer(at, serviceTimeDistribution=None):
+    def addServer(at, serviceTimeDistribution=None, dollySlowdown=1):
         def addServerHandler():
-            server = Server(sim, serviceTimeDistribution=serviceTimeDistribution)
+            server = Server(sim, serviceTimeDistribution=serviceTimeDistribution, dollySlowdown=dollySlowdown)
             servers.append(server)
             loadBalancer.addBackend(server)
 
@@ -278,8 +287,11 @@ def runSingleSimulation(sim, scenario, loadBalancingAlgorithm, cloning, nbrClone
     toReport.append(( "stddevResponseTime", "{:.4f}".format(np.std(responseTimes)) ))
     toReport.append(( "serviceRate", "{:.4f}".format(serviceRate)))
     toReport.append(( "arrivalRateFrac", "{:.4f}".format(arrivalRateFrac)))
+    totalActiveTime = 0.0
     for k, server in enumerate(loadBalancer.backends):
         toReport.append(( "s{} util".format(k), "{:.4f}".format(server.activeTime / simulationTime)))
+        totalActiveTime = totalActiveTime + server.activeTime
+    toReport.append(("avg util", "{:.4f}".format(totalActiveTime/(simulationTime*len(loadBalancer.backends)))))
 
     # Calculate utils
     #utils = {}

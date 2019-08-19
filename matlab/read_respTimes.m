@@ -1,9 +1,9 @@
-function data = read_data(basepath)
+function data = read_respTimes(basepath)
     strats = dir(basepath);
     strats(1:2) = [];
 
     m = length(strats);
-
+    
     paths = cell(m, 1);
     for i = 1:m
         runs =  dir([basepath '/' strats(i).name]);
@@ -12,8 +12,8 @@ function data = read_data(basepath)
 
         subpaths = cell(n,1);
         for j = 1:n
-            subpaths{j} = [basepath '/' strats(i).name  '/run' num2str(j-1) ...
-                '/sim-final-results.csv'];
+            subpaths{j} = [basepath '/' strats(i).name  '/sim' num2str(j-1) ...
+                '/sim-lb-allReqs.csv'];
         end
 
         paths{i} = subpaths;
@@ -24,19 +24,17 @@ end
 
 function [data] = read_paths(paths, strats)
     m = size(paths, 1);
-    data = cell(m, 2);
+    n = size(paths{1}, 1);
+    data = cell(m, size(paths{1}, 1)+1);
     
     for i = 1:m
-        n = size(paths{i}, 1);
-        for j = 1:n
-            t = readtable(paths{i}{j}, 'Delimiter', ',');
-            if isempty(data{i, 1})
-                data{i, 1} = t;
-            else
-                data{i, 1} = [data{i, 1}; t];
-            end
+        for k = 1:n
+            table = readtable(paths{i}{k}, 'Delimiter', ',');
+            data{i, k+1} = table.Var1;
+            
         end
-        data{i, 2} = strats(i).name;
+        data{i, 1} = strats(i).name;
     end
 end
+
 

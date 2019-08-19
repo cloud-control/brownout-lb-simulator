@@ -12,7 +12,7 @@ function data = read_data(basepath)
 
         subpaths = cell(n,1);
         for j = 1:n
-            subpaths{j} = [basepath '/' strats(i).name  '/run' num2str(j-1) ...
+            subpaths{j} = [basepath '/' strats(i).name  '/sim' num2str(j-1) ...
                 '/sim-final-results.csv'];
         end
 
@@ -27,9 +27,20 @@ function [data] = read_paths(paths, strats)
     data = cell(m, 2);
     
     for i = 1:m
+        i
         n = size(paths{i}, 1);
-        for j = 1:n
-            t = readtable(paths{i}{j}, 'Delimiter', ',');
+        for j = 1:n 
+            fileID = fopen(paths{i}{j});
+            C = textscan(fileID, '%s', 'Delimiter', '\n');
+            fclose(fileID);
+
+            names = cellfun(@(x) erase(x, ' '), strsplit(C{1}{1}, ','), ...
+                'UniformOutput', false);
+            vals = cellfun(@(x) erase(x, ' '), strsplit(C{1}{2}, ','), ...
+                'UniformOutput', false);
+
+            t = cell2table(vals);
+            t.Properties.VariableNames = names;
             if isempty(data{i, 1})
                 data{i, 1} = t;
             else
