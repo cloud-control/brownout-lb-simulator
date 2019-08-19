@@ -122,8 +122,8 @@ plot(x,tester, 'r');
 %% Hyperexp + dolly monte carlo
 clc
 close all
-nbrClones = 3;
-M = 230330;
+nbrClones = 2;
+M = 630330;
 
 dolly = zeros(1000, 1);
 
@@ -199,17 +199,34 @@ dollymean = cumsum(x.*dollypdf);
 hypermeanservicetime = 1/4.7;
 hypercoeff = 10;
 arrivalcoeff = 1;
-arrivalrate = 0.3;
 
+rates = 0.1:0.01:0.70;
+%rates = 0.40;
+%arrivalrate = 0.05;
+
+
+
+optclones = ones(size(rates));
+meanRTs = NaN(size(rates));
+
+index = 0;
+
+utils = zeros(length(rates), 12);
+
+minavgresps2 = NaN(length(rates),1);
+
+for lambda = rates
+    
 minmeans = zeros(1,50);
 minquadexp = zeros(1,50);
 mincoeffs = zeros(1,50);
 minavgresps = -1*ones(1,50);
-minavgresps2 = -1*ones(1,50);
 
-clones = 1:10;
+
+
+index = index + 1;
+clones = 1:1;
 for j = clones
-j
 nbrClones = j;
 mindollycdf = 1 - (1 - dollycdf).^nbrClones;
 mindollypdf = zeros(size(mindollycdf));
@@ -220,7 +237,8 @@ for i=2:length(mindollycdf)
     mindollypdf(i) = mindollycdf(i) - mindollycdf(i-1);
 end
 
-cloneminmean = cumsum(x.*mindollypdf);
+cloneminmean = cumsum(x.*mindollypdf)
+cloneminmean2 = cumsum(1-mindollycdf)
 
 cloneminvar = cumsum((x.^2).*mindollypdf) - cumsum(x.*mindollypdf);
 cloneminquadexp = cumsum((x.^2).*mindollypdf);
@@ -229,24 +247,55 @@ minmeans(j) = cloneminmean(end);
 minquadexp(j) = cloneminquadexp(end);
 mincoeffs(j) = cloneminvar(end)./(cloneminmean(end).^2);
 
-% Use kingmans formula for G/G/1
-avgservicetime = hypermeanservicetime* cloneminmean(end)
+avgservicetime = hypermeanservicetime* cloneminmean(end);
+avgservicerate = 1/avgservicetime;
 vartot = ((1+hypercoeff)*hypermeanservicetime.^2)*minquadexp(j) - (hypermeanservicetime*minmeans(j)).^2;
-servicecoeff = vartot/((hypermeanservicetime*minmeans(j)).^2)
-util = arrivalrate*avgservicetime*j
+servicecoeff = vartot/((hypermeanservicetime*minmeans(j)).^2);
+util = lambda*avgservicetime*j;
 
-if util <= 1
+if util < 1
+    utils(index, j) = util;
     minavgresps(j) = avgservicetime + avgservicetime*(util/(1-util))*(arrivalcoeff + servicecoeff)/2;
-    minavgresps2(j) = avgservicetime + (util*avgservicetime*(1+servicecoeff))/(2*(1-util));
+    %minavgresps2(j) = avgservicetime + (util*avgservicetime*(1+servicecoeff))/(2*(1-util));
+    %minavgresps2(index, j) = 1./((1./avgservicetime) - (lambda*j));
+    minavgresps2(index) = SQFapprox_ps(lambda*12, avgservicerate, 12/j);
+    meanRTs(index) =  SQFapprox_ps(lambda*12, avgservicerate, 12/j);
 end
 
 end
 
-minresp = min(minavgresps(minavgresps>0));
-bestCloningKingman = find(minavgresps == minresp)
+%minresp = min(minavgresps(minavgresps>0));
+%bestCloningKingman = find(minavgresps == minresp);
 
-minresp2 = min(minavgresps2(minavgresps2>0));
-bestCloningMG1 = find(minavgresps2 == minresp2)
+%lambda;
+
+%minresp2 = min(minavgresps2(minavgresps2>0));
+%bestCloningMG1 = find(minavgresps2 == minresp2);
+%shortestResponseTime = minresp2;
+
+%optclones(index) = bestCloningMG1;
+%meanRTs(index) = shortestResponseTime;
+
+end
+
+%plot(clones, minavgresps2)
+meanRTs
+plot(rates, meanRTs)
+
+% plot(rates, optclones)
+% figure()
+% plot(rates, meanRTs)
+% figure()
+% plot(rates, utils)
+% hold on;
+% plot(rates, rates)
+
+%csvwrite('optclones-ps.csv', [rates' optclones']);
+%csvwrite('meanRTs-ps.csv', [rates' meanRTs']);
+csvwrite('dolly-meanRTs-sqf-ps-clone-6.csv', [rates' meanRTs']);
+
+%csvwrite('utils-8.csv', [rates' utils']);
+%csvwrite('utils-1.csv', [rates' rates']);
 
 
 
@@ -256,8 +305,8 @@ bestCloningMG1 = find(minavgresps2 == minresp2)
 % hold on;
 % stem(mindollycdf, 'r');
 % 
-figure()
-stem(minmeans)
+%figure()
+%stem(minmeans)
 % 
 % figure()
 % stem(mincoeffs)
@@ -271,9 +320,9 @@ stem(minmeans)
 % figure()
 % stem(mincoeffs)
 
-figure()
-stem(minavgresps, 'b')
-hold on;
-stem(minavgresps2, 'r')
+%figure()
+%stem(minavgresps, 'b')
+%hold on;
+%stem(minavgresps2, 'r')
 
 

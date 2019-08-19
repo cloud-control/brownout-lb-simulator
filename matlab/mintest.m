@@ -1,13 +1,13 @@
-N = 100000;
-x = linspace(0, 3.1, N);
+N = 5000;
+x = linspace(0, 4.0, N);
 
-mu1 = 0.4;
+mu1 = 0.48;
 cdf_exp = 1-exp(-x.*mu1);
 
 plot(x, cdf_exp)
 
-a = 1;
-b = 3;
+a = 0.5;
+b = 3.5;
 cdf_uniform = zeros(size(x));
 for i=1:length(x)
     if (x(i) >= a) && (x(i)< b)
@@ -18,20 +18,23 @@ for i=1:length(x)
     
 end
 
-mu2 = 1.8;
-sigma = 0.5;
-cdf_norm = 0.5*(1+erf((x-mu2)./(sigma*sqrt(2))));
+lambda = 2;
+k = 3;
+cdf_weibull =1 - exp((-x./lambda).^k);
 
-cdf_min = 1-(1-cdf_exp).*(1-cdf_uniform).*(1-cdf_norm);
+cdf_min = 1-(1-cdf_exp).*(1-cdf_uniform).*(1-cdf_weibull);
 
 minmean = cumtrapz(x(2:end)'.*diff(cdf_min'));
 minmean(end)
 
 plot(x, cdf_exp)
 hold on;
+plot(x, cdf_weibull)
 plot(x, cdf_uniform)
-plot(x, cdf_norm)
 plot(x, cdf_min)
 
-csvwrite('mintest.csv', [x' cdf_min']);
+csvwrite('mincdf.csv', [x' cdf_min']);
+csvwrite('expcdf.csv', [x' cdf_exp']);
+csvwrite('uniformcdf.csv', [x' cdf_uniform']);
+csvwrite('weibullcdf.csv', [x' cdf_weibull']);
 
