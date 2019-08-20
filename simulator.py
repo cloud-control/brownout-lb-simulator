@@ -181,7 +181,7 @@ def runSingleSimulation(sim, scenario, loadBalancingAlgorithm, cloning, nbrClone
     if loadBalancingAlgorithm == "central-queue":
         loadBalancer = LoadBalancerCentralQueue(sim, printout=printout, printRespTime=printRespTime)
     else:
-        loadBalancer = LoadBalancer(sim, printout=printout, printRespTime=printRespTime, seed=setSeed)
+        loadBalancer = LoadBalancer(sim, printout=printout, printRespTime=printRespTime, seed=(setSeed+1))
     if 'IQ-' in loadBalancingAlgorithm:
         index = loadBalancingAlgorithm.index('-')
         intstr = loadBalancingAlgorithm[index+1:]
@@ -193,7 +193,7 @@ def runSingleSimulation(sim, scenario, loadBalancingAlgorithm, cloning, nbrClone
     sim.cloner.setNbrClones(nbrClones)
     sim.setupLogging(logging)
 
-    openLoopClient = OpenLoopClient(sim, loadBalancer, uniformArrivals=uniformArrivals, seed=setSeed)
+    openLoopClient = OpenLoopClient(sim, loadBalancer, uniformArrivals=uniformArrivals, seed=(setSeed+2))
 
     # Define verbs for scenarios
     def addClients(at, n):
@@ -248,9 +248,12 @@ def runSingleSimulation(sim, scenario, loadBalancingAlgorithm, cloning, nbrClone
                 nbrDiff -= 1
         sim.add(at, changeActiveServersHandler)
 
-    def addServer(at, serviceTimeDistribution=None, dollySlowdown=1):
+    def addServer(at, serviceTimeDistribution=None, dollySlowdown=1,
+                  meanStartupDelay = 0.0, meanCancellationDelay = 0.0):
         def addServerHandler():
-            server = Server(sim, serviceTimeDistribution=serviceTimeDistribution, dollySlowdown=dollySlowdown)
+            server = Server(sim, serviceTimeDistribution=serviceTimeDistribution,dollySlowdown=dollySlowdown,
+                            seed=setSeed,meanStartupDelay=meanStartupDelay,
+                            meanCancellationDelay=meanCancellationDelay)
             servers.append(server)
             loadBalancer.addBackend(server)
 

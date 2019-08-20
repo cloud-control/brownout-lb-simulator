@@ -11,7 +11,8 @@ class Request(object):
 	__slots__ = ('requestId', 'arrival', 'completion', 'onCompleted', 'onCanceled', \
 		'originalRequest', 'chosenBackend', 'chosenBackendIndex',
 		'remainingTime', 'createdAt', 'serviceTime', 'illegalServers',
-		'isClone', 'lastCheckpoint', 'processorShare', 'isCompleted', 'serverOnCompleted', 'hasWaited')
+		'isClone', 'lastCheckpoint', 'processorShare', 'isCompleted', 'serverOnCompleted', 'hasWaited',
+		'cancellationDelay')
 	
 	## Constructor
 	def __init__(self):

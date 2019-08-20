@@ -1,4 +1,4 @@
-import random
+import random as xxx_random # prevent accidental usage
 from collections import deque
 
 ## Represents a brownout compliant server.
@@ -9,7 +9,8 @@ class Server:
     lastServerId = 1
 
     ## Constructor.
-    def __init__(self, sim, serviceTimeDistribution=None, seed = 1, dollySlowdown=1):
+    def __init__(self, sim, serviceTimeDistribution=None, seed = 1, dollySlowdown=1,
+                 meanStartupDelay = 0.0, meanCancellationDelay = 0.0):
         self.serviceTimeDistribution = serviceTimeDistribution
 
         if self.serviceTimeDistribution is None:
@@ -31,10 +32,19 @@ class Server:
         self.latestActivation = 0.0
         self.isActive = False
 
+        ## Non-perfect parameters
+        self.meanStartupDelay = meanStartupDelay
+        self.meanCancellationDelay = meanCancellationDelay
+
         ## Server ID for pretty-printing
         self.name = 'server' + str(Server.lastServerId)
         self.serverId = Server.lastServerId
+        seed = seed + 3 + Server.lastServerId
         Server.lastServerId += 1
+
+        ## Separate random number generator
+        self.random = xxx_random.Random()
+        self.random.seed(seed)
 
         ## Reference to simulator
         self.sim = sim
@@ -48,6 +58,16 @@ class Server:
         # self.sim.log(self, "Got to request in server with reqId " + str(request.requestId) + "," + str(request.isClone))
 
         request.arrival = self.sim.now
+
+        if self.meanStartupDelay > 0.0:
+            startupDelay = self.random.expovariate(1.0/self.meanStartupDelay)
+            #startupDelay = self.meanStartupDelay
+        else:
+            startupDelay = 0.0
+
+        self.sim.add(startupDelay, lambda: self.activateRequest(request))
+
+    def activateRequest(self, request):
         # Start to serve request if possible
         if len(self.activeRequests) < self.maxActiveJobs:
             self.startRunningRequest(request)
@@ -104,20 +124,31 @@ class Server:
     def onCanceled(self, request):
         #self.sim.log(self, "Got to onCanceled for req " + str(request.requestId) + " in server " + str(self))
 
-        activeRequestCanceled = True
+        if self.meanCancellationDelay > 0.0:
+            cancellationDelay = self.random.expovariate(1.0/self.meanCancellationDelay)
+        else:
+            cancellationDelay = 0.0
+
+        request.cancellationDelay = cancellationDelay
+
+        self.sim.add(cancellationDelay, lambda: self.performCancellation(request))
+
+    def performCancellation(self, request):
+        activeRequestCanceled = False
 
         if request in self.activeRequests:
             self.sim.delete(request.serverOnCompleted)
             self.activeRequests.remove(request)
-        else:
+            activeRequestCanceled = True
+        elif request in self.waitingRequests:
             self.waitingRequests.remove(request)
-            activeRequestCanceled = False
+        else:
+            return
 
         self.continueWithRequests(activeRequestCanceled)
 
         request.onCanceled()
-        #self.sim.log(self, "Leaving onCanceled() at " + str(self.sim.now))
-
+        # self.sim.log(self, "Leaving onCanceled() at " + str(self.sim.now))
 
     ## Event handler for request completion.
     # Marks the request as completed, calls request.onCompleted() and picks a new request to schedule.
@@ -135,7 +166,7 @@ class Server:
             request.completion = self.sim.now
             request.onCompleted()
 
-        else:
+        elif not hasattr(request, 'cancellationDelay'):
             #self.sim.log(self, "request is canceled! " + str(request.requestId) + "," + str(request.isClone))
             request.onCanceled()
 
