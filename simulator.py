@@ -139,6 +139,7 @@ def main():
             os.makedirs(outdir)
         cloner = Cloner(setSeed=args.setSeed)
         sim = SimulatorKernel(cloner=cloner, outputDirectory=outdir, maxRunTime=args.maxRunTime)
+        cloner.setSim(sim)
 
         try:
             runSingleSimulation(
@@ -292,15 +293,12 @@ def runSingleSimulation(sim, scenario, loadBalancingAlgorithm, cloning, nbrClone
     toReport.append(( "arrivalRateFrac", "{:.4f}".format(arrivalRateFrac)))
     totalActiveTime = 0.0
     for k, server in enumerate(loadBalancer.backends):
+        if server.isActive:
+            server.activeTime += (simulationTime - server.latestActivation)
         toReport.append(( "s{} util".format(k), "{:.4f}".format(server.activeTime / simulationTime)))
         totalActiveTime = totalActiveTime + server.activeTime
     toReport.append(("avg util", "{:.4f}".format(totalActiveTime/(simulationTime*len(loadBalancer.backends)))))
-
-    # Calculate utils
-    #utils = {}
-    #for server in loadBalancer.backends:
-    #    utils[server.serverId] = "{:.4f}".format(server.activeTime / simulationTime)
-    #    toReport.append((str(server) + " util:", "{:.4f}".format(server.activeTime / simulationTime)))
+    toReport.append(("clone var coeff", "{:.5f}".format(sim.cloner.processorShareVariance / (sim.cloner.processorShareMean**2))))
 
     sim.output('final-results', ', '.join([k for k,v in toReport]))
     sim.output('final-results', ', '.join([v for k,v in toReport]))

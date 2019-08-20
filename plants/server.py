@@ -87,6 +87,7 @@ class Server:
         request.remainingTime = self.drawServiceTime(request)
         request.lastCheckpoint = self.sim.now
         request.processorShare = 1.0/(len(self.activeRequests))
+        request.avgProcessorShare = 1.0/(len(self.activeRequests))
 
         completionTime = len(self.activeRequests)*request.remainingTime
         request.serverOnCompleted = lambda: self.onCompleted(request)
@@ -101,10 +102,17 @@ class Server:
             request = self.activeRequests[i]
             processedTime = (self.sim.now - request.lastCheckpoint)*request.processorShare
             request.remainingTime -= processedTime
-            request.lastCheckpoint = self.sim.now
+
             request.processorShare = 1.0/(len(self.activeRequests))
+            self.updateAvgProcessorShare(request)
+            request.lastCheckpoint = self.sim.now
             completionTime = len(self.activeRequests) * request.remainingTime
             self.sim.update(completionTime, request.serverOnCompleted)
+
+    def updateAvgProcessorShare(self, request):
+        if self.sim.now > request.arrival:
+            request.avgProcessorShare = ((request.lastCheckpoint - request.arrival) * request.avgProcessorShare + (
+                self.sim.now - request.lastCheckpoint) * request.processorShare) / (self.sim.now - request.arrival)
 
     def drawServiceTime(self, activeRequest):
         if not hasattr(activeRequest, 'serviceTime'):
@@ -142,8 +150,6 @@ class Server:
             activeRequestCanceled = True
         elif request in self.waitingRequests:
             self.waitingRequests.remove(request)
-        else:
-            return
 
         self.continueWithRequests(activeRequestCanceled)
 
@@ -164,6 +170,7 @@ class Server:
 
             # And completed it
             request.completion = self.sim.now
+            self.updateAvgProcessorShare(request)
             request.onCompleted()
 
         elif not hasattr(request, 'cancellationDelay'):

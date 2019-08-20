@@ -2,8 +2,9 @@ import scipy.stats
 import numpy as np
 from base.numerical_dist import NumericalDistribution
 
-nbrServers = 3
+nbrServers = 12
 arrivalRateFrac = 0.50
+serviceRate = 1.0
 for i in range(0, nbrServers):
 
     if dist == "fromPath":
@@ -19,11 +20,11 @@ for i in range(0, nbrServers):
     else:
         serviceTimeDistribution = None
 
-    addServer(at=0.0, serviceTimeDistribution=serviceTimeDistribution, meanStartupDelay=0.20, meanCancellationDelay=0.00)
+    addServer(at=0.0, serviceTimeDistribution=serviceTimeDistribution, meanStartupDelay=0.00, meanCancellationDelay=0.00)
 
 
 changeMC(at=0.0, newMC=1000000)
 setRate(at = 0, rate = arrivalRateFrac*serviceRate*nbrServers)
 
 
-endOfSimulation(at = 1000000/(arrivalRateFrac*serviceRate*nbrServers))
+endOfSimulation(at = 100000/(arrivalRateFrac*serviceRate*nbrServers))
