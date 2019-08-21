@@ -88,6 +88,8 @@ class Cloner:
             if not hasattr(clone, 'isCompleted') and hasattr(clone, 'chosenBackend'):
                 if hasattr(clone, 'lastCheckpoint'):
                     clone.chosenBackend.updateAvgProcessorShare(clone)
+
+                clone.isCanceled = True
                 clone.chosenBackend.onCanceled(clone)
 
             if hasattr(clone, 'avgProcessorShare'):

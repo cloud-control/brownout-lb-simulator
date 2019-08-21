@@ -138,8 +138,9 @@ class Server:
             cancellationDelay = 0.0
 
         request.cancellationDelay = cancellationDelay
+        request.serverOnCanceled = lambda: self.performCancellation(request)
+        self.sim.add(cancellationDelay, request.serverOnCanceled)
 
-        self.sim.add(cancellationDelay, lambda: self.performCancellation(request))
 
     def performCancellation(self, request):
         activeRequestCanceled = False
@@ -148,6 +149,7 @@ class Server:
             self.sim.delete(request.serverOnCompleted)
             self.activeRequests.remove(request)
             activeRequestCanceled = True
+
         elif request in self.waitingRequests:
             self.waitingRequests.remove(request)
 
@@ -162,23 +164,22 @@ class Server:
     def onCompleted(self, request):
         #self.sim.log(self, "Got to onCompleted() for reqId " + str(request.requestId) +  " in " + str(self))
 
-        # Remove request from active list
-        self.activeRequests.remove(request)
-
-        if not self.sim.cloner.isCanceled(request):
+        if not hasattr(request, 'isCanceled'):
             #self.sim.log(self, "request is not canceled! " + str(request.requestId) + "," + str(request.isClone))
+
+            # Remove request from active list
+            self.activeRequests.remove(request)
 
             # And completed it
             request.completion = self.sim.now
             self.updateAvgProcessorShare(request)
             request.onCompleted()
 
-        elif not hasattr(request, 'cancellationDelay'):
-            #self.sim.log(self, "request is canceled! " + str(request.requestId) + "," + str(request.isClone))
-            request.onCanceled()
+            self.continueWithRequests(True)
 
-        self.continueWithRequests(True)
-        #self.sim.log(self, "Done with onCompleted()")
+        elif hasattr(request, 'cancellationDelay'):
+            self.sim.update(0.0, request.serverOnCanceled)
+
 
     def continueWithRequests(self, activeRequestStopped):
         # Append the next request waiting to run (if there is one)

@@ -299,6 +299,7 @@ def runSingleSimulation(sim, scenario, loadBalancingAlgorithm, cloning, nbrClone
         totalActiveTime = totalActiveTime + server.activeTime
     toReport.append(("avg util", "{:.4f}".format(totalActiveTime/(simulationTime*len(loadBalancer.backends)))))
     toReport.append(("clone var coeff", "{:.5f}".format(sim.cloner.processorShareVariance / (sim.cloner.processorShareMean**2))))
+    toReport.append(("clone mean share", "{:.5f}".format(sim.cloner.processorShareMean)))
 
     sim.output('final-results', ', '.join([k for k,v in toReport]))
     sim.output('final-results', ', '.join([v for k,v in toReport]))
