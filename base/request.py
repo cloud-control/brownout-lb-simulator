@@ -12,7 +12,7 @@ class Request(object):
 		'originalRequest', 'chosenBackend', 'chosenBackendIndex',
 		'remainingTime', 'createdAt', 'serviceTime', 'illegalServers',
 		'isClone', 'lastCheckpoint', 'processorShare', 'isCompleted', 'serverOnCompleted', 'hasWaited',
-		'cancellationDelay', 'avgProcessorShare', 'isCanceled', 'serverOnCanceled')
+		'cancellationDelay', 'avgProcessorShare', 'isCanceled', 'serverOnCanceled', 'serverActivateRequest')
 	
 	## Constructor
 	def __init__(self):

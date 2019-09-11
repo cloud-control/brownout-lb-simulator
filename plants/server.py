@@ -65,7 +65,8 @@ class Server:
         else:
             startupDelay = 0.0
 
-        self.sim.add(startupDelay, lambda: self.activateRequest(request))
+        request.serverActivateRequest = lambda: self.activateRequest(request)
+        self.sim.add(startupDelay, request.serverActivateRequest)
 
     def activateRequest(self, request):
         # Start to serve request if possible
@@ -143,17 +144,18 @@ class Server:
 
 
     def performCancellation(self, request):
-        activeRequestCanceled = False
 
         if request in self.activeRequests:
             self.sim.delete(request.serverOnCompleted)
             self.activeRequests.remove(request)
-            activeRequestCanceled = True
+            self.continueWithRequests(True)
 
         elif request in self.waitingRequests:
             self.waitingRequests.remove(request)
+            self.continueWithRequests(False)
 
-        self.continueWithRequests(activeRequestCanceled)
+        else:
+            self.sim.delete(request.serverActivateRequest)
 
         request.onCanceled()
         # self.sim.log(self, "Leaving onCanceled() at " + str(self.sim.now))
