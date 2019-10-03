@@ -157,7 +157,7 @@ class Cloner:
         del self.activeRequests[request.requestId]
 
     def drawHyperExpServiceTime(self):
-        coeff = 10.0
+        coeff = 2.0
         hypermean = 1.0 / 4.7
         p1 = 0.5 * (1.0 + math.sqrt((coeff - 1.0) / (coeff + 1.0)))
         p2 = 1.0 - p1
