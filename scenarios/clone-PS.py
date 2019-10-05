@@ -18,7 +18,8 @@ for i in range(0, nbrServers):
     else:
         serviceTimeDistribution = None
 
-    addServer(at=0.0, serviceTimeDistribution=serviceTimeDistribution)
+        addServer(at=0.0, serviceTimeDistribution=serviceTimeDistribution, meanStartupDelay=0.00,
+                  meanCancellationDelay=0.00)
 
 
 changeMC(at=0.0, newMC=10000)
