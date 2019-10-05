@@ -28,13 +28,13 @@ for sim in MC_SIMS:
             simulations.append("./simulator.py  --lb cluster-SQF --scenario scenarios/clone-PS.py --cloning 1 --nbrClones {} \
                 --printout 0 --printRespTime 0 --dist SXmodel --serviceRate 1.0 --arrivalRateFrac {} --nbrOfServers 12 \
                 --setSeed {} --maxRunTime {} --outdir result/clusterSQF-PS/c{}_af{}/sim{} \
-                ".format(clones, frac, count*10 + 123456, MAXRUNTIME, clones, i, sim))
+                ".format(clones, frac, count*100 + 123456, MAXRUNTIME, clones, i, sim))
 
             count += 1
             simulations.append("./simulator.py  --lb cluster-random --scenario scenarios/clone-PS.py --cloning 1 --nbrClones {} \
                 --printout 0 --printRespTime 0 --dist SXmodel --serviceRate 1.0 --arrivalRateFrac {} --nbrOfServers 12 \
                 --setSeed {} --maxRunTime {} --outdir result/clusterRandom-PS/c{}_af{}/sim{} \
-                ".format(clones, frac, count*10 + 123456, MAXRUNTIME, clones, i, sim))
+                ".format(clones, frac, count*100 + 123456, MAXRUNTIME, clones, i, sim))
 
 # Run the simulation
 pool = Pool(processes=PROCESSES)
