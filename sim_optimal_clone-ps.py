@@ -25,7 +25,7 @@ for k in MC_SIMS:
             count += 1
             simulations.append("./simulator.py  --lb clone-random --scenario scenarios/clone-sim_optimal_clone-ps.py --cloning 1 --nbrClones {} \
                 --printout 0 --printRespTime 0 --dist SXmodel --serviceRate 1.0 --arrivalRateFrac {} --nbrOfServers {} \
-                --setSeed {} --outdir result/clone_to_all/s{}_af{}/sim{}".format(servers, frac, servers, count*10 + 123456, servers, i, k))
+                --setSeed {} --outdir result/clone_to_all/s{}_af{}/sim{}".format(servers, frac, servers, count*100 + 123456, servers, i, k))
 
 # Run the simulation
 pool = Pool(processes=PROCESSES)
