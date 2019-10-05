@@ -111,14 +111,15 @@ class Cloner:
         if not clones:
             return
 
-        taskSize = self.drawHyperExpServiceTime()
+        #taskSize = self.drawHyperExpServiceTime()
         serviceTimes = []
         slowdowns = []
         for i in range(0, len(clones)):
             if not hasattr(clones[i], 'serviceTime'):
                 slowdownFactor = clones[i].chosenBackend.dollySlowdown
                 slowdown = self.drawDollySlowdown(slowdownFactor)
-                serviceTime = slowdown*taskSize
+                #serviceTime = slowdown*taskSize
+                serviceTime = self.drawHyperExpServiceTime()
                 #serviceTime = 0.743
                 #serviceTime = slowdown*1.0/4.7
                 #serviceTime = self.random.expovariate(1.0)
@@ -194,8 +195,8 @@ class Cloner:
     def drawHyperExpServiceTime(self, p=None, mu1=None, mu2=None):
 
         if p is None:
-            coeff = 2.0
-            hypermean = 1.0 / 4.7
+            coeff = 10.0
+            hypermean = 1.0
             #hypermean = 1.0
             p1 = 0.5 * (1.0 + math.sqrt((coeff - 1.0) / (coeff + 1.0)))
             p2 = 1.0 - p1
