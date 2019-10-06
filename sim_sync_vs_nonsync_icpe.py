@@ -30,7 +30,7 @@ for sim in MC_SIMS:
             ".format(2, frac, count*100 + 123456, MAXRUNTIME, 2, i, sim))
 
         count += 1
-        simulations.append("./simulator.py  --lb clone-SQF --scenario scenarios/clone-PS-weibull.py--cloning 1 --nbrClones {} \
+        simulations.append("./simulator.py  --lb clone-SQF --scenario scenarios/clone-PS-weibull.py --cloning 1 --nbrClones {} \
             --printout 0 --printRespTime 0 --dist weibull_min --serviceRate 1.0 --arrivalRateFrac {} --nbrOfServers 12 \
             --setSeed {} --maxRunTime {} --outdir result/sync_vs_nonsync_weibull/SQF-PS/c{}_af{}/sim{} \
             ".format(2, frac, count*100 + 123456, MAXRUNTIME, 2, i, sim))
