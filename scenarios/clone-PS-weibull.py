@@ -3,6 +3,7 @@ import numpy as np
 from base.numerical_dist import NumericalDistribution
 
 nbrServers = nbrOfServers #12
+seed = setSeed
 for i in range(0, nbrServers):
 
     if dist == "fromPath":
@@ -12,8 +13,8 @@ for i in range(0, nbrServers):
             func = getattr(scipy.stats, dist)
         except:
             raise ValueError("Distribution could not load, does it exist in scipy.stats?")
-        serviceTimeDistribution = func(scale=1.0/serviceRate)
-        serviceTimeDistribution.random_state = np.random.RandomState(seed=i*3+45567)
+        serviceTimeDistribution = func(scale=0.5, c=0.5)
+        serviceTimeDistribution.random_state = np.random.RandomState(seed=setSeed+i*3+45567)
 
     else:
         serviceTimeDistribution = None
