@@ -8,7 +8,7 @@ LAMBDA_FRAC_2 = [0.2000, 0.5999, 0.9998, 1.3997, 1.7996]
 LAMBDA_FRAC_4 = [0.3997, 1.1990, 1.9984, 2.7977, 3.5971]
 
 PROCESSES = 24
-MAXRUNTIME = 2000
+MAXRUNTIME = 5000
 
 # Add simulation commands as strings
 simulations = []
