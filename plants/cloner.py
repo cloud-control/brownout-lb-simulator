@@ -23,7 +23,7 @@ class Cloner:
 
         self.dolly = np.asarray(self.readCsv('dists/dolly.csv'))
 
-        self.processorShareStd = 0.0
+        self.processorShareVarCoeff = 0.0
         self.processorShareMean = 0.0
 
         self.reqNbr = 0
@@ -96,7 +96,7 @@ class Cloner:
                 processorShares.append(clone.avgProcessorShare)
 
         self.processorShareMean = (self.processorShareMean*self.reqNbr + avg(processorShares))/(self.reqNbr+1)
-        self.processorShareStd = (self.processorShareStd*self.reqNbr + np.std(processorShares))/(self.reqNbr+1)
+        self.processorShareVarCoeff = (self.processorShareVarCoeff*self.reqNbr + np.std(processorShares)/avg(processorShares))/(self.reqNbr+1)
 
         self.reqNbr += 1
 
