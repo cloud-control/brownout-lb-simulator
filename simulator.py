@@ -102,6 +102,14 @@ def main():
         type = int,
         help = 'Use uniform arrival rates',
         default = 0)
+    group_s.add_argument('--arrivalDelay',
+        type = float,
+        help = 'Use uniform arrival rates',
+        default = 0.0)
+    group_s.add_argument('--cancellationDelay',
+        type = float,
+        help = 'Use uniform arrival rates',
+        default = 0.0)
 
     # Add load-balancer specific command-line arguments
     group_lb = parser.add_argument_group('lb', 'Load-balancer options')
@@ -157,7 +165,9 @@ def main():
                 arrivalRateFrac=args.arrivalRateFrac,
                 nbrOfServers=args.nbrOfServers,
                 uniformArrivals=args.uniformArrivals,
-                setSeed=args.setSeed
+                setSeed=args.setSeed,
+                arrivalDelay=args.arrivalDelay,
+                cancellationDelay=args.cancellationDelay
             )
         except Exception as e:
             print("Caught exception: {0}".format(e))
@@ -174,7 +184,8 @@ def main():
 # @param scenario file containing the scenario
 # @param loadBalancingAlgorithm load-balancing algorithm name
 def runSingleSimulation(sim, scenario, loadBalancingAlgorithm, cloning, nbrClones, logging, printout, printRespTime,
-                        dist, distpath, serviceRate, arrivalRateFrac, nbrOfServers, uniformArrivals, setSeed):
+                        dist, distpath, serviceRate, arrivalRateFrac, nbrOfServers, uniformArrivals, setSeed,
+                        arrivalDelay, cancellationDelay):
 
     servers = []
     clients = []

@@ -65,7 +65,7 @@ def normalize(numbers):
     return [n / s for n in numbers]
 
 
-def getLambdaFrac(dist, util, cloneFactor):
+def getDistInfo(dist, util, cloneFactor):
     xmax = 100
     N = 1000000
     h = 1 / (N / xmax)
@@ -89,7 +89,7 @@ def getLambdaFrac(dist, util, cloneFactor):
         mu_cf = 1 / avg_s
         lambd = mu_cf * util / cloneFactor
 
-        return lambd
+        return lambd, avg_s
 
     elif dist == "SXmodel":
         dollycdf = np.array([0, 0.23, 0.37, 0.46, 0.49, 0.57, 0.67, 0.71, 0.85, 0.97, 0.9910, 0.9980, 1.00])
@@ -105,10 +105,13 @@ def getLambdaFrac(dist, util, cloneFactor):
 
         lambd = mu_cf * util / cloneFactor
 
-        return lambd
+        return lambd, avg_s
 
     elif dist == "expon":
-        return util
+        avg_s = 1.0 / cloneFactor
+        lambd = util
+
+        return lambd, avg_s
 
     elif dist == "weibull_min":
         shape = 0.5
@@ -122,7 +125,7 @@ def getLambdaFrac(dist, util, cloneFactor):
         mu_cf = 1 / avg_s
         lambd = mu_cf * util / cloneFactor
 
-        return lambd
+        return lambd, avg_s
 
     elif dist == "pareto":
         shape = 2.5
@@ -141,7 +144,15 @@ def getLambdaFrac(dist, util, cloneFactor):
         mu_cf = 1 / avg_s
         lambd = mu_cf * util / cloneFactor
 
-        return lambd
+        return lambd, avg_s
+
+def getMeanServiceTime(dist, cloneFactor):
+    lambd, avg_s = getDistInfo(dist, 0.5, cloneFactor)
+    return avg_s
+
+def getLambdaFrac(dist, util, cloneFactor):
+    lambd, avg_s = getDistInfo(dist, util, cloneFactor)
+    return lambd
 
 
 def readCsv(filename):
