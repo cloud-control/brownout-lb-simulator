@@ -35,7 +35,6 @@ simulations = []
 
 def getRandomStableCancellationFrac(util):
     safeFracs = [x for x in cancellationDelayFracs if x+util < 1.0]
-    print("safe fracs: " + str(safeFracs))
     return rnd.choice(safeFracs)
 
 count = 0
