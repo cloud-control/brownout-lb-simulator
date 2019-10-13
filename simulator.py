@@ -322,7 +322,7 @@ def runSingleSimulation(sim, scenario, loadBalancingAlgorithm, cloning, nbrClone
     toMappingReport = []
 
     for key in sim.cloner.mapping:
-        toMappingReport.append("{},{}".format(key, sim.cloner.mapping[key][0]))
+        toMappingReport.append("{:.4f},{:.4f}".format(key, sim.cloner.mapping[key][0]))
 
     sim.output('final-results-mapping', '\n'.join([s for s in toMappingReport]))
 

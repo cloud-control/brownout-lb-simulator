@@ -175,8 +175,8 @@ class Cloner:
         print "N = " + str(N)
         print "------------"""""
 
-        roundedM = round(float(M), 2)
-        roundedN = round(float(N), 3)
+        roundedM = round(float(M), 1)
+        roundedN = round(float(N), 4)
         if roundedM not in self.mapping:
             self.mapping[roundedM] = (roundedN, 1)
         else:

@@ -36,12 +36,13 @@ simulations = []
 count = 0
 for scenario in NBR_SCENARIOS:
 
-    dist = rnd.choice(dists)
+    #dist = rnd.choice(dists)
+    dist = "SXmodel"
     #util = rnd.choice(utils)
     util = 0.8
     #nbrServer = rnd.choice(nbrServers)
-    nbrServer = 6
-    cloneFactor = nbrServer-3
+    nbrServer = 12
+    cloneFactor = 4
     frac = getLambdaFrac(dist, util, cloneFactor)
     arrivalDelayFrac = rnd.choice(arrivalDelayFracs)
     meanServiceTime = getMeanServiceTime(dist, cloneFactor)
