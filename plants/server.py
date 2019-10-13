@@ -104,8 +104,9 @@ class Server:
             processedTime = (self.sim.now - request.lastCheckpoint)*request.processorShare
             request.remainingTime -= processedTime
 
-            request.processorShare = 1.0/(len(self.activeRequests))
             self.updateAvgProcessorShare(request)
+            request.processorShare = 1.0/(len(self.activeRequests))
+
             request.lastCheckpoint = self.sim.now
             completionTime = len(self.activeRequests) * request.remainingTime
             self.sim.update(completionTime, request.serverOnCompleted)
