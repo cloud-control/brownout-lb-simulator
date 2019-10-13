@@ -14,6 +14,7 @@ import time
 from plants import ClosedLoopClient, OpenLoopClient, LoadBalancer, Server, Cloner, LoadBalancerCentralQueue
 from base import SimulatorKernel
 from base.utils import *
+from collections import OrderedDict
 
 ## Custom type for argparse to represent a random distribution
 def distribution(s):
@@ -203,6 +204,7 @@ def runSingleSimulation(sim, scenario, loadBalancingAlgorithm, cloning, nbrClone
     loadBalancer.algorithm = loadBalancingAlgorithm
     sim.cloner.setCloning(cloning)
     sim.cloner.setNbrClones(nbrClones)
+    sim.cloner.setServers(servers)
     sim.setupLogging(logging)
 
     openLoopClient = OpenLoopClient(sim, loadBalancer, uniformArrivals=uniformArrivals, seed=(setSeed+2))
@@ -314,6 +316,15 @@ def runSingleSimulation(sim, scenario, loadBalancingAlgorithm, cloning, nbrClone
 
     sim.output('final-results', ', '.join([k for k,v in toReport]))
     sim.output('final-results', ', '.join([v for k,v in toReport]))
+
+    sim.cloner.mapping = OrderedDict(sorted(sim.cloner.mapping.items(), key=lambda t: t[0]))
+
+    toMappingReport = []
+
+    for key in sim.cloner.mapping:
+        toMappingReport.append("{},{}".format(key, sim.cloner.mapping[key][0]))
+
+    sim.output('final-results-mapping', '\n'.join([s for s in toMappingReport]))
 
     if printout:
         print(*[k for k,v in toReport], sep = ', ')

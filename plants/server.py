@@ -49,6 +49,12 @@ class Server:
         ## Reference to simulator
         self.sim = sim
 
+        self.nbrRequests = []
+        self.nbrRequests.append((self.sim.now, 0))
+
+        self.cleanUpPeriod = 5.0
+        self.sim.add(0.0, self.cleanUp)
+
     def changeMC(self, newMC):
         self.sim.log(self, "In server " + str(self.name) + " with newMC " + str(newMC) + " at " + str(self.sim.now))
         self.maxActiveJobs = newMC
@@ -80,6 +86,7 @@ class Server:
     def startRunningRequest(self, request):
         #self.sim.log(self, "Got to start running request " + str(request.requestId) + "," + str(request.isClone))
         self.activeRequests.append(request)
+        self.nbrRequests.append((self.sim.now, len(self.activeRequests)))
 
         if not self.isActive:
             self.isActive = True
@@ -89,6 +96,7 @@ class Server:
         request.lastCheckpoint = self.sim.now
         request.processorShare = 1.0/(len(self.activeRequests))
         request.avgProcessorShare = 1.0/(len(self.activeRequests))
+        request.theta = len(self.activeRequests)
 
         completionTime = len(self.activeRequests)*request.remainingTime
         request.serverOnCompleted = lambda: self.onCompleted(request)
@@ -104,8 +112,9 @@ class Server:
             processedTime = (self.sim.now - request.lastCheckpoint)*request.processorShare
             request.remainingTime -= processedTime
 
-            request.processorShare = 1.0/(len(self.activeRequests))
             self.updateAvgProcessorShare(request)
+            request.processorShare = 1.0/(len(self.activeRequests))
+
             request.lastCheckpoint = self.sim.now
             completionTime = len(self.activeRequests) * request.remainingTime
             self.sim.update(completionTime, request.serverOnCompleted)
@@ -114,6 +123,9 @@ class Server:
         if self.sim.now > request.arrival:
             request.avgProcessorShare = ((request.lastCheckpoint - request.arrival) * request.avgProcessorShare + (
                 self.sim.now - request.lastCheckpoint) * request.processorShare) / (self.sim.now - request.arrival)
+
+            request.theta = ((request.lastCheckpoint - request.arrival) * request.theta + (
+                    self.sim.now - request.lastCheckpoint) * 1.0/request.processorShare) / (self.sim.now - request.arrival)
 
     def drawServiceTime(self, activeRequest):
         if not hasattr(activeRequest, 'serviceTime'):
@@ -148,6 +160,7 @@ class Server:
         if request in self.activeRequests:
             self.sim.delete(request.serverOnCompleted)
             self.activeRequests.remove(request)
+            self.nbrRequests.append((self.sim.now, len(self.activeRequests)))
             self.continueWithRequests(True)
 
         elif request in self.waitingRequests:
@@ -171,6 +184,7 @@ class Server:
 
             # Remove request from active list
             self.activeRequests.remove(request)
+            self.nbrRequests.append((self.sim.now, len(self.activeRequests)))
 
             # And completed it
             request.completion = self.sim.now
@@ -200,6 +214,16 @@ class Server:
     def getTotalQueueLength(self):
         totalQueue = len(self.activeRequests) + len(self.waitingRequests)
         return totalQueue
+
+    def cleanUp(self):
+        """print "------------------"
+        print self.nbrRequests
+        print "------------------"""""
+        for (t,q) in self.nbrRequests:
+            if (self.sim.now - t) > 100.0:
+                self.nbrRequests.remove((t,q))
+
+        self.sim.add(self.cleanUpPeriod, self.cleanUp)
 
     ## Pretty-print server's ID
     def __str__(self):

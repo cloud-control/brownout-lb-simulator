@@ -5,7 +5,7 @@ import numpy as np
 import random as xxx_random # prevent accidental usage
 from base import Request
 from base.utils import *
-
+from collections import OrderedDict
 
 # Simulates a request cloner.
 class Cloner:
@@ -21,10 +21,14 @@ class Cloner:
 
         self.activeRequests = {}
 
+        self.servers = None
+
         self.dolly = np.asarray(self.readCsv('dists/dolly.csv'))
 
         self.processorShareVarCoeff = 0.0
         self.processorShareMean = 0.0
+
+        self.mapping = {}
 
         self.reqNbr = 0
 
@@ -37,6 +41,9 @@ class Cloner:
 
     def setSim(self, sim):
         self.sim = sim
+
+    def setServers(self, servers):
+        self.servers = servers
 
     def setCloning(self, cloning):
         self.cloning = cloning
@@ -82,9 +89,16 @@ class Cloner:
             return
 
         processorShares = []
+        thetas = []
+        incompleteCloneServerIndexes = []
 
         for i in range(0, len(clones)):
             clone = clones[i]
+
+            if not hasattr(clone, 'isCompleted') and hasattr(clone, 'chosenBackendIndex'):
+                incompleteCloneServerIndexes.append(clone.chosenBackendIndex)
+
+
             if not hasattr(clone, 'isCompleted') and hasattr(clone, 'chosenBackend'):
                 if hasattr(clone, 'lastCheckpoint'):
                     clone.chosenBackend.updateAvgProcessorShare(clone)
@@ -94,6 +108,88 @@ class Cloner:
 
             if hasattr(clone, 'avgProcessorShare'):
                 processorShares.append(clone.avgProcessorShare)
+                thetas.append(clone.theta)
+
+
+        #incompleteServers = [s for i,s in enumerate(self.servers) if i in incompleteCloneServerIndexes]
+
+        #for s in incompleteServers:
+        #    lastQueue = s.nbrRequests[-1][1]
+
+        #    s.nbrRequests.append((self.sim.now, lastQueue-1))
+
+        N = sum(thetas)
+        Mvec = []
+
+        arr = clones[0].arrival
+        dep = self.sim.now
+
+
+        """for server in self.servers:
+            print "--------------------"
+            print server.nbrRequests
+            print "--------------------"
+
+        print "arr: " + str(arr)
+        print "dep: " + str(dep)"""
+
+        for server in self.servers:
+            for i, val in reversed(list(enumerate(server.nbrRequests))):
+                if self.floatLessThanOrEqual(server.nbrRequests[i][0], arr):
+                    """print "-------------------"
+                    print "arr = " + str(arr)
+                    print server.nbrRequests[i][0]
+                    print "-------------------"""""
+                    if i == len(server.nbrRequests) - 1:
+                        M = float(server.nbrRequests[i][1])
+                        Mvec.append(M)
+                        break
+                    j = i + 1
+
+                    ttot = 0
+                    M = 0.0
+
+                    while self.floatLessThanOrEqual(server.nbrRequests[j][0], dep):
+                        if ttot == 0:
+                            t = server.nbrRequests[j][0] - arr
+                        else:
+                            t = server.nbrRequests[j][0] - server.nbrRequests[j-1][0]
+
+                        if t > 0.0:
+                            M = (M*ttot + (server.nbrRequests[j-1][1])*t)/(ttot+t)
+                            ttot = ttot + t
+                        if j < (len(server.nbrRequests) - 1):
+                            j = j + 1
+                        else:
+                            break
+
+                    t = dep - server.nbrRequests[j][0]
+
+                    M = (M * ttot + (server.nbrRequests[j][1]) * t) / (ttot + t)
+                    Mvec.append(M)
+                    break
+
+        M = sum(Mvec)
+        """print "------------"      
+        print "M = " + str(M)
+        print "N = " + str(N)
+        print "------------"""""
+
+        roundedM = round(float(M), 2)
+        roundedN = round(float(N), 3)
+        if roundedM not in self.mapping:
+            self.mapping[roundedM] = (roundedN, 1)
+        else:
+            newN = (self.mapping[roundedM][0]*self.mapping[roundedM][1] + roundedN)/(self.mapping[roundedM][1] + 1)
+            newRoundedN = round(newN, 3)
+            newCount = self.mapping[roundedM][1] + 1
+
+            self.mapping[roundedM] = (newRoundedN, newCount)
+
+
+        """print "------------"
+        print self.mapping
+        print "------------"""""
 
         self.processorShareMean = (self.processorShareMean*self.reqNbr + avg(processorShares))/(self.reqNbr+1)
         self.processorShareVarCoeff = (self.processorShareVarCoeff*self.reqNbr + np.std(processorShares)/avg(processorShares))/(self.reqNbr+1)
@@ -101,6 +197,15 @@ class Cloner:
         self.reqNbr += 1
 
         self.deleteClones(request)
+
+    def floatLessThanOrEqual(self, f1, f2):
+        tol = 0.00001
+        if f1<f2:
+            return True
+        elif abs(f1 - f2) <= tol:
+            return True
+        else:
+            return False
 
     def setCloneServiceTimes(self, request):
         if not self.cloning:
