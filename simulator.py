@@ -204,6 +204,7 @@ def runSingleSimulation(sim, scenario, loadBalancingAlgorithm, cloning, nbrClone
     sim.cloner.setCloning(cloning)
     sim.cloner.setNbrClones(nbrClones)
     sim.setupLogging(logging)
+    sim.setServers(servers)
 
     openLoopClient = OpenLoopClient(sim, loadBalancer, uniformArrivals=uniformArrivals, seed=(setSeed+2))
 
@@ -273,6 +274,7 @@ def runSingleSimulation(sim, scenario, loadBalancingAlgorithm, cloning, nbrClone
 
     def setRate(at, rate):
         sim.add(at, lambda: openLoopClient.setRate(rate))
+        sim.reportRate(rate)
 
     def endOfSimulation(at):
         otherParams['simulateUntil'] = at
@@ -305,10 +307,10 @@ def runSingleSimulation(sim, scenario, loadBalancingAlgorithm, cloning, nbrClone
     totalActiveTime = 0.0
     for k, server in enumerate(loadBalancer.backends):
         if server.isActive:
-            server.activeTime += (simulationTime - server.latestActivation)
-        toReport.append(( "s{} util".format(k), "{:.4f}".format(server.activeTime / simulationTime)))
+            server.activeTime += (sim.now - server.latestActivation)
+        toReport.append(( "s{} util".format(k), "{:.4f}".format(server.activeTime / sim.now)))
         totalActiveTime = totalActiveTime + server.activeTime
-    toReport.append(("avg util", "{:.4f}".format(totalActiveTime/(simulationTime*len(loadBalancer.backends)))))
+    toReport.append(("avg util", "{:.4f}".format(totalActiveTime/(sim.now*len(loadBalancer.backends)))))
     toReport.append(("clone std coeff", "{:.5f}".format(sim.cloner.processorShareVarCoeff)))
     toReport.append(("clone mean share", "{:.5f}".format(sim.cloner.processorShareMean)))
 

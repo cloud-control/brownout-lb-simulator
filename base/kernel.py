@@ -4,6 +4,8 @@ from collections import defaultdict, deque
 import os
 import logging
 import time
+from copy import deepcopy
+from base.utils import *
 
 ## Simulation kernel.
 # Implements an event-driven simulator
@@ -26,8 +28,19 @@ class SimulatorKernel:
         self.shouldLog = False
 
         self.cloner = cloner
+        self.servers = None
+        self.lastUtilCheck = 0.0
+        self.rate = 1.0
+        self.utilCheckInterval = 10000.0 / self.rate
         self.maxRunTime = maxRunTime
         self.startTime = time.time()
+
+    def setServers(self, servers):
+        self.servers = servers
+
+    def reportRate(self, rate):
+        self.rate = rate
+        self.utilCheckInterval = 10000.0 / self.rate
 
     def setupLogging(self, shouldLog):
         self.shouldLog = shouldLog
@@ -102,6 +115,10 @@ class SimulatorKernel:
             #print("SimKernel: Running new event ")
             #print(str(event))
 
+            if self.isUnstable():
+                print("Early termination, system is unstable!")
+                print("Completed simulation time: {} of {}".format(self.now, until))
+                return
 
             # Abort if runTime exceeds the predefined roof
             if self.maxRunTime < time.time() - self.startTime and self.maxRunTime > 0:
@@ -146,6 +163,23 @@ class SimulatorKernel:
 
         # kills performance, but reduces experimenter's impatience :D
         #outputFile.flush()
+
+    def isUnstable(self):
+        if (self.now - self.lastUtilCheck) > self.utilCheckInterval:
+            utils = []
+            for server in self.servers:
+                activeTime = deepcopy(server.activeTime)
+                if server.isActive:
+                    activeTime += (self.now - server.latestActivation)
+                util = activeTime / self.now
+                utils.append(util)
+
+            meanUtil = avg(utils)
+            self.lastUtilCheck = self.now
+
+            return meanUtil > 0.995
+        else:
+            return False
 
     ## Pretty-print the simulator kernel's name
     def __str__(self):
