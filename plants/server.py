@@ -61,7 +61,6 @@ class Server:
 
         if self.meanStartupDelay > 0.0:
             startupDelay = self.random.expovariate(1.0/self.meanStartupDelay)
-            #startupDelay = self.meanStartupDelay
         else:
             startupDelay = 0.0
 
@@ -123,7 +122,6 @@ class Server:
             if self.sxModel:
                 self.sim.cloner.setCloneServiceTimes(activeRequest)
             else:
-                #activeRequest.serviceTime = random.expovariate(1.0)
                 activeRequest.serviceTime = float(self.serviceTimeDistribution.rvs())
 
             return activeRequest.serviceTime

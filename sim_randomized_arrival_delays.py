@@ -46,16 +46,6 @@ for scenario in NBR_SCENARIOS:
     arrivalDelay = arrivalDelayFrac*meanServiceTime
     cancellationDelay = 0.0
 
-    """print("-------------------")
-    print(dist)
-    print("util: " + str(util))
-    print("nbrServer: " + str(nbrServer))
-    print("cloneFactor: " + str(cloneFactor))
-    print("lambda frac: " + str(frac))
-    print("arrival delay frac: " + str(arrivalDelayFrac))
-    print("arrival delay: " + str(arrivalDelay))
-    print("-------------------")"""
-
     os.makedirs("result/randomized_arrival_delays/scenario{}".format(scenario))
 
     count += 1

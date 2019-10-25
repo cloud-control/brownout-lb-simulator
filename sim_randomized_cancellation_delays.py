@@ -25,7 +25,7 @@ NBR_SCENARIOS = range(scen_min, scen_max)
 dists = ["SXmodel", "expon", "pareto", "uniform", "weibull_min"]
 utils = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9]
 nbrServers = [2, 3, 4, 5, 6, 7, 9, 10]
-cancellationDelayFracs = [0.1, 0.2, 0.5]
+cancellationDelayFracs = [0.01, 0.02, 0.05, 0.1, 0.2, 0.5]
 
 PROCESSES = 24
 MAXRUNTIME = 20000
@@ -49,16 +49,6 @@ for scenario in NBR_SCENARIOS:
     cancellationDelayFrac = rnd.choice(cancellationDelayFracs)
     meanServiceTime = getMeanServiceTime(dist, cloneFactor)
     cancellationDelay = cancellationDelayFrac*meanServiceTime
-
-    """print("-------------------")
-    print(dist)
-    print("util: " + str(util))
-    print("nbrServer: " + str(nbrServer))
-    print("cloneFactor: " + str(cloneFactor))
-    print("lambda frac: " + str(frac))
-    print("cancellation delay frac: " + str(cancellationDelayFrac))
-    print("cancellation delay: " + str(cancellationDelay))
-    print("-------------------")"""
 
     os.makedirs("result/randomized_cancellation_delays/scenario{}".format(scenario))
 

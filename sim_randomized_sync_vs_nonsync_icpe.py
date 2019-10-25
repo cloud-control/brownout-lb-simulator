@@ -49,12 +49,6 @@ for scenario in NBR_SCENARIOS:
     cloneFactor = getRandomCloneFactor(nbrServer)
     frac = getLambdaFrac(dist, util, cloneFactor)
 
-    """print(dist)
-    print("util: " + str(util))
-    print("nbrServer: " + str(nbrServer))
-    print("cloneFactor: " + str(cloneFactor))
-    print("lambda frac: " + str(frac))"""
-
     os.makedirs("result/randomized_sync_vs_nonsync/scenario{}".format(scenario))
 
     count += 1
