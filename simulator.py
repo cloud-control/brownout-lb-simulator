@@ -314,12 +314,12 @@ def runSingleSimulation(sim, scenario, loadBalancingAlgorithm, cloning, nbrClone
     toReport.append(("clone std coeff", "{:.5f}".format(sim.cloner.processorShareVarCoeff)))
     toReport.append(("clone mean share", "{:.5f}".format(sim.cloner.processorShareMean)))
 
-    sim.output('final-results', ', '.join([k for k,v in toReport]))
-    sim.output('final-results', ', '.join([v for k,v in toReport]))
-
     if printout:
         print(*[k for k,v in toReport], sep = ', ')
         print(*[v for k,v in toReport], sep = ', ')
+    else:
+        sim.output('final-results', ', '.join([k for k, v in toReport]))
+        sim.output('final-results', ', '.join([v for k, v in toReport]))
 
     #for key in sorted(utils.iterkeys()):
     #    s = "server %s util: %s" % (key, utils[key])
