@@ -1,15 +1,10 @@
 import random as xxx_random # prevent accidental usage
 from base.utils import *
 
-if len(sys.argv) == 4:
-    scen_min = int(sys.argv[1])
-    scen_max = int(sys.argv[2])
-    seed_input = int(sys.argv[3])
-else:
-    print("No input, setting to default")
-    scen_min = 0
-    scen_max = 1000
-    seed_input = 222454
+
+scen_min = 0
+scen_max = 1000
+seed_input = 222454
 
 
 rnd = xxx_random.Random()
