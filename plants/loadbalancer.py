@@ -330,8 +330,8 @@ class LoadBalancer:
         request.originalRequest.onCompleted()
 
     def runProgressLoop(self):
-        if self.printout:
-            print self.sim.now
+        #if self.printout:
+        #    print self.sim.now
 
         self.sim.add(self.progressPeriod, self.runProgressLoop)
 
