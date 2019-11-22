@@ -3,7 +3,7 @@ from base.utils import *
 
 
 scen_min = 0
-scen_max = 7
+scen_max = 5
 seed_input = 222454
 
 
