@@ -1,0 +1,23 @@
+<h2><strong>Artifact - </strong><em>Modeling of Request Cloning in Cloud Server </em><em>Systems<br /></em><em> using Processor Sharing</em></h2>
+<p><strong>Software requirements:</strong> Docker, Matlab for data pre-processing<br /><strong>Hardware requirements:</strong> Standard Linux PC for evaluation, access to some sort of computing infrastructure is<br />highly reccomended for running the actual experiments done in the paper.</p>
+<p>The artifact contains the cloning simulator, raw data and data preprocessing, and plotting of the data in LaTex as<br />displayed in the paper.</p>
+<h3><strong>Running the artifact docker container<br /></strong></h3>
+<p>Everything needed to run the components of the artifact is included in the form of a dockerfile. To build the<br />associated image, simply run</p>
+<p style="padding-left: 30px;">&gt; docker build -t artifact .</p>
+<p>By starting the container, and sharing the folders for the plots and cloning simulator, results can easily be <br />accessed from the host. To start the container and run bash interactively with the shared folders, do</p>
+<p style="padding-left: 30px;">&gt; docker run -it -v $(pwd)/plots:/work/plots -v $(pwd)/cloning-simulator:/work/cloning-simulator artifact /bin/bash</p>
+<h3><strong>Evaluating the simulator<br /></strong></h3>
+<p>The simulator is contained in the /work/cloning-simulator directory and is directly executable from the artifact<br />container.</p>
+<p>The main script of the simulator, "simulator.py" runs a single simulation for the given input parameters and<br />supplied scenario file. To get a detailed help on the available arguments for the simulator, run</p>
+<p style="padding-left: 30px;">&gt; python simulator.py&nbsp; --help</p>
+<p>The scenario files in "scenarios/" adds servers of desired types, and sets simulation<br />parameters.</p>
+<p>Larger simulations of e.g. parameter sweeps is most easily done through scripting. An example on how to run <br />the simulator in a scripted fashion is available in "sim_example.py" and its corresponding scenario file<br />"scenarios/clone-example.py". To run the example script, simply type</p>
+<p style="padding-left: 30px;">&gt; python sim_example.py</p>
+<p>The results are stored in the directory "results_example/". Since the cloning-simulator is a shared directory the<br />output results can be accessed on the host computer directly.</p>
+<h3><strong>Data pre-processing</strong></h3>
+<p>The raw data needs to be processed for plotting, check scripts</p>
+<h3><strong>Recreating the plots</strong></h3>
+<p>The plots seen in the paper can be generated in LaTeX from the processed raw data. From the "/work/plots"&nbsp;<br />directory on the artifact container, simply run</p>
+<p style="padding-left: 30px;">&gt; pdflatex main.tex</p>
+<p>Since the plots directory is shared with the host, the resulting pdf-file is easily accessed.</p>
+<p>&nbsp;</p>
