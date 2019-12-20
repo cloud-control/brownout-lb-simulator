@@ -1,0 +1,118 @@
+\begin{tikzpicture}
+
+\begin{axis}[%
+width=0.85\columnwidth,
+height=0.25\columnwidth,
+scale only axis,
+xmin=0.25,
+xmax=0.75,
+xtick={0.3, 0.38, 0.52, 0.62, 0.70},
+ymin=0,
+ymax=6.5,
+ytick={1, 2, 3, 4, 6},
+ylabel={Clone factor $c_f$},
+grid style={dashed,black!20},
+grid=major,
+legend columns=2,
+legend style={draw, fill=white, at={(0.01, 0.05)}, anchor=south west},
+ylabel near ticks,
+xlabel near ticks,
+legend cell align={left},
+]
+
+\addplot[solid, blue, line width=1.5pt]
+  table[row sep=crcr]{%
+x y\\
+0.28 6\\
+0.32 6\\
+};
+%\addlegendentry{c-JSQ-d}
+
+\addplot[blue,mark=x,mark options=solid, only marks,mark size=3pt, thick]
+  table[row sep=crcr]{%
+x y\\
+0.30 6\\
+0.38 4\\
+0.52 3\\
+0.62 2\\
+0.70 1\\
+};
+%\addlegendentry{theory}
+
+\addplot[solid, blue, line width=1.5pt, forget plot]
+  table[row sep=crcr]{%
+x y\\
+0.36 4\\
+0.40 4\\
+};
+
+\addplot[solid, blue, line width=1.5pt, forget plot]
+  table[row sep=crcr]{%
+x y\\
+0.50 3\\
+0.54 3\\
+};
+
+\addplot[solid, blue, line width=1.5pt, forget plot]
+  table[row sep=crcr]{%
+x y\\
+0.60 2\\
+0.64 2\\
+};
+
+\addplot[solid, blue, line width=1.5pt, forget plot]
+  table[row sep=crcr]{%
+x y\\
+0.68 1\\
+0.72 1\\
+};
+
+\addplot[dashed, red, line width=1.5pt]
+  table[row sep=crcr]{%
+x y\\
+0.28 6\\
+0.32 6\\
+};
+%\addlegendentry{c-R-d}
+
+\addplot[red,mark=o, only marks,mark size=2.5pt, thick]
+  table[row sep=crcr]{%
+x y\\
+0.30 6\\
+0.38 6\\
+0.52 4\\
+0.62 1\\
+0.70 1\\
+};
+%\addlegendentry{theory}
+
+\addplot[dashed, red, line width=1.5pt, forget plot]
+  table[row sep=crcr]{%
+x y\\
+0.36 6\\
+0.40 6\\
+};
+
+\addplot[dashed, red, line width=1.5pt, forget plot]
+  table[row sep=crcr]{%
+x y\\
+0.50 4\\
+0.54 4\\
+};
+
+\addplot[dashed, red, line width=1.5pt, forget plot]
+  table[row sep=crcr]{%
+x y\\
+0.60 1\\
+0.64 1\\
+};
+
+\addplot[dashed, red, line width=1.5pt, forget plot]
+  table[row sep=crcr]{%
+x y\\
+0.68 1\\
+0.72 1\\
+};
+
+\end{axis}
+\end{tikzpicture}

@@ -1,0 +1,32 @@
+\begin{tikzpicture}[]
+
+\begin{axis}[%
+width=0.70\columnwidth,
+height=0.35\columnwidth,
+scale only axis,
+separate axis lines,
+xmin=0, xmax=8,
+ymin=0, ymax=1,
+xlabel = {Response time (s)},
+compat = 1.4,
+ylabel = {Empirical CDF},
+grid style = {dashed, black!20},
+grid=major,
+legend columns=1,
+legend style={draw, fill=white},
+legend pos = south east,
+ylabel near ticks,
+xlabel near ticks,
+legend cell align={left},
+]
+
+\addplot [color=black, thick, solid]
+table [col sep=comma] {data/gg1-example-compressed/3dist-ps.csv};
+\addlegendentry{Three Servers with Cloning};
+
+\addplot [color=red, ultra thick, dashed]
+table [col sep=comma] {data/gg1-example-compressed/equivalent-ps.csv};
+\addlegendentry{Equivalent Single Server};
+
+\end{axis}
+\end{tikzpicture}

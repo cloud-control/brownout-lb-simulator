@@ -1,0 +1,69 @@
+\documentclass[]{article} 
+
+\usepackage{tikz,pgfplots,pgfplotstable}
+\usepackage{amsmath}
+\usepackage{graphicx}
+\usepackage{float}
+
+\input{tikzoptions.tex}
+
+\begin{document}
+
+\title{Plot generation of accepted paper of \\ \emph{Modeling of Request Cloning in Cloud Server Systems using Processor Sharing}}
+
+\maketitle
+
+\section*{Plots with empirical data in chronological order}
+
+\begin{figure}[H]
+	\centering
+	\input{figures/gg1-example/gg1-example-resps-ps.tex}
+	\caption{Empirical response time CDFs for the Example with Heterogeneous Servers. Data retrieved through 20 repeated simulations of $10^6$ requests each. The 95\% confidence intervals lie within the lines.}
+	\label{fig:gg1-results-ps}
+\end{figure}
+
+
+\begin{figure}[H]
+	\centering
+	\input{figures/clone-to-all/optclones-ps-simulation.tex}
+	\caption{Clone-to-All: Comparison of theoretical values with 95\% confidence intervals for the simulation results.}
+	\label{fig:clone-to-all-evaluation}
+\end{figure}
+
+  \begin{figure}[H]
+	\centering
+	\input{figures/co-design/co-design-sim-clones.tex}
+	
+	\input{figures/co-design/co-design-sim-means.tex}
+	\caption{Co-designs: Comparison of theoretical values with 95\% confidence intervals for the simulation results. The legend applies to both figures.}
+	\label{fig:co-design}
+\end{figure}
+
+\begin{figure}[H] 
+	\centering
+	\input{figures/nonsync/randomized-arrival-delays.tex}
+	\caption{Arrival delays only.}
+\end{figure}
+
+\begin{figure}[H]
+	\centering
+	\input{figures/nonsync/randomized-cancellation-delays.tex}
+	\caption{Cancellation delays only.}
+\end{figure}
+
+\begin{figure}[H]
+	\centering
+	\input{figures/nonsync/randomized-combined-delays.tex}
+	\caption{Both delays present.}
+\end{figure}
+
+\begin{figure}[H]
+	\centering
+	\input{figures/nonsync/randomized-sync-vs-nonsync-clone-errors.tex}
+	
+	\input{figures/nonsync/randomized-sync-vs-nonsync-means.tex}
+	\caption{Simulations comparing a-$\ell$-d to c-$\ell$-d for random and JSQ. The normalization of $\mathbf{E}[T]$ is performed such that each value is divided by the value for the c-$\ell$-d counterpart. The intervals represent 95\% confidence intervals.}
+	\label{fig:nonsync-vs-sync}
+\end{figure}
+
+\end{document}

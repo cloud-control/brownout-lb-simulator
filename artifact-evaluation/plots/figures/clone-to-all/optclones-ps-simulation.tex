@@ -1,0 +1,92 @@
+\begin{tikzpicture}[]
+\pgfplotsset{set layers}
+
+\begin{axis}[%
+width=0.75\columnwidth,
+height=0.40\columnwidth,
+scale only axis,
+separate axis lines,
+xmin=0,
+xmax=0.7,
+ymin=0,
+ymax=10,
+axis y line*=right,
+axis x line=none,
+ytick={2, 4, 6, 8, 10},
+compat=1.4,
+ylabel={$\mathbf{E}[T]$ (s)},
+grid style={dashed,black!20},
+grid=major,
+legend columns=1,
+legend style={draw, fill=white, at={(0.98, 0.98)}, anchor=north east},
+ylabel near ticks,
+xlabel near ticks,
+legend cell align={left},
+]
+
+\addplot [color=black, thick, solid]
+table [col sep=comma] {data/clone-to-all-compressed/meanRTs-ps.csv};
+\addlegendentry{$\mathbf{E}[T]^{\text{opt}}$ (theory)}
+
+%\addplot [color=green, thick, dashed]
+%table [col sep=comma] {data/clone-to-all/minAvgRTVal-mean-ps.csv};
+%\addlegendentry{$\mathbf{E}[T]^{\text{opt}}$ (sim)}
+
+\addplot[area legend,dashed,fill=green,draw=green,opacity=5e-01]
+table [col sep=comma]
+{data/clone-to-all/optmean-confint.csv};
+\addlegendentry{$\mathbf{E}[T]^{\text{opt}}$ (sim)}
+
+\draw[->, >=latex, thick] (axis cs:0.52, 5.75) -- (axis cs:0.57, 5.75);
+
+\end{axis}
+
+\begin{axis}[%
+width=0.75\columnwidth,
+height=0.40\columnwidth,
+scale only axis,
+separate axis lines,
+axis y line*=left,
+xmin=0,
+xmax=0.7,
+ymin=0,
+ymax=10,
+xlabel={Arrival rate / server (1/s)},
+compat=1.4,
+ylabel={Cloning factor $c_f$},
+grid style={dashed,black!20},
+grid=major,
+legend columns=1,
+legend style={draw, fill=white, at={(0.02, 0.15)}, anchor=south west},
+ylabel near ticks,
+xlabel near ticks,
+legend cell align={left},
+]
+
+%\addplot[area legend,solid,fill=black,opacity=2.5e-01,draw=none]
+%table [col sep=comma] {data/clone-to-all/minAvgRTSer_minmax.csv};
+%\addlegendentry{minmax};
+
+\addplot [color=red, thick, solid]
+table [col sep=comma] {data/clone-to-all-compressed/optclones-ps.csv};
+\addlegendentry{$c_f^{\text{opt}}$ (theory)};
+
+%\addplot [color=blue, thick, dashed]
+%table [col sep=comma] {data/clone-to-all/minAvgRTSer-mean-ps.csv};
+%\addlegendentry{$c_f^{\text{opt}}$ (sim)};
+
+\addplot[area legend,dashed,fill=blue,draw=blue,opacity=5e-01]
+table [col sep=comma] {data/clone-to-all/optclone-confint.csv};
+\addlegendentry{$c_f^{\text{opt}}$ (sim)};
+
+%\addplot [color=black, thick, dashed]
+%table [col sep=comma] {data/clone-to-all/minAvgRTSer_min.csv};
+
+%\addplot [color=black, thick, dashed]
+%table [col sep=comma] {data/clone-to-all/minAvgRTSer_max.csv};
+
+\draw[->, >=latex, thick] (axis cs:0.1, 5.75) -- (axis cs:0.05, 5.75);
+
+\end{axis}
+
+\end{tikzpicture}%

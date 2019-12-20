@@ -1,0 +1,120 @@
+\begin{tikzpicture}
+
+
+\begin{axis}[%
+width=0.85\columnwidth,
+height=0.35\columnwidth,
+scale only axis,
+separate axis lines,
+xmin=0.25,
+xmax=0.75,
+xlabel={Arrival rate $\lambda$ / server (1/s)},
+xtick={0.3, 0.38, 0.52, 0.62, 0.70},
+ymin=0,
+ymax=3.5,
+ytick={0,1,2,3},
+ylabel={$\mathbf{E}[T]$ (s)},
+grid style={dashed,black!20},
+grid=major,
+legend columns=2,
+legend style={draw, fill=white, at={(0.01, 0.95)}, anchor=north west},
+ylabel near ticks,
+xlabel near ticks,
+legend cell align={left},
+]
+
+\addplot[solid, blue, line width=1.5pt]
+  table[row sep=crcr]{%
+x y\\
+0.28 0.4053\\
+0.32 0.4053\\
+};
+\addlegendentry{c-JSQ-d (sim)}
+
+\addplot[blue,mark=x,mark options=solid, only marks,mark size=3pt, thick]
+  table[row sep=crcr]{%
+x y\\
+0.30 0.404\\
+0.38 0.482\\
+0.52 0.692\\
+0.62 0.955\\
+0.70 1.112\\
+};
+\addlegendentry{theory}
+
+\addplot[solid, blue, line width=1.5pt, forget plot]
+  table[row sep=crcr]{%
+x y\\
+0.36 0.4868\\
+0.40 0.4868\\
+};
+
+\addplot[solid, blue, line width=1.5pt, forget plot]
+  table[row sep=crcr]{%
+x y\\
+0.50 0.7067\\
+0.54 0.7067\\
+};
+
+\addplot[solid, blue, line width=1.5pt, forget plot]
+  table[row sep=crcr]{%
+x y\\
+0.60 0.9631\\
+0.64 0.9631\\
+};
+
+\addplot[solid, blue, line width=1.5pt, forget plot]
+  table[row sep=crcr]{%
+x y\\
+0.68 1.1223\\
+0.72 1.1223\\
+};
+
+\addplot[dashed, red, line width=1.5pt]
+  table[row sep=crcr]{%
+x y\\
+0.28 0.5743\\
+0.32 0.5743\\
+};
+\addlegendentry{c-R-d (sim)}
+
+\addplot[red,mark=o, only marks,mark size=2.5pt, thick]
+  table[row sep=crcr]{%
+x y\\
+0.30 0.569\\
+0.38 0.783\\
+0.52 1.515\\
+0.62 2.618\\
+0.70 3.312\\
+};
+\addlegendentry{theory}
+
+\addplot[dashed, red, line width=1.5pt, forget plot]
+  table[row sep=crcr]{%
+x y\\
+0.36 0.7879\\
+0.40 0.7879\\
+};
+
+\addplot[dashed, red, line width=1.5pt, forget plot]
+  table[row sep=crcr]{%
+x y\\
+0.50 1.5185\\
+0.54 1.5185\\
+};
+
+\addplot[dashed, red, line width=1.5pt, forget plot]
+  table[row sep=crcr]{%
+x y\\
+0.60 2.6154\\
+0.64 2.6154\\
+};
+
+\addplot[dashed, red, line width=1.5pt, forget plot]
+  table[row sep=crcr]{%
+x y\\
+0.68 3.3176\\
+0.72 3.3176\\
+};
+\end{axis}
+\end{tikzpicture}

@@ -1,0 +1,72 @@
+\begin{tikzpicture}
+
+
+\begin{axis}[%
+width=0.82\columnwidth,
+height=3.0cm,
+scale only axis,
+separate axis lines,
+%no markers,
+xmin=0.006,
+xmax=0.8,
+xlabel={$\frac{\mathbf{E}[c]}{\mathbf{E}[X]}$},
+ylabel={Normalized $\mathbf{E}[T]$},
+xmode=log,
+xtick = data,
+log ticks with fixed point,
+%symbolic x coords={0.05, 0.10, 0.20, 0.50},
+%xticklabels = {0.05, 0.10, 0.20, 0.50},
+%xtick={0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9},
+ymin=0.95,
+%xlabel={Utilization $\rho$},
+ymax=2.90,
+%ytick={0, 0.2, 0.4, 0.6, 0.8, 1.0},
+compat=1.5.1,
+%ylabel={ $\mathbf{E}[T^{ns}]/\mathbf{E}[T^{s}]$},
+grid style={dashed,black!20},
+grid=major,
+legend columns=1,
+legend style={draw, fill=white, at={(0.02, 0.95)}, anchor=north west},
+ylabel near ticks,
+xlabel near ticks,
+legend cell align={left},
+]
+
+\addplot+[red, only marks, mark options={red}, mark size=1.5pt,
+  error bars/.cd,
+    y dir=both,
+    y explicit,
+    error bar style={line width=1pt},
+    error mark options={
+      rotate=90,
+      mark size=6pt,
+      line width=1pt
+    }
+]
+table [x index=0, y index=2, x error index=1, y error index=3] {data/randomized-delays/randomized_cancellation_delays_confint_bound.txt};
+%\addlegendentry{Upper bound}
+
+\addplot+[blue, only marks, mark options={blue}, mark size=1.5pt,
+  error bars/.cd,
+    y dir=both,
+    y explicit,
+    error bar style={line width=1pt},
+    error mark options={
+      rotate=90,
+      mark size=6pt,
+      line width=1pt
+    }
+]
+table [x index=0, y index=2, x error index=1, y error index=3] {data/randomized-delays/randomized_cancellation_delays_confint_resp.txt};
+%\addlegendentry{Delays}
+
+\addplot[dashed, black, line width=1.0pt]
+  table[row sep=crcr]{%
+x y\\
+0.005 1\\
+0.8 1\\
+};
+%\addlegendentry{No delays}
+
+\end{axis}
+\end{tikzpicture}

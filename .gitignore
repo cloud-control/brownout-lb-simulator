@@ -24,4 +24,4 @@ plotscripts/data.mat
 *.log
 
 # Matlab tikz files
-*.tex
+
