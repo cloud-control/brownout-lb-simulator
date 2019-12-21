@@ -23,12 +23,8 @@ xlabel near ticks,
 legend cell align={left},
 ]
 
-\addplot[solid, blue, line width=1.5pt]
-  table[row sep=crcr]{%
-x y\\
-0.28 0.4053\\
-0.32 0.4053\\
-};
+\addplot[solid, blue, line width=1.5pt, restrict expr to domain={\coordindex}{0:1}]
+table [col sep=comma] {data/co-design/clusterSQF-PS-RT.csv};
 \addlegendentry{c-JSQ-d (sim)}
 
 \addplot[blue,mark=x,mark options=solid, only marks,mark size=3pt, thick]
@@ -42,40 +38,20 @@ x y\\
 };
 \addlegendentry{theory}
 
-\addplot[solid, blue, line width=1.5pt, forget plot]
-  table[row sep=crcr]{%
-x y\\
-0.36 0.4868\\
-0.40 0.4868\\
-};
+\addplot[solid, blue, line width=1.5pt, restrict expr to domain={\coordindex}{2:3}, forget plot]
+table [col sep=comma] {data/co-design/clusterSQF-PS-RT.csv};
 
-\addplot[solid, blue, line width=1.5pt, forget plot]
-  table[row sep=crcr]{%
-x y\\
-0.50 0.7067\\
-0.54 0.7067\\
-};
+\addplot[solid, blue, line width=1.5pt, restrict expr to domain={\coordindex}{4:5}, forget plot]
+table [col sep=comma] {data/co-design/clusterSQF-PS-RT.csv};
 
-\addplot[solid, blue, line width=1.5pt, forget plot]
-  table[row sep=crcr]{%
-x y\\
-0.60 0.9631\\
-0.64 0.9631\\
-};
+\addplot[solid, blue, line width=1.5pt, restrict expr to domain={\coordindex}{6:7}, forget plot]
+table [col sep=comma] {data/co-design/clusterSQF-PS-RT.csv};
 
-\addplot[solid, blue, line width=1.5pt, forget plot]
-  table[row sep=crcr]{%
-x y\\
-0.68 1.1223\\
-0.72 1.1223\\
-};
+\addplot[solid, blue, line width=1.5pt, restrict expr to domain={\coordindex}{8:9}, forget plot]
+table [col sep=comma] {data/co-design/clusterSQF-PS-RT.csv};
 
-\addplot[dashed, red, line width=1.5pt]
-  table[row sep=crcr]{%
-x y\\
-0.28 0.5743\\
-0.32 0.5743\\
-};
+\addplot[dashed, red, line width=1.5pt, restrict expr to domain={\coordindex}{0:1}]
+table [col sep=comma] {data/co-design/clusterRandom-PS-RT.csv};
 \addlegendentry{c-R-d (sim)}
 
 \addplot[red,mark=o, only marks,mark size=2.5pt, thick]
@@ -89,32 +65,16 @@ x y\\
 };
 \addlegendentry{theory}
 
-\addplot[dashed, red, line width=1.5pt, forget plot]
-  table[row sep=crcr]{%
-x y\\
-0.36 0.7879\\
-0.40 0.7879\\
-};
+\addplot[dashed, red, line width=1.5pt, restrict expr to domain={\coordindex}{2:3}, forget plot]
+table [col sep=comma] {data/co-design/clusterRandom-PS-RT.csv};
 
-\addplot[dashed, red, line width=1.5pt, forget plot]
-  table[row sep=crcr]{%
-x y\\
-0.50 1.5185\\
-0.54 1.5185\\
-};
+\addplot[dashed, red, line width=1.5pt, restrict expr to domain={\coordindex}{4:5}, forget plot]
+table [col sep=comma] {data/co-design/clusterRandom-PS-RT.csv};
 
-\addplot[dashed, red, line width=1.5pt, forget plot]
-  table[row sep=crcr]{%
-x y\\
-0.60 2.6154\\
-0.64 2.6154\\
-};
+\addplot[dashed, red, line width=1.5pt, restrict expr to domain={\coordindex}{6:7}, forget plot]
+table [col sep=comma] {data/co-design/clusterRandom-PS-RT.csv};
 
-\addplot[dashed, red, line width=1.5pt, forget plot]
-  table[row sep=crcr]{%
-x y\\
-0.68 3.3176\\
-0.72 3.3176\\
-};
+\addplot[dashed, red, line width=1.5pt, restrict expr to domain={\coordindex}{8:9}, forget plot]
+table [col sep=comma] {data/co-design/clusterRandom-PS-RT.csv};
 \end{axis}
 \end{tikzpicture}
